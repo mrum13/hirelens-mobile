@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unsplash_clone/screens/register.dart';
+import 'package:unsplash_clone/screens/home.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -38,7 +39,9 @@ class LoginPage extends StatelessWidget {
                     labelText: 'Email',
                     border: const OutlineInputBorder(),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color.fromARGB(255, 41, 41, 41)),
+                      borderSide: BorderSide(
+                        color: Color.fromARGB(255, 41, 41, 41),
+                      ),
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
@@ -51,7 +54,9 @@ class LoginPage extends StatelessWidget {
                     labelText: 'Password',
                     border: const OutlineInputBorder(),
                     focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: Color.fromARGB(255, 41, 41, 41)),
+                      borderSide: BorderSide(
+                        color: Color.fromARGB(255, 41, 41, 41),
+                      ),
                     ),
                   ),
                 ),
@@ -67,12 +72,12 @@ class LoginPage extends StatelessWidget {
                       // final password = passwordController.text.trim();
 
                       // if (email.isNotEmpty && password.isNotEmpty) {
-                      //   Navigator.pushReplacement(
-                      //     context,
-                      //     MaterialPageRoute(
-                      //       builder: (context) => const DashboardHome(),
-                      //     ),
-                      //   );
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomePage(),
+                        ),
+                      );
                       // } else {
                       //   ScaffoldMessenger.of(context).showSnackBar(
                       //     const SnackBar(content: Text("Email dan Password harus diisi")),
@@ -98,7 +103,10 @@ class LoginPage extends StatelessWidget {
                           ),
                         );
                       },
-                      child: const Text('Daftar', style: TextStyle(color: Colors.black87)),
+                      child: const Text(
+                        'Daftar',
+                        style: TextStyle(color: Colors.black87),
+                      ),
                     ),
                   ],
                 ),
