@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:unsplash_clone/components/item_card.dart';
+import 'package:unsplash_clone/screens/cart.dart';
+import 'package:unsplash_clone/screens/profile.dart'; // Tambahkan import ini
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -47,7 +50,9 @@ class HomePage extends StatelessWidget {
 }
 
 class TopBarDelegate extends SliverPersistentHeaderDelegate {
+  @override
   final double minExtent;
+  @override
   final double maxExtent;
 
   TopBarDelegate({required this.minExtent, required this.maxExtent});
@@ -75,16 +80,24 @@ class TopBarDelegate extends SliverPersistentHeaderDelegate {
           child: Stack(
             alignment: Alignment.bottomLeft,
             children: [
-              // Profile picture (top, shrinks as you scroll)
               Positioned(
                 top: 16 + 40 * (1 - percent),
                 left: 0,
-                child: Opacity(
-                  opacity: opacity,
-                  child: CircleAvatar(
-                    radius: avatarSize / 2,
-                    backgroundImage: NetworkImage(
-                      'https://randomuser.me/api/portraits/men/1.jpg',
+                child: GestureDetector(
+                  onTap: () {
+                    // Navigasi ke ProfilePage saat avatar diklik
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfilePage()),
+                    );
+                  },
+                  child: Opacity(
+                    opacity: opacity,
+                    child: CircleAvatar(
+                      radius: avatarSize / 2,
+                      backgroundImage: NetworkImage(
+                        'https://randomuser.me/api/portraits/men/1.jpg',
+                      ),
                     ),
                   ),
                 ),
@@ -106,19 +119,39 @@ class TopBarDelegate extends SliverPersistentHeaderDelegate {
                       textAlign: TextAlign.left,
                     ),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
                           icon: Icon(Icons.shopping_bag_outlined),
-                          onPressed: () {},
+                          onPressed: () {
+                            // Navigasi ke CartPage
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CartPage(),
+                              ),
+                            );
+                          },
                         ),
                         IconButton(
                           icon: Icon(Icons.search_outlined),
-                          onPressed: () {},
+                          onPressed: () {
+                            // Tambahkan fungsi search nanti
+                            if (kDebugMode) {
+                              print('Search pressed');
+                            }
+                          },
                         ),
                         IconButton(
                           icon: Icon(Icons.person_outline_outlined),
-                          onPressed: () {},
+                          onPressed: () {
+                            // Navigasi ke ProfilePage
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfilePage(),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
