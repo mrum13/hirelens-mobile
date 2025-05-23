@@ -294,7 +294,7 @@ class _ProfilePageState extends State<ProfilePage> {
             subtitle: 'Baca kebijakan privasi kami',
             onTap: () => _showComingSoonSnackBar('Kebijakan Privasi'),
           ),
-        ],
+        ],  
       ),
     );
   }
