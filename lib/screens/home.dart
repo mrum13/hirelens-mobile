@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:unsplash_clone/components/item_card.dart';
 import 'package:unsplash_clone/providers/user_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:unsplash_clone/models/user_model.dart';
 import 'package:unsplash_clone/screens/cart.dart'; // Pastikan path ini sesuai struktur project kamu
 
 class HomePage extends StatelessWidget {
