@@ -9,9 +9,9 @@ import 'package:unsplash_clone/utils/auth_storage.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
-    url: 'https://axpgpvextydxieasyqaw.supabase.co',
+    url: 'https://lebuzerrmpjjugoxaaav.supabase.co',
     anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF4cGdwdmV4dHlkeGllYXN5cWF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMDc2NDEsImV4cCI6MjA2MzU4MzY0MX0.o5I3DAoKcsish64fS8jFWiLKh9ZMagutLerLD-1QuNQ',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlYnV6ZXJybXBqanVnb3hhYWF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTQ4NjAsImV4cCI6MjA2NDk3MDg2MH0.6yeXMi_H8NtqhvGGNGvEQi7lB78eJzqHwb9_AGGPi7Q',
   );
 
   final token = await getAuthToken();
@@ -19,7 +19,7 @@ Future<void> main() async {
   final userProvider = UserProvider();
 
   if (token != null) {
-    await Supabase.instance.client.auth.reauthenticate();
+    // await Supabase.instance.client.auth.reauthenticate();
     final user = Supabase.instance.client.auth.currentUser;
 
     if (user != null) {

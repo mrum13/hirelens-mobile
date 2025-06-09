@@ -45,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
         final user = UserModel(
           id: response.user!.id,
           email: response.user!.email ?? '',
+          displayName: response.user!.userMetadata!['displayName'],
         );
         Provider.of<UserProvider>(context, listen: false).setUser(user);
 
