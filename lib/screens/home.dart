@@ -49,6 +49,8 @@ class HomePage extends StatelessWidget {
     }
 
     return Scaffold(
+      // TODO: Ubah menjadi Search bar di kiri, shopping cart dan profile di kanan
+      // TODO: Refactor keseluruhan AppBar
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,

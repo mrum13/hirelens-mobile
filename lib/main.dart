@@ -19,17 +19,18 @@ Future<void> main() async {
   final userProvider = UserProvider();
 
   if (token != null) {
-    // await Supabase.instance.client.auth.reauthenticate();
-    final user = Supabase.instance.client.auth.currentUser;
+    final response = await Supabase.instance.client.auth.recoverSession(token);
 
-    if (user != null) {
+    if (response.session != null && response.user != null) {
       userProvider.setUser(
         UserModel(
-          id: user.id,
-          email: user.email!,
-          displayName: user.userMetadata!['displayName'] ?? user.email!,
+          id: response.user!.id,
+          email: response.user!.email ?? '',
+          displayName: response.user!.userMetadata?['displayName'] ?? response.user!.email ?? '',
         ),
       );
+      // Optionally, save the refreshed token if it changed
+      await saveAuthToken(response.session!.accessToken);
     } else {
       await clearAuthToken();
     }

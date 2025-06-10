@@ -38,9 +38,9 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text,
       );
 
-      if (response.user != null) {
-        if (!mounted) return;
+      if (!mounted) return;
 
+      if (response.user != null) {
         await saveAuthToken(response.session!.accessToken);
         final user = UserModel(
           id: response.user!.id,
@@ -49,6 +49,7 @@ class _LoginPageState extends State<LoginPage> {
         );
         Provider.of<UserProvider>(context, listen: false).setUser(user);
 
+        // TODO: Pisahkan home vendor dan home customer
         Navigator.of(
           context,
         ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
@@ -56,7 +57,9 @@ class _LoginPageState extends State<LoginPage> {
         _showError('Login gagal. Silakan coba lagi.');
       }
     } catch (e) {
-      _showError('Terjadi kesalahan: ${e.toString()}');
+      if (mounted) {
+        _showError('Terjadi kesalahan: ${e.toString()}');
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
