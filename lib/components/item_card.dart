@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 String formatCurrency(int price) {
-  final formatter = NumberFormat.simpleCurrency(locale: 'id_ID');
+  final formatter = NumberFormat.simpleCurrency(
+    locale: 'id_ID',
+    decimalDigits: 0,
+  );
   return formatter.format(price);
 }
 
@@ -48,15 +51,9 @@ class ItemCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            name,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(
-            desc,
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-          ),
+          Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
           const Spacer(),
           Text(
             formatCurrency(price),

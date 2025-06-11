@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:unsplash_clone/components/item_card.dart';
 import 'package:unsplash_clone/providers/user_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:unsplash_clone/screens/cart.dart'; // Pastikan path ini sesuai struktur project kamu
+import 'package:unsplash_clone/screens/cart.dart';
+import 'package:unsplash_clone/screens/profile.dart';
+import 'package:unsplash_clone/components/appbar.dart';
 
 class HomePage extends StatelessWidget {
   final List<Map<String, dynamic>> items = [
@@ -49,81 +51,49 @@ class HomePage extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        toolbarHeight: 0, // Sembunyikan AppBar asli
+      backgroundColor: Colors.white,
+      appBar: HomeCustomAppBar(
+        onCartPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CartPage()),
+          );
+        },
+        onProfilePressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfilePage()),
+          );
+        },
+        onSearchPressed: () {
+          // TODO: Implement search action
+        },
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
           children: [
-            const SizedBox(height: 16),
-
-            // Baris 1: Icon profil
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Icon(Icons.person, size: 30, color: Colors.black),
-            ),
-            const SizedBox(height: 12),
-
-            // Baris 2: Hello User + Icon keranjang + search
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Hello, ${user.displayName ?? user.email}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.shopping_bag_outlined),
-                      onPressed: () {
-                        // Navigasi ke halaman keranjang
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CartPage(),
-                          ),
-                        );
-                      },
-                      color: Colors.black,
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.search),
-                      onPressed: () {},
-                      color: Colors.black,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
             // Grid konten
             Expanded(
-              child: GridView.builder(
-                itemCount: items.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.65,
+              child: Container(
+                color: Colors.white,
+                child: GridView.builder(
+                  itemCount: items.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.65,
+                  ),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return ItemCard(
+                      name: item['title'],
+                      price: item['price'],
+                      desc: item['desc'],
+                    );
+                  },
                 ),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return ItemCard(
-                    name: item['title'],
-                    price: item['price'],
-                    desc: item['desc'],
-                  );
-                },
               ),
             ),
           ],
