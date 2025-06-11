@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:unsplash_clone/models/user_model.dart';
 import 'package:unsplash_clone/providers/user_provider.dart';
@@ -26,7 +27,10 @@ Future<void> main() async {
         UserModel(
           id: response.user!.id,
           email: response.user!.email ?? '',
-          displayName: response.user!.userMetadata?['displayName'] ?? response.user!.email ?? '',
+          displayName:
+              response.user!.userMetadata?['displayName'] ??
+              response.user!.email ??
+              '',
         ),
       );
       // Optionally, save the refreshed token if it changed
