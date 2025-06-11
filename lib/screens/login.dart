@@ -41,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (response.user != null) {
-        await saveAuthToken(response.session!.accessToken);
+        await saveAuthSession(response.session!.toJson());
         final user = UserModel(
           id: response.user!.id,
           email: response.user!.email ?? '',

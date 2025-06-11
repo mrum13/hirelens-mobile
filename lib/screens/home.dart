@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/components/appbar.dart';
+import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
 
 class HomePage extends StatelessWidget {
   final List<Map<String, dynamic>> items = [
@@ -50,6 +51,10 @@ class HomePage extends StatelessWidget {
       return const Center(child: Text('Belum login'));
     }
 
+    // Collect all titles for suggestions
+    final List<String> suggestionTitles =
+        items.map((item) => item['title'] as String).toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: HomeCustomAppBar(
@@ -65,14 +70,23 @@ class HomePage extends StatelessWidget {
             MaterialPageRoute(builder: (context) => const ProfilePage()),
           );
         },
-        onSearchPressed: () {
-          // TODO: Implement search action
-        },
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 16),
+            // Search bar with suggestions
+            SearchBarWithSuggestions(
+              suggestionsData: suggestionTitles,
+              onSearch: (query) {
+                // TODO: Connect this to actual filtering logic
+                // For now, just print the query
+                debugPrint('Search: $query');
+              },
+            ),
+            const SizedBox(height: 16),
             // Grid konten
             Expanded(
               child: Container(

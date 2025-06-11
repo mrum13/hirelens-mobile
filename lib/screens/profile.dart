@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/utils/auth_storage.dart';
+import 'package:unsplash_clone/screens/login.dart';
+import 'package:unsplash_clone/providers/user_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -294,7 +299,7 @@ class _ProfilePageState extends State<ProfilePage> {
             subtitle: 'Baca kebijakan privasi kami',
             onTap: () => _showComingSoonSnackBar('Kebijakan Privasi'),
           ),
-        ],  
+        ],
       ),
     );
   }
@@ -312,17 +317,9 @@ class _ProfilePageState extends State<ProfilePage> {
       leading: Icon(icon, color: Colors.black54),
       title: Text(
         title,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
+        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-        ),
-      ),
+      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
       trailing: trailing,
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -347,29 +344,18 @@ class _ProfilePageState extends State<ProfilePage> {
       leading: Icon(icon, color: Colors.black54),
       title: Text(
         title,
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
+        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
       ),
-      subtitle: Text(
-        subtitle,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-        ),
-      ),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-      ),
+      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
+      trailing: Switch(value: value, onChanged: onChanged),
       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
     );
   }
 
   void _showComingSoonSnackBar(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature akan segera hadir.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('$feature akan segera hadir.')));
   }
 
   Widget _buildStatItem(String value, String label, IconData icon) {
@@ -389,10 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
         SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -432,16 +415,19 @@ class _ProfilePageState extends State<ProfilePage> {
         icon: Icon(Icons.logout),
         label: Text(
           'Keluar',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.red,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
         ),
-        onPressed: () {
-          // TODO: Implement logout logic here
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout berhasil (dummy action)')),
-          );
+        onPressed: () async {
+          // Logout logic
+          await Supabase.instance.client.auth.signOut();
+          await clearAuthSession();
+          if (mounted) {
+            Provider.of<UserProvider>(context, listen: false).clearUser();
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => LoginPage()),
+              (route) => false,
+            );
+          }
         },
       ),
     );
