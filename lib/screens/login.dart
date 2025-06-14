@@ -42,17 +42,28 @@ class _LoginPageState extends State<LoginPage> {
 
       if (response.user != null) {
         await saveAuthSession(response.session!.toJson());
+        final userMeta = response.user!.userMetadata ?? {};
         final user = UserModel(
           id: response.user!.id,
           email: response.user!.email ?? '',
-          displayName: response.user!.userMetadata!['displayName'],
+          displayName: userMeta['displayName'],
+          role:
+              userMeta['role'] ?? 'customer', // fallback to customer if missing
         );
         Provider.of<UserProvider>(context, listen: false).setUser(user);
 
-        // TODO: Pisahkan home vendor dan home customer
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+        // Pisahkan home vendor dan home customer
+        if (user.role == 'vendor') {
+          // TODO: Replace with your VendorHomePage
+          Navigator.of(
+            context,
+          ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+        } else {
+          // Default to customer home
+          Navigator.of(
+            context,
+          ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+        }
       } else {
         _showError('Login gagal. Silakan coba lagi.');
       }
@@ -99,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const Text(
-                  'Unsplash Clone',
+                  'Project HireLens',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),

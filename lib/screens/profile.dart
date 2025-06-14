@@ -19,6 +19,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final role = (user?.role ?? '-');
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -50,9 +52,9 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             _buildProfileHeader(),
             SizedBox(height: 20),
-            _buildStatsSection(),
-            SizedBox(height: 20),
-            _buildMenuSection(),
+            role.toLowerCase() == 'customer'
+                ? _buildCustomerMenuSection()
+                : _buildVendorMenuSection(),
             SizedBox(height: 20),
             _buildSettingsSection(),
             SizedBox(height: 20),
@@ -65,6 +67,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader() {
+    final user = Provider.of<UserProvider>(context, listen: false).user;
+    final name = user?.displayName ?? '-';
+    final email = user?.email ?? '-';
+    final role =
+        (user?.role ?? '-').isNotEmpty
+            ? (user!.role[0].toUpperCase() +
+                user.role.substring(1).toLowerCase())
+            : '-';
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20),
@@ -74,8 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -88,28 +97,35 @@ class _ProfilePageState extends State<ProfilePage> {
               CircleAvatar(
                 radius: 50,
                 backgroundImage: NetworkImage(
-                  'https://randomuser.me/api/portraits/men/1.jpg',
+                  'https://ui-avatars.com/api/?background=6777cc&color=fff&name=${user!.displayName!.toUpperCase()}',
                 ),
               ),
               Positioned(
                 bottom: 0,
                 right: 0,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                child: GestureDetector(
+                  onTap: _onChangeProfilePicture,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Icon(
+                      Icons.camera_alt,
+                      color: Colors.white,
+                      size: 16,
+                    ),
                   ),
-                  child: Icon(Icons.camera_alt, color: Colors.white, size: 16),
                 ),
               ),
             ],
           ),
           SizedBox(height: 16),
           Text(
-            'John Doe',
+            name,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -118,21 +134,32 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           SizedBox(height: 4),
           Text(
-            'john.doe@example.com',
+            email,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),
           SizedBox(height: 8),
           Container(
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.green.shade50,
+              color:
+                  role.toLowerCase() == 'customer'
+                      ? const Color.fromARGB(250, 160, 250, 161)
+                      : const Color.fromARGB(177, 250, 225, 161),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.green.shade200),
+              border: Border.all(
+                color:
+                    role.toLowerCase() == 'customer'
+                        ? Colors.green.shade700
+                        : Colors.yellow.shade700,
+              ),
             ),
             child: Text(
-              'Anggota Premium',
+              role,
               style: TextStyle(
-                color: Colors.green.shade700,
+                color:
+                    role.toLowerCase() == 'customer'
+                        ? Colors.green.shade900
+                        : Colors.yellow.shade900,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -143,36 +170,14 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildStatsSection() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem('12', 'Pesanan', Icons.shopping_bag_outlined),
-          Container(height: 40, width: 1, color: Colors.grey.shade200),
-          _buildStatItem('8', 'Favorit', Icons.favorite_outline),
-          Container(height: 40, width: 1, color: Colors.grey.shade200),
-          _buildStatItem('4.8', 'Penilaian', Icons.star_outline),
-        ],
-      ),
+  // Dummy function for changing profile picture
+  void _onChangeProfilePicture() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Fitur ganti foto profil akan segera hadir.')),
     );
   }
 
-  Widget _buildMenuSection() {
+  Widget _buildCustomerMenuSection() {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -180,8 +185,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -193,32 +197,105 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.history,
             title: 'Riwayat Pesanan',
             subtitle: 'Lihat pesanan sebelumnya',
-            onTap: () => _showComingSoonSnackBar('Riwayat Pesanan'),
+            onTap: _onOrderHistory,
           ),
           _buildMenuItemDivider(),
           _buildMenuItem(
             icon: Icons.favorite_outline,
             title: 'Favorit Saya',
             subtitle: 'Layanan fotografi yang disimpan',
-            onTap: () => _showComingSoonSnackBar('Favorit Saya'),
+            onTap: _onFavorites,
           ),
           _buildMenuItemDivider(),
           _buildMenuItem(
             icon: Icons.payment,
             title: 'Metode Pembayaran',
             subtitle: 'Kelola opsi pembayaran',
-            onTap: () => _showComingSoonSnackBar('Metode Pembayaran'),
+            onTap: _onPaymentMethods,
           ),
           _buildMenuItemDivider(),
           _buildMenuItem(
             icon: Icons.location_on_outlined,
             title: 'Alamat',
             subtitle: 'Kelola alamat pengiriman',
-            onTap: () => _showComingSoonSnackBar('Alamat'),
+            onTap: _onAddresses,
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildVendorMenuSection() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildMenuItem(
+            icon: Icons.list,
+            title: 'Portfolio',
+            subtitle: 'Cek portfolio anda',
+            onTap: _onComingSoonTM,
+          ),
+          _buildMenuItemDivider(),
+          _buildMenuItem(
+            icon: Icons.inbox_outlined,
+            title: 'Pesanan',
+            subtitle:
+                'Cek pesanan yang masuk atau riwayat pesanan yang sudah dikerjakan',
+            onTap: _onComingSoonTM,
+          ),
+          _buildMenuItemDivider(),
+          _buildMenuItem(
+            icon: Icons.bookmark_border_outlined,
+            title: 'Kelola Item',
+            subtitle: 'Kelola jasa, studio atau tempat foto yang anda sewakan',
+            onTap: _onComingSoonTM,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Dummy functions for menu links
+  void _onComingSoonTM() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Coming Soon....')));
+  }
+
+  void _onOrderHistory() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Menu Riwayat Pesanan dibuka.')));
+  }
+
+  void _onFavorites() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Menu Favorit Saya dibuka.')));
+  }
+
+  void _onPaymentMethods() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Menu Metode Pembayaran dibuka.')));
+  }
+
+  void _onAddresses() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Menu Alamat dibuka.')));
   }
 
   Widget _buildSettingsSection() {
@@ -229,8 +306,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: Offset(0, 2),
           ),
@@ -251,18 +327,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           _buildSwitchMenuItem(
-            icon: Icons.notifications_outlined,
-            title: 'Notifikasi',
-            subtitle: 'Dapatkan pembaruan pesanan',
-            value: notificationsEnabled,
-            onChanged: (value) {
-              setState(() {
-                notificationsEnabled = value;
-              });
-            },
-          ),
-          _buildMenuItemDivider(),
-          _buildSwitchMenuItem(
             icon: Icons.dark_mode_outlined,
             title: 'Mode Gelap',
             subtitle: 'Beralih ke tema gelap',
@@ -271,6 +335,7 @@ class _ProfilePageState extends State<ProfilePage> {
               setState(() {
                 darkModeEnabled = value;
               });
+              _onToggleDarkMode(value);
             },
           ),
           _buildMenuItemDivider(),
@@ -283,28 +348,48 @@ class _ProfilePageState extends State<ProfilePage> {
               size: 16,
               color: Colors.grey,
             ),
-            onTap: () => _showComingSoonSnackBar('Pengaturan Bahasa'),
-          ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.help_outline,
-            title: 'Bantuan & Dukungan',
-            subtitle: 'Bantuan terkait akun',
-            onTap: () => _showComingSoonSnackBar('Bantuan & Dukungan'),
+            onTap: _onLanguageSettings,
           ),
           _buildMenuItemDivider(),
           _buildMenuItem(
             icon: Icons.privacy_tip_outlined,
-            title: 'Kebijakan Privasi',
-            subtitle: 'Baca kebijakan privasi kami',
-            onTap: () => _showComingSoonSnackBar('Kebijakan Privasi'),
+            title: 'Syarat & Ketentuan',
+            subtitle: 'Syarat & Ketentuan terkait penggunaan layanan kami',
+            onTap: _onPrivacyPolicy,
+          ),
+          _buildMenuItemDivider(),
+          _buildMenuItem(
+            icon: Icons.info_outline,
+            title: 'Info Aplikasi',
+            subtitle: 'Versi : 0.01_dev',
+            onTap: () {},
           ),
         ],
       ),
     );
   }
 
-  // Fungsi _buildMenuItem, _buildSwitchMenuItem, _buildLogoutButton, dan lainnya tetap sama
+  // Dummy functions for settings links
+
+  void _onToggleDarkMode(bool value) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Mode Gelap ${value ? 'diaktifkan' : 'dinonaktifkan'}'),
+      ),
+    );
+  }
+
+  void _onLanguageSettings() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Menu Pengaturan Bahasa dibuka.')));
+  }
+
+  void _onPrivacyPolicy() {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Menu Syarat & Ketentuan dibuka.')));
+  }
 
   Widget _buildMenuItem({
     required IconData icon,
@@ -352,35 +437,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showComingSoonSnackBar(String feature) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('$feature akan segera hadir.')));
-  }
-
-  Widget _buildStatItem(String value, String label, IconData icon) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: Colors.black54, size: 28),
-        SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-        ),
-      ],
-    );
-  }
-
   void _showEditProfileDialog() {
     showDialog(
       context: context,
@@ -417,19 +473,40 @@ class _ProfilePageState extends State<ProfilePage> {
           'Keluar',
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
         ),
-        onPressed: () async {
-          // Logout logic
-          await Supabase.instance.client.auth.signOut();
-          await clearAuthSession();
-          if (mounted) {
-            Provider.of<UserProvider>(context, listen: false).clearUser();
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => LoginPage()),
-              (route) => false,
-            );
-          }
-        },
+        onPressed: _onLogoutPressed,
       ),
     );
+  }
+
+  void _onLogoutPressed() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Konfirmasi Logout'),
+            content: Text('Apakah Anda yakin ingin keluar?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('Keluar'),
+              ),
+            ],
+          ),
+    );
+    if (confirm == true) {
+      await Supabase.instance.client.auth.signOut();
+      await clearAuthSession();
+      if (mounted) {
+        Provider.of<UserProvider>(context, listen: false).clearUser();
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => LoginPage()),
+          (route) => false,
+        );
+      }
+    }
   }
 }
