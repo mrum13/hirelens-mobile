@@ -8,6 +8,7 @@ import 'package:unsplash_clone/components/appbar.dart';
 import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
 
 class HomePage extends StatelessWidget {
+  // TODO: Remove this and implement the actual data fetching logic
   final List<Map<String, dynamic>> items = [
     {
       "title": "foto wisuda",

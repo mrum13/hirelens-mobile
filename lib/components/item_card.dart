@@ -14,6 +14,7 @@ class ItemCard extends StatelessWidget {
   final int price;
   final String desc;
   final String? thumbnail;
+  final bool? showFavorite;
 
   const ItemCard({
     super.key,
@@ -21,6 +22,7 @@ class ItemCard extends StatelessWidget {
     required this.price,
     required this.desc,
     this.thumbnail,
+    this.showFavorite = true,
   });
   @override
   Widget build(BuildContext context) {
@@ -43,11 +45,12 @@ class ItemCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Icon(Icons.star_border, size: 20),
-              ),
+              if (showFavorite == true)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Icon(Icons.star_border, size: 20),
+                ),
             ],
           ),
           const SizedBox(height: 8),

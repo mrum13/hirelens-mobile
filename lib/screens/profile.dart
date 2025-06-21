@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/utils/auth_storage.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/providers/user_provider.dart';
@@ -260,7 +261,15 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icons.bookmark_border_outlined,
             title: 'Kelola Item',
             subtitle: 'Kelola jasa, studio atau tempat foto yang anda sewakan',
-            onTap: _onComingSoonTM,
+            onTap:
+                () => {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const KelolaItemPage(),
+                    ),
+                  ),
+                },
           ),
         ],
       ),
@@ -318,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
           Padding(
             padding: EdgeInsets.all(20),
             child: Text(
-              'Pengaturan',
+              'Informasi',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -326,31 +335,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-          _buildSwitchMenuItem(
-            icon: Icons.dark_mode_outlined,
-            title: 'Mode Gelap',
-            subtitle: 'Beralih ke tema gelap',
-            value: darkModeEnabled,
-            onChanged: (value) {
-              setState(() {
-                darkModeEnabled = value;
-              });
-              _onToggleDarkMode(value);
-            },
-          ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.language_outlined,
-            title: 'Bahasa',
-            subtitle: 'Indonesia',
-            trailing: Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.grey,
-            ),
-            onTap: _onLanguageSettings,
-          ),
-          _buildMenuItemDivider(),
           _buildMenuItem(
             icon: Icons.privacy_tip_outlined,
             title: 'Syarat & Ketentuan',
@@ -370,21 +354,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // Dummy functions for settings links
-
-  void _onToggleDarkMode(bool value) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Mode Gelap ${value ? 'diaktifkan' : 'dinonaktifkan'}'),
-      ),
-    );
-  }
-
-  void _onLanguageSettings() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Menu Pengaturan Bahasa dibuka.')));
-  }
-
   void _onPrivacyPolicy() {
     ScaffoldMessenger.of(
       context,
@@ -415,25 +384,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Divider(height: 1, color: Colors.grey.shade200),
-    );
-  }
-
-  Widget _buildSwitchMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.black54),
-      title: Text(
-        title,
-        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
-      ),
-      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
-      trailing: Switch(value: value, onChanged: onChanged),
-      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
     );
   }
 
