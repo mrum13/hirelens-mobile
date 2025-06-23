@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:unsplash_clone/components/item_card.dart';
 import 'package:unsplash_clone/models/item_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/screens/create_item.dart';
 
 class KelolaItemPage extends StatefulWidget {
   const KelolaItemPage({super.key});
@@ -77,10 +78,10 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
                   elevation: 0,
                 ),
                 onPressed: () {
-                  // TODO: Implement create item action
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fitur buat item baru akan segera hadir.'),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreateItemPage(),
                     ),
                   );
                 },
