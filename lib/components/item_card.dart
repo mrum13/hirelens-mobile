@@ -9,7 +9,9 @@ String formatCurrency(int price) {
   return formatter.format(price);
 }
 
+// TODO: Add a onClick listener to navigate to product_detail.dart and carry the item id
 class ItemCard extends StatelessWidget {
+  // TODO: Match the properties with your actual data model
   final String name;
   final int price;
   final String desc;

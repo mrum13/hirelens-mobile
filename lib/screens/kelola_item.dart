@@ -1,42 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:unsplash_clone/components/item_card.dart';
+import 'package:unsplash_clone/models/item_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class KelolaItemPage extends StatelessWidget {
-  // TODO: Remove this and implement the actual data fetching logic
-  final List<Map<String, dynamic>> items = const [
-    {
-      "title": "foto wisuda",
-      "desc": "photoshoot graduation with property",
-      "price": 1200000,
-    },
-    {
-      "title": "foto wisuda malam",
-      "desc": "with the lamp and lens fish eye make your photo cool",
-      "price": 1500000,
-    },
-    {
-      "title": "photobox",
-      "desc": "With your someone love make a moment",
-      "price": 800000,
-    },
-    {
-      "title": "photobooth",
-      "desc": "with your sister/friend make your moment",
-      "price": 800000,
-    },
-    {
-      "title": "foto studio",
-      "desc": "take a moment with your family",
-      "price": 750000,
-    },
-    {
-      "title": "foto prewed",
-      "desc": "make your happy moment",
-      "price": 1200000,
-    },
-  ];
-
+class KelolaItemPage extends StatefulWidget {
   const KelolaItemPage({super.key});
+
+  @override
+  State<KelolaItemPage> createState() => _KelolaItemPageState();
+}
+
+class _KelolaItemPageState extends State<KelolaItemPage> {
+  List<ItemModel> items = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchItems();
+  }
+
+  Future<void> fetchItems() async {
+    setState(() => isLoading = true);
+    final response = await Supabase.instance.client
+        .from('items')
+        .select()
+        .order('created_at', ascending: false);
+    setState(() {
+      items =
+          (response as List)
+              .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,24 +88,30 @@ class KelolaItemPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: GridView.builder(
-                itemCount: items.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.65,
-                ),
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return ItemCard(
-                    name: item['title'],
-                    price: item['price'],
-                    desc: item['desc'],
-                    showFavorite: false,
-                  );
-                },
-              ),
+              child:
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : items.isEmpty
+                      ? const Center(child: Text('Belum ada item.'))
+                      : GridView.builder(
+                        itemCount: items.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.65,
+                            ),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return ItemCard(
+                            name: item.name,
+                            price: item.price ?? 0,
+                            desc: item.description ?? '',
+                            showFavorite: false,
+                          );
+                        },
+                      ),
             ),
           ],
         ),
