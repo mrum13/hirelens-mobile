@@ -6,43 +6,40 @@ import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/components/appbar.dart';
 import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
+import 'package:unsplash_clone/models/item_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class HomePage extends StatelessWidget {
-  // TODO: Remove this and implement the actual data fetching logic
-  final List<Map<String, dynamic>> items = [
-    {
-      "title": "foto wisuda",
-      "desc": "photoshoot graduation with property",
-      "price": 1200000,
-    },
-    {
-      "title": "foto wisuda malam",
-      "desc": "with the lamp and lens fish eye make your photo cool",
-      "price": 1500000,
-    },
-    {
-      "title": "photobox",
-      "desc": "With your someone love make a moment",
-      "price": 800000,
-    },
-    {
-      "title": "photobooth",
-      "desc": "with your sister/friend make your moment",
-      "price": 800000,
-    },
-    {
-      "title": "foto studio",
-      "desc": "take a moment with your family",
-      "price": 750000,
-    },
-    {
-      "title": "foto prewed",
-      "desc": "make your happy moment",
-      "price": 1200000,
-    },
-  ];
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
-  HomePage({super.key});
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<ItemModel> items = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchItems();
+  }
+
+  Future<void> fetchItems() async {
+    setState(() => isLoading = true);
+    final response = await Supabase.instance.client
+        .from('items')
+        .select()
+        .order('created_at', ascending: false);
+    setState(() {
+      items =
+          (response as List)
+              .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +49,8 @@ class HomePage extends StatelessWidget {
       return const Center(child: Text('Belum login'));
     }
 
-    // Collect all titles for suggestions
     final List<String> suggestionTitles =
-        items.map((item) => item['title'] as String).toList();
+        items.map((item) => item.name).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -82,34 +78,39 @@ class HomePage extends StatelessWidget {
             SearchBarWithSuggestions(
               suggestionsData: suggestionTitles,
               onSearch: (query) {
-                // TODO: Connect this to actual filtering logic
-                // For now, just print the query
+                // You can implement actual filtering logic here if needed
                 debugPrint('Search: $query');
               },
             ),
             const SizedBox(height: 16),
             // Grid konten
             Expanded(
-              child: Container(
-                color: Colors.white,
-                child: GridView.builder(
-                  itemCount: items.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 0.65,
-                  ),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ItemCard(
-                      name: item['title'],
-                      price: item['price'],
-                      desc: item['desc'],
-                    );
-                  },
-                ),
-              ),
+              child:
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : items.isEmpty
+                      ? const Center(child: Text('Belum ada item.'))
+                      : Container(
+                        color: Colors.white,
+                        child: GridView.builder(
+                          itemCount: items.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.65,
+                              ),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return ItemCard(
+                              name: item.name,
+                              price: item.price ?? 0,
+                              desc: item.description ?? '',
+                            );
+                          },
+                        ),
+                      ),
             ),
           ],
         ),
