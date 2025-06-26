@@ -4,9 +4,9 @@ class ItemModel {
   final String name;
   final String? description;
   final String thumbnail;
-  final int? price;
+  final int price;
   final String vendor;
-  final bool isDraft;
+  final String? verified_at;
   final String address;
 
   ItemModel({
@@ -15,9 +15,9 @@ class ItemModel {
     required this.name,
     this.description,
     required this.thumbnail,
-    this.price,
+    required this.price,
     required this.vendor,
-    required this.isDraft,
+    this.verified_at,
     required this.address,
   });
 
@@ -27,9 +27,9 @@ class ItemModel {
     name: json['name'] as String,
     description: json['description'] as String?,
     thumbnail: json['thumbnail'] as String,
-    price: json['price'] as int?,
+    price: json['price'] as int,
     vendor: json['vendor'] as String,
-    isDraft: json['is_draft'] as bool,
+    verified_at: json['verified_at'] as String?,
     address: json['address'] as String,
   );
 
@@ -41,7 +41,7 @@ class ItemModel {
     'thumbnail': thumbnail,
     'price': price,
     'vendor': vendor,
-    'is_draft': isDraft,
+    'verified_at': verified_at,
     'address': address,
   };
 }

@@ -28,16 +28,30 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchItems() async {
     setState(() => isLoading = true);
-    final response = await Supabase.instance.client
+    // final response = await Supabase.instance.client
+    //     .from('items')
+    //     .select()
+    //     .order('created_at', ascending: false);
+    // setState(() {
+    //   items =
+    //       (response as List)
+    //           .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
+    //           .toList();
+    //   isLoading = false;
+    // });
+
+    final response = (await Supabase.instance.client
         .from('items')
         .select()
-        .order('created_at', ascending: false);
+        // .filter('verified_at', 'neq', null)
+        .order('created_at', ascending: false));
+
     setState(() {
+      isLoading = false;
       items =
           (response as List)
               .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
               .toList();
-      isLoading = false;
     });
   }
 
@@ -105,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                             final item = items[index];
                             return ItemCard(
                               name: item.name,
-                              price: item.price ?? 0,
+                              price: item.price,
                               desc: item.description ?? '',
                             );
                           },

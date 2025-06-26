@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:provider/provider.dart';
-import 'package:unsplash_clone/providers/user_provider.dart';
+import 'package:path/path.dart' as p;
+// import 'package:provider/provider.dart';
+// import 'package:unsplash_clone/providers/user_provider.dart';
+import 'dart:io';
+import 'package:unsplash_clone/components/image_picker_widget.dart';
 
 class CreateItemPage extends StatefulWidget {
   const CreateItemPage({super.key});
@@ -15,65 +18,114 @@ class _CreateItemPageState extends State<CreateItemPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  final TextEditingController _thumbnailController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
-  bool _isDraft = false;
   bool _isLoading = false;
+  File? _selectedImage;
 
   @override
   void dispose() {
     _nameController.dispose();
     _descController.dispose();
     _priceController.dispose();
-    _thumbnailController.dispose();
     _addressController.dispose();
     super.dispose();
   }
 
-  Future<void> _createItem() async {
-    setState(() => _isLoading = true);
-    try {
-      final name = _nameController.text.trim();
-      final description = _descController.text.trim();
-      final thumbnail = _thumbnailController.text.trim();
-      final price = int.tryParse(_priceController.text.trim());
-      final address = _addressController.text.trim();
-      final user = Provider.of<UserProvider>(context, listen: false).user;
-      final vendor = user?.id ?? '';
-      if (name.isEmpty ||
-          thumbnail.isEmpty ||
-          price == null ||
-          vendor.isEmpty ||
-          address.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Semua field wajib diisi dengan benar!'),
-          ),
+  Future<String> uploadImage(File imageFile) async {
+    final bucket = 'item-thumbnails';
+    final fileName =
+        'item_thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
+
+    final fullPath = await Supabase.instance.client.storage
+        .from(bucket)
+        .uploadBinary(
+          fileName,
+          await imageFile.readAsBytes(),
+          fileOptions: const FileOptions(upsert: false),
         );
-        setState(() => _isLoading = false);
-        return;
-      }
-      await Supabase.instance.client.from('items').insert({
-        'name': name,
-        'description': description,
-        'thumbnail': thumbnail,
-        'price': price,
-        'vendor': vendor,
-        'is_draft': _isDraft,
-        'address': address,
-      });
-      if (mounted) {
-        Navigator.of(context).pop(true); // Return to previous screen
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Item berhasil dibuat!')));
-      }
+
+    return fullPath;
+  }
+
+  Future<String> getFileId(String bucket, String path) async {
+    try {
+      final dynamic result = await Supabase.instance.client.rpc(
+        'get_object_id',
+        params: {'bucket_id': bucket, 'name': path},
+      );
+      // result directly holds the returned UUID as a string
+      return result as String;
+    } on PostgrestException catch (e) {
+      print('RPC error: ${e.message}');
+      rethrow;
     } catch (e) {
+      print('Unexpected error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> insertNewItem({
+    required String name,
+    required String thumbnail,
+    required int price,
+    required String address,
+    String description = '',
+  }) async {
+    try {
+      final result =
+          await Supabase.instance.client
+              .from('items')
+              .insert({
+                'name': name,
+                'thumbnail': thumbnail,
+                'price': price,
+                'address': address,
+                'description': description,
+              })
+              .select()
+              .single();
+
+      // result is Map<String, dynamic> – your inserted row
+      final String newRowId = (result['id'] as int).toString();
+      print('Inserted row ID: $newRowId');
+    } on PostgrestException catch (e) {
+      print('Insert failed: ${e.message}');
+      rethrow;
+    }
+  }
+
+  Future<void> _createItem() async {
+    if (_selectedImage == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih gambar terlebih dahulu')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final path = await uploadImage(_selectedImage!);
+      // final fileId = await getFileId('item-thumbnails', path);
+      await insertNewItem(
+        name: _nameController.text,
+        address: _addressController.text,
+        price: int.parse(_priceController.text),
+        thumbnail: path,
+        description: _descController.text,
+      );
+      // Optionally show success
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Gagal membuat item: $e')));
+      ).showSnackBar(const SnackBar(content: Text('Item berhasil disimpan')));
+      Navigator.of(context).pop();
+    } catch (e) {
+      print('Create item error: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan item: $e')));
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => _isLoading = false);
     }
   }
 
@@ -124,17 +176,19 @@ class _CreateItemPageState extends State<CreateItemPage> {
                   maxLines: 2,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _thumbnailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Thumbnail (UUID)',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Thumbnail wajib diisi'
-                              : null,
+                Text(
+                  'Thumbnail',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ImagePickerWidget(
+                  initialImage: _selectedImage,
+                  enabled: !_isLoading,
+                  onImageSelected: (file) {
+                    setState(() {
+                      _selectedImage = file;
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -162,20 +216,6 @@ class _CreateItemPageState extends State<CreateItemPage> {
                           value == null || value.isEmpty
                               ? 'Alamat wajib diisi'
                               : null,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isDraft,
-                      onChanged: (val) {
-                        setState(() {
-                          _isDraft = val ?? false;
-                        });
-                      },
-                    ),
-                    const Text('Draft'),
-                  ],
                 ),
                 const SizedBox(height: 24),
                 SizedBox(

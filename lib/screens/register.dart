@@ -58,16 +58,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       const Text(
-                        'Unsplash Clone',
+                        'Project HireLens',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Silahkan daftar untuk membuat akun.',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       const SizedBox(height: 24),
 
