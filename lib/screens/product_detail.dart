@@ -1,18 +1,53 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProductDetailPage extends StatelessWidget {
-  final String productName;
-  final String productImage;
-  final String productDescription;
-  final double productPrice;
+// class ProductDetailPage extends StatelessWidget {
+//   final String productId;
 
-  const ProductDetailPage({
-    super.key,
-    required this.productName,
-    required this.productImage,
-    required this.productDescription,
-    required this.productPrice,
-  });
+//   ProductDetailPage({super.key, required this.productId});
+
+//   String productName = '';
+//   String productImage = '';
+//   String productDescription = '';
+//   double productPrice = 0;
+// }
+
+class ProductDetailPage extends StatefulWidget {
+  const ProductDetailPage({super.key, required this.productId});
+  final int productId;
+
+  @override
+  State<ProductDetailPage> createState() => _ProductDetailPageState();
+}
+
+class _ProductDetailPageState extends State<ProductDetailPage> {
+  late int productId;
+  String productName = '';
+  String productImage = '';
+  String productDescription = '';
+  double productPrice = 0;
+
+  @override
+  void initState() async {
+    super.initState();
+    productId = widget.productId;
+
+    final client = Supabase.instance.client;
+
+    try {
+      final response =
+          await client.from('items').select().eq('id', productId).single();
+
+      log(response.entries as String);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error while fetching product details: $e")),
+      );
+      return;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

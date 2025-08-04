@@ -3,6 +3,7 @@ import 'package:unsplash_clone/components/item_card.dart';
 import 'package:unsplash_clone/models/item_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
+import 'package:unsplash_clone/screens/edit_item.dart';
 
 class KelolaItemPage extends StatefulWidget {
   const KelolaItemPage({super.key});
@@ -107,9 +108,17 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
                           final item = items[index];
                           return ItemCard(
                             name: item.name,
-                            price: item.price ?? 0,
-                            desc: item.description ?? '',
+                            price: item.price,
+                            vendor: item.vendor,
+                            description: item.description ?? '',
                             showFavorite: false,
+                            onTapHandler:
+                                () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder:
+                                        (_) => EditItemPage(productId: item.id),
+                                  ),
+                                ),
                           );
                         },
                       ),

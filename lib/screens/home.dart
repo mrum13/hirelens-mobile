@@ -4,6 +4,7 @@ import 'package:unsplash_clone/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/profile.dart';
+import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/components/appbar.dart';
 import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
 import 'package:unsplash_clone/models/item_model.dart';
@@ -119,8 +120,18 @@ class _HomePageState extends State<HomePage> {
                             final item = items[index];
                             return ItemCard(
                               name: item.name,
+                              vendor: item.vendor,
                               price: item.price,
-                              desc: item.description ?? '',
+                              description: item.description ?? '',
+                              onTapHandler:
+                                  () => Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) => ProductDetailPage(
+                                            productId: item.id,
+                                          ),
+                                    ),
+                                  ),
                             );
                           },
                         ),
