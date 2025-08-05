@@ -7,8 +7,8 @@ import 'dart:io';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 
 class EditItemPage extends StatefulWidget {
-  const EditItemPage({super.key, required this.productId});
-  final int productId;
+  const EditItemPage({super.key, required this.dataId});
+  final int dataId;
 
   @override
   State<EditItemPage> createState() => _EditItemPageState();
@@ -16,6 +16,7 @@ class EditItemPage extends StatefulWidget {
 
 class _EditItemPageState extends State<EditItemPage> {
   final _formKey = GlobalKey<FormState>();
+  late int dataId;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -23,31 +24,41 @@ class _EditItemPageState extends State<EditItemPage> {
   bool _isLoading = false;
   File? _selectedImage;
 
-  @override
-  void initState() async {
-    super.initState();
-
-    // TODO: Load prev data by productId and set the value of controllers
+  void fetchAndSetData() async {
+    dataId = widget.dataId;
     final client = Supabase.instance.client;
 
     try {
-      final response =
-          await client
-              .from('items')
-              .select()
-              .eq('id', widget.productId)
-              .single();
+      final data =
+          await client.from('items').select().eq('id', dataId).single();
 
-      _nameController.text = response['name'];
-      _descController.text = response['description'];
-      _priceController.text = response['price'];
-      _addressController.text = response['address'];
+      if (data.isEmpty) {
+        throw Exception('Product not found');
+      }
+
+      setState(() {
+        _nameController.value = TextEditingValue(text: data['name']);
+        _descController.value = TextEditingValue(text: data['description']);
+        _priceController.value = TextEditingValue(
+          text: (data['price'] as num).toString(),
+        );
+        _addressController.value = TextEditingValue(text: data['address']);
+
+        _isLoading = false;
+      });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error while fetching product details: $e")),
-      );
-      return;
+      mounted
+          ? ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error while fetching data details: $e")),
+          )
+          : null;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAndSetData();
   }
 
   @override

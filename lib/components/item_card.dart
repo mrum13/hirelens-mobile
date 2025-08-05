@@ -9,10 +9,9 @@ String formatCurrency(int price) {
   return formatter.format(price);
 }
 
-class ItemCard extends StatelessWidget {
-  // TODO: Match the properties with your actual data model
+class ItemCard extends StatefulWidget {
   final String name;
-  final String vendor;
+  final int vendor;
   final int price;
   final String description;
   final String? thumbnail;
@@ -29,10 +28,16 @@ class ItemCard extends StatelessWidget {
     this.showFavorite = true,
     required this.onTapHandler,
   });
+
+  @override
+  State<ItemCard> createState() => _ItemCardState();
+}
+
+class _ItemCardState extends State<ItemCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTapHandler,
+      onTap: widget.onTapHandler,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -44,15 +49,22 @@ class ItemCard extends StatelessWidget {
           children: [
             Stack(
               children: [
-                Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                if (showFavorite == true)
+                widget.thumbnail == null
+                    ? Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    )
+                    : Image.network(
+                      widget.thumbnail!,
+                      fit: BoxFit.cover,
+                      height: 120,
+                      width: double.infinity,
+                    ),
+                if (widget.showFavorite == true)
                   Positioned(
                     top: 8,
                     right: 8,
@@ -61,15 +73,15 @@ class ItemCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(widget.name, style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text(
-              description,
+              widget.description,
               style: TextStyle(fontSize: 12, color: Colors.grey[700]),
             ),
             const Spacer(),
             Text(
-              formatCurrency(price),
+              formatCurrency(widget.price),
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ],

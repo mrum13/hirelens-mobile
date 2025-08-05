@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 // import 'package:unsplash_clone/providers/user_provider.dart';
 import 'dart:io';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
+import 'package:unsplash_clone/screens/kelola_item.dart';
 
 class CreateItemPage extends StatefulWidget {
   const CreateItemPage({super.key});
@@ -36,7 +37,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
     final fileName =
         'item_thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
 
-    final fullPath = await Supabase.instance.client.storage
+    await Supabase.instance.client.storage
         .from(bucket)
         .uploadBinary(
           fileName,
@@ -44,24 +45,31 @@ class _CreateItemPageState extends State<CreateItemPage> {
           fileOptions: const FileOptions(upsert: false),
         );
 
-    return fullPath;
+    final fileUrl = await Supabase.instance.client.storage
+        .from(bucket)
+        .createSignedUrl(fileName, 60 * 24 * 365 * 3);
+
+    return fileUrl;
   }
 
-  Future<String> getFileId(String bucket, String path) async {
+  Future<int?> findVendorId() async {
+    final client = Supabase.instance.client;
     try {
-      final dynamic result = await Supabase.instance.client.rpc(
-        'get_object_id',
-        params: {'bucket_id': bucket, 'name': path},
-      );
-      // result directly holds the returned UUID as a string
-      return result as String;
-    } on PostgrestException catch (e) {
-      print('RPC error: ${e.message}');
-      rethrow;
+      final result =
+          await client
+              .from('vendors')
+              .select('id')
+              .eq('user_id', client.auth.currentUser!.id)
+              .single();
+
+      return result['id'];
     } catch (e) {
-      print('Unexpected error: $e');
-      rethrow;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar((SnackBar(content: Text("Failed to find vendor ID!"))));
     }
+
+    return null;
   }
 
   Future<void> insertNewItem({
@@ -72,6 +80,8 @@ class _CreateItemPageState extends State<CreateItemPage> {
     String description = '',
   }) async {
     try {
+      final vendorId = await findVendorId();
+
       final result =
           await Supabase.instance.client
               .from('items')
@@ -81,6 +91,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 'price': price,
                 'address': address,
                 'description': description,
+                'vendor': vendorId,
               })
               .select()
               .single();
@@ -105,20 +116,21 @@ class _CreateItemPageState extends State<CreateItemPage> {
     setState(() => _isLoading = true);
 
     try {
-      final path = await uploadImage(_selectedImage!);
-      // final fileId = await getFileId('item-thumbnails', path);
+      final url = await uploadImage(_selectedImage!);
       await insertNewItem(
         name: _nameController.text,
         address: _addressController.text,
         price: int.parse(_priceController.text),
-        thumbnail: path,
+        thumbnail: url,
         description: _descController.text,
       );
       // Optionally show success
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Item berhasil disimpan')));
-      Navigator.of(context).pop();
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => KelolaItemPage()));
     } catch (e) {
       print('Create item error: $e');
       ScaffoldMessenger.of(
@@ -131,131 +143,136 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: const Text(
+            'Buat Item Baru',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
+              fontSize: 20,
+            ),
+          ),
         ),
-        title: const Text(
-          'Buat Item Baru',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama Item',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Nama item wajib diisi'
-                              : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _descController,
-                  decoration: const InputDecoration(
-                    labelText: 'Deskripsi',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Thumbnail',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ImagePickerWidget(
-                  initialImage: _selectedImage,
-                  enabled: !_isLoading,
-                  onImageSelected: (file) {
-                    setState(() {
-                      _selectedImage = file;
-                    });
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Harga',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Harga wajib diisi'
-                              : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Alamat',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator:
-                      (value) =>
-                          value == null || value.isEmpty
-                              ? 'Alamat wajib diisi'
-                              : null,
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 41, 41, 41),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      elevation: 0,
+        body: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nama Item',
+                      border: OutlineInputBorder(),
                     ),
-                    onPressed:
-                        _isLoading
-                            ? null
-                            : () {
-                              if (_formKey.currentState!.validate()) {
-                                _createItem();
-                              }
-                            },
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                            : const Text('Simpan'),
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Nama item wajib diisi'
+                                : null,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descController,
+                    decoration: const InputDecoration(
+                      labelText: 'Deskripsi',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Thumbnail',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  ImagePickerWidget(
+                    initialImage: _selectedImage,
+                    enabled: !_isLoading,
+                    onImageSelected: (file) {
+                      setState(() {
+                        _selectedImage = file;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: const InputDecoration(
+                      labelText: 'Harga',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Harga wajib diisi'
+                                : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _addressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Alamat',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator:
+                        (value) =>
+                            value == null || value.isEmpty
+                                ? 'Alamat wajib diisi'
+                                : null,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color.fromARGB(255, 41, 41, 41),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        textStyle: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed:
+                          _isLoading
+                              ? null
+                              : () {
+                                if (_formKey.currentState!.validate()) {
+                                  _createItem();
+                                }
+                              },
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : const Text('Simpan'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

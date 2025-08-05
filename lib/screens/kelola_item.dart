@@ -24,9 +24,11 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
 
   Future<void> fetchItems() async {
     setState(() => isLoading = true);
-    final response = await Supabase.instance.client
+    final client = Supabase.instance.client;
+    final response = await client
         .from('items')
         .select()
+        .eq('vendor', client.auth.currentUser!.id)
         .order('created_at', ascending: false);
     setState(() {
       items =
@@ -116,7 +118,7 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
                                 () => Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder:
-                                        (_) => EditItemPage(productId: item.id),
+                                        (_) => EditItemPage(dataId: item.id),
                                   ),
                                 ),
                           );
