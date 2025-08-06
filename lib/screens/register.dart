@@ -490,6 +490,15 @@ class _RegisterPageState extends State<RegisterPage> {
       if (response.user != null) {
         // Registration success: redirect to OTP verification screen with email
         if (!mounted) return;
+        if (!isCustomer) {
+          await Supabase.instance.client.from('vendors').insert({
+            'user_id': response.user!.id,
+            'name': name,
+            'phone': phone,
+            'email': email,
+            'city': city,
+          });
+        }
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => VerifyRegistrationPage(email: email),

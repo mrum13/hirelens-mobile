@@ -4,6 +4,7 @@ import 'package:unsplash_clone/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/profile.dart';
+import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/components/appbar.dart';
 import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
 import 'package:unsplash_clone/models/item_model.dart';
@@ -28,22 +29,11 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchItems() async {
     setState(() => isLoading = true);
-    // final response = await Supabase.instance.client
-    //     .from('items')
-    //     .select()
-    //     .order('created_at', ascending: false);
-    // setState(() {
-    //   items =
-    //       (response as List)
-    //           .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
-    //           .toList();
-    //   isLoading = false;
-    // });
 
     final response = (await Supabase.instance.client
         .from('items')
         .select()
-        // .filter('verified_at', 'neq', null)
+        .filter('is_verified', 'neq', false)
         .order('created_at', ascending: false));
 
     setState(() {
@@ -106,23 +96,38 @@ class _HomePageState extends State<HomePage> {
                       ? const Center(child: Text('Belum ada item.'))
                       : Container(
                         color: Colors.white,
-                        child: GridView.builder(
-                          itemCount: items.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 0.65,
-                              ),
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return ItemCard(
-                              name: item.name,
-                              price: item.price,
-                              desc: item.description ?? '',
-                            );
-                          },
+                        child: RefreshIndicator(
+                          onRefresh: fetchItems,
+                          child: GridView.builder(
+                            physics: AlwaysScrollableScrollPhysics(),
+                            itemCount: items.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  mainAxisSpacing: 12,
+                                  crossAxisSpacing: 12,
+                                  childAspectRatio: 0.65,
+                                ),
+                            itemBuilder: (context, index) {
+                              final item = items[index];
+                              return ItemCard(
+                                name: item.name,
+                                vendor: item.vendor,
+                                price: item.price,
+                                thumbnail: item.thumbnail,
+                                description: item.description ?? '',
+                                onTapHandler:
+                                    () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => ProductDetailPage(
+                                              dataId: item.id,
+                                            ),
+                                      ),
+                                    ),
+                              );
+                            },
+                          ),
                         ),
                       ),
             ),

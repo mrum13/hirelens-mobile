@@ -5,7 +5,7 @@ class ItemModel {
   final String? description;
   final String thumbnail;
   final int price;
-  final String vendor;
+  final int vendor;
   final String? verified_at;
   final String address;
 
@@ -28,7 +28,7 @@ class ItemModel {
     description: json['description'] as String?,
     thumbnail: json['thumbnail'] as String,
     price: json['price'] as int,
-    vendor: json['vendor'] as String,
+    vendor: json['vendor'] as int,
     verified_at: json['verified_at'] as String?,
     address: json['address'] as String,
   );

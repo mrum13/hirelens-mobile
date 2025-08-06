@@ -9,62 +9,89 @@ String formatCurrency(int price) {
   return formatter.format(price);
 }
 
-// TODO: Add a onClick listener to navigate to product_detail.dart and carry the item id
-class ItemCard extends StatelessWidget {
-  // TODO: Match the properties with your actual data model
+class ItemCard extends StatefulWidget {
   final String name;
+  final int vendor;
   final int price;
-  final String desc;
+  final String description;
   final String? thumbnail;
   final bool? showFavorite;
+  final VoidCallback? onTapHandler;
 
   const ItemCard({
     super.key,
     required this.name,
+    required this.vendor,
     required this.price,
-    required this.desc,
+    required this.description,
     this.thumbnail,
     this.showFavorite = true,
+    required this.onTapHandler,
   });
+
+  @override
+  State<ItemCard> createState() => _ItemCardState();
+}
+
+class _ItemCardState extends State<ItemCard> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              Container(
-                height: 100,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              if (showFavorite == true)
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Icon(Icons.star_border, size: 20),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(name, style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(desc, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-          const Spacer(),
-          Text(
-            formatCurrency(price),
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
+    return GestureDetector(
+      onTap: widget.onTapHandler,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                widget.thumbnail == null
+                    ? Container(
+                      height: 120,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    )
+                    : Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Image.network(
+                        widget.thumbnail!,
+                        fit: BoxFit.cover,
+                        height: double.infinity,
+                        width: double.infinity,
+                      ),
+                    ),
+                if (widget.showFavorite == true)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Icon(Icons.star_border, size: 20),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(widget.name, style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text(
+              widget.description,
+              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            ),
+            const Spacer(),
+            Text(
+              formatCurrency(widget.price),
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
       ),
     );
   }
