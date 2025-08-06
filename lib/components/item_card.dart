@@ -58,11 +58,17 @@ class _ItemCardState extends State<ItemCard> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     )
-                    : Image.network(
-                      widget.thumbnail!,
-                      fit: BoxFit.cover,
-                      height: 120,
-                      width: double.infinity,
+                    : Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Image.network(
+                        widget.thumbnail!,
+                        fit: BoxFit.cover,
+                        height: double.infinity,
+                        width: double.infinity,
+                      ),
                     ),
                 if (widget.showFavorite == true)
                   Positioned(
