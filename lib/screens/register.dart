@@ -79,14 +79,10 @@ class _RegisterPageState extends State<RegisterPage> {
                               highlightColor: Colors.transparent,
                               hoverColor: Colors.transparent,
                               tabBarTheme: const TabBarTheme(
-                                indicator:
-                                    BoxDecoration(), // Remove underline/separator
-                                dividerColor:
-                                    Colors.transparent, // Remove separator line
+                                indicator: BoxDecoration(),
+                                dividerColor: Colors.transparent,
                               ),
-                              dividerColor:
-                                  Colors
-                                      .transparent, // Remove separator line for newer Flutter
+                              dividerColor: Colors.transparent,
                             ),
                             child: TabBar(
                               indicator: BoxDecoration(
@@ -121,7 +117,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
 
                       const SizedBox(height: 24),
-                      // Make TabBarView fill available space and scroll the whole page, height dynamic
                       Expanded(
                         child: TabBarView(
                           physics:

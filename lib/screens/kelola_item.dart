@@ -22,13 +22,26 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
     fetchItems();
   }
 
+  Future<int> fetchVendorId() async {
+    final client = Supabase.instance.client;
+    final response =
+        await client
+            .from('vendors')
+            .select('id')
+            .eq('user_id', client.auth.currentUser!.id)
+            .single();
+
+    return response['id'];
+  }
+
   Future<void> fetchItems() async {
     setState(() => isLoading = true);
     final client = Supabase.instance.client;
+    final vendorId = await fetchVendorId();
     final response = await client
         .from('items')
         .select()
-        .eq('vendor', client.auth.currentUser!.id)
+        .eq('vendor', vendorId)
         .order('created_at', ascending: false);
     setState(() {
       items =
@@ -109,9 +122,11 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
                         itemBuilder: (context, index) {
                           final item = items[index];
                           return ItemCard(
+                            id: item.id,
                             name: item.name,
                             price: item.price,
                             vendor: item.vendor,
+                            thumbnail: item.thumbnail,
                             description: item.description ?? '',
                             showFavorite: false,
                             onTapHandler:

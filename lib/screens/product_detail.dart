@@ -19,13 +19,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   late int vendorId;
   double price = 0;
   bool isLoading = true;
+  bool isOnCart = false;
 
-  void checkIsAlreadyOnCart() async {
-    // TODO: Finish this function
+  Future<bool> checkIsAlreadyOnCart() async {
+    final client = Supabase.instance.client;
+
+    final response =
+        await client
+            .from('shopping_cart')
+            .select()
+            .eq('user_id', client.auth.currentUser!.id)
+            .eq('item_id', dataId)
+            .maybeSingle();
+
+    return response != null;
   }
 
   void fetchAndSetData() async {
     dataId = widget.dataId;
+    isOnCart = await checkIsAlreadyOnCart();
 
     final client = Supabase.instance.client;
 
@@ -63,18 +75,38 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
-  void addToCart() async {
+  void toggleCart() async {
     final client = Supabase.instance.client;
     setState(() {
       isLoading = true;
     });
 
     try {
-      await client.from('shopping_cart').insert({"item_id": dataId});
+      if (isOnCart) {
+        await client
+            .from('shopping_cart')
+            .delete()
+            .eq('item_id', dataId)
+            .eq('user_id', client.auth.currentUser!.id);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Berhasil ditambahkan ke keranjang!")),
-      );
+        setState(() {
+          isOnCart = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Berhasil dihapus dari keranjang!")),
+        );
+      } else {
+        await client.from('shopping_cart').insert({"item_id": dataId});
+
+        setState(() {
+          isOnCart = true;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Berhasil ditambahkan ke keranjang!")),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Failed to add item to shopping cart! $e")),
@@ -89,7 +121,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   @override
   void initState() {
     super.initState();
-    // TODO: Use checkIsAlreadyOnCart method
     fetchAndSetData();
   }
 
@@ -98,7 +129,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     if (isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Detail Produk'),
           backgroundColor: Colors.white,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -109,86 +139,167 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       );
     }
 
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Detail Produk'),
-          backgroundColor: Colors.white,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 100,
+        decoration: BoxDecoration(color: Colors.white),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ElevatedButton(
+                onPressed: toggleCart,
+                child:
+                    isOnCart ? Text("Sudah di Keranjang") : Text("Keranjang"),
+              ),
+              ElevatedButton(
+                onPressed: () => {},
+                child: Text("Pesan Langsung"),
+              ),
+            ],
           ),
         ),
-        body: SingleChildScrollView(
+      ),
+      body: SafeArea(
+        child: DefaultTabController(
+          length: 3,
+          initialIndex: 0,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // TODO: Refactor the whole layout
-              Image.network(
-                thumbnail,
-                width: double.infinity,
-                height: 250,
-                fit: BoxFit.cover,
-              ),
+              // Top image
               Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  "dari $vendorName",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    // fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Rp ${price.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    thumbnail,
+                    width: double.infinity,
+                    height: 240,
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),
               const SizedBox(height: 16),
+
+              // Title
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(description, style: const TextStyle(fontSize: 16)),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      "dari $vendorName",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
-              const SizedBox(height: 32),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: addToCart,
-                  icon: const Icon(
-                    Icons.shopping_cart_outlined,
-                    color: Colors.white,
+
+              // Tab bar
+              TabBar(
+                tabAlignment: TabAlignment.start,
+                indicator: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
                   ),
-                  label: const Text(
-                    'Tambah ke Keranjang',
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  color: Colors.black,
+                ),
+                unselectedLabelStyle: const TextStyle(color: Colors.black),
+                labelColor: Colors.white,
+                isScrollable: true,
+                dividerColor: Colors.transparent,
+                tabs: const [
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+                    child: Text("Deskripsi"),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+                    child: Text("Galeri"),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+                    child: Text("Behind the Scenes"),
+                  ),
+                ],
+              ),
+
+              // Tab content
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    // Deskripsi
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Alamat : $address"),
+                          SizedBox(height: 8),
+                          Text(description),
+                        ],
+                      ),
                     ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
+
+                    // Galeri
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                        itemCount: 5,
+                        itemBuilder: (context, index) {
+                          // TODO: Create an expandable image viewer widget
+                          return Placeholder();
+                        },
+                      ),
                     ),
-                  ),
+
+                    // Behind the Scene
+                    SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                        itemCount: 8,
+                        itemBuilder: (context, index) {
+                          // TODO: Create an expandable image and video viewer widget
+                          return Placeholder();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -198,3 +309,4 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 }
+// TODO: Create checkout page

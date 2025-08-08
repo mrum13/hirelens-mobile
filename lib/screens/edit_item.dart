@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as p;
@@ -6,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 
+// TODO: Refactor this code to actually update data
 class EditItemPage extends StatefulWidget {
   const EditItemPage({super.key, required this.dataId});
   final int dataId;
@@ -86,24 +89,8 @@ class _EditItemPageState extends State<EditItemPage> {
     return fullPath;
   }
 
-  Future<String> getFileId(String bucket, String path) async {
-    try {
-      final dynamic result = await Supabase.instance.client.rpc(
-        'get_object_id',
-        params: {'bucket_id': bucket, 'name': path},
-      );
-      // result directly holds the returned UUID as a string
-      return result as String;
-    } on PostgrestException catch (e) {
-      print('RPC error: ${e.message}');
-      rethrow;
-    } catch (e) {
-      print('Unexpected error: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> insertNewItem({
+  Future<void> updateItem({
+    required int dataId,
     required String name,
     required String thumbnail,
     required int price,
@@ -111,29 +98,25 @@ class _EditItemPageState extends State<EditItemPage> {
     String description = '',
   }) async {
     try {
-      final result =
-          await Supabase.instance.client
-              .from('items')
-              .insert({
-                'name': name,
-                'thumbnail': thumbnail,
-                'price': price,
-                'address': address,
-                'description': description,
-              })
-              .select()
-              .single();
-
-      // result is Map<String, dynamic> – your inserted row
-      final String newRowId = (result['id'] as int).toString();
-      print('Inserted row ID: $newRowId');
+      await Supabase.instance.client
+          .from('items')
+          .update({
+            'name': name,
+            'thumbnail': thumbnail,
+            'price': price,
+            'address': address,
+            'description': description,
+          })
+          .eq('id', dataId)
+          .select()
+          .single();
     } on PostgrestException catch (e) {
-      print('Insert failed: ${e.message}');
+      log('Insert failed: ${e.message}');
       rethrow;
     }
   }
 
-  Future<void> _createItem() async {
+  Future<void> _updateItem() async {
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih gambar terlebih dahulu')),
@@ -146,7 +129,8 @@ class _EditItemPageState extends State<EditItemPage> {
     try {
       final path = await uploadImage(_selectedImage!);
       // final fileId = await getFileId('item-thumbnails', path);
-      await insertNewItem(
+      await updateItem(
+        dataId: dataId,
         name: _nameController.text,
         address: _addressController.text,
         price: int.parse(_priceController.text),
@@ -180,7 +164,7 @@ class _EditItemPageState extends State<EditItemPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Buat Item Baru',
+          'Edit Item',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -278,7 +262,7 @@ class _EditItemPageState extends State<EditItemPage> {
                             ? null
                             : () {
                               if (_formKey.currentState!.validate()) {
-                                _createItem();
+                                _updateItem();
                               }
                             },
                     child:

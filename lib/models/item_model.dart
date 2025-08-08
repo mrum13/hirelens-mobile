@@ -6,6 +6,7 @@ class ItemModel {
   final String thumbnail;
   final int price;
   final int vendor;
+  final List<dynamic> durations;
   final String? verified_at;
   final String address;
 
@@ -16,6 +17,7 @@ class ItemModel {
     this.description,
     required this.thumbnail,
     required this.price,
+    required this.durations,
     required this.vendor,
     this.verified_at,
     required this.address,
@@ -29,6 +31,7 @@ class ItemModel {
     thumbnail: json['thumbnail'] as String,
     price: json['price'] as int,
     vendor: json['vendor'] as int,
+    durations: json['durations'] as List<dynamic>,
     verified_at: json['verified_at'] as String?,
     address: json['address'] as String,
   );
@@ -41,6 +44,7 @@ class ItemModel {
     'thumbnail': thumbnail,
     'price': price,
     'vendor': vendor,
+    'durations': durations,
     'verified_at': verified_at,
     'address': address,
   };

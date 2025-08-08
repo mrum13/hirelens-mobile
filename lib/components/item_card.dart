@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 String formatCurrency(int price) {
   final formatter = NumberFormat.simpleCurrency(
@@ -10,6 +11,7 @@ String formatCurrency(int price) {
 }
 
 class ItemCard extends StatefulWidget {
+  final int id;
   final String name;
   final int vendor;
   final int price;
@@ -20,6 +22,7 @@ class ItemCard extends StatefulWidget {
 
   const ItemCard({
     super.key,
+    required this.id,
     required this.name,
     required this.vendor,
     required this.price,
@@ -34,6 +37,28 @@ class ItemCard extends StatefulWidget {
 }
 
 class _ItemCardState extends State<ItemCard> {
+  bool isFavorite = false;
+
+  void checkIsFavorite() async {
+    final client = Supabase.instance.client;
+
+    final response =
+        await client
+            .from('shopping_cart')
+            .select()
+            .eq('user_id', client.auth.currentUser!.id)
+            .eq('item_id', widget.id)
+            .maybeSingle();
+
+    isFavorite = response != null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkIsFavorite();
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -58,23 +83,31 @@ class _ItemCardState extends State<ItemCard> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     )
-                    : Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    : ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
                       child: Image.network(
                         widget.thumbnail!,
                         fit: BoxFit.cover,
-                        height: double.infinity,
+                        height: 120,
                         width: double.infinity,
                       ),
                     ),
                 if (widget.showFavorite == true)
                   Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Icon(Icons.star_border, size: 20),
+                    top: 4,
+                    right: 4,
+                    child: Icon(
+                      isFavorite ? Icons.star : Icons.star_border,
+                      size: 24,
+                      color: isFavorite ? Colors.amber : Colors.black,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black87,
+                          blurRadius: 8,
+                          offset: Offset(0, 0),
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),
@@ -86,6 +119,7 @@ class _ItemCardState extends State<ItemCard> {
               style: TextStyle(fontSize: 12, color: Colors.grey[700]),
             ),
             const Spacer(),
+            Text("Mulai dari", style: TextStyle(fontSize: 8)),
             Text(
               formatCurrency(widget.price),
               style: TextStyle(fontWeight: FontWeight.bold),
