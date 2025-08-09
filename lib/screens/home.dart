@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:unsplash_clone/components/item_card.dart';
+import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:unsplash_clone/screens/cart.dart';
@@ -17,7 +18,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with RouteAware {
   List<ItemModel> items = [];
   bool isLoading = true;
 
@@ -43,6 +44,20 @@ class _HomePageState extends State<HomePage> {
               .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
               .toList();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    fetchItems();
   }
 
   @override

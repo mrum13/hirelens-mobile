@@ -4,6 +4,7 @@ import 'package:unsplash_clone/models/item_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
+import 'package:unsplash_clone/main.dart' show routeObserver;
 
 class KelolaItemPage extends StatefulWidget {
   const KelolaItemPage({super.key});
@@ -12,7 +13,7 @@ class KelolaItemPage extends StatefulWidget {
   State<KelolaItemPage> createState() => _KelolaItemPageState();
 }
 
-class _KelolaItemPageState extends State<KelolaItemPage> {
+class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
   List<ItemModel> items = [];
   bool isLoading = true;
 
@@ -50,6 +51,20 @@ class _KelolaItemPageState extends State<KelolaItemPage> {
               .toList();
       isLoading = false;
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  didPopNext() {
+    fetchItems();
   }
 
   @override

@@ -37,7 +37,8 @@ class ItemCard extends StatefulWidget {
 }
 
 class _ItemCardState extends State<ItemCard> {
-  bool isFavorite = false;
+  bool isLoading = true;
+  late bool isFavorite;
 
   void checkIsFavorite() async {
     final client = Supabase.instance.client;
@@ -50,7 +51,10 @@ class _ItemCardState extends State<ItemCard> {
             .eq('item_id', widget.id)
             .maybeSingle();
 
-    isFavorite = response != null;
+    setState(() {
+      isFavorite = response != null;
+      isLoading = false;
+    });
   }
 
   @override
@@ -61,72 +65,88 @@ class _ItemCardState extends State<ItemCard> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTapHandler,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
+    return !isLoading
+        ? GestureDetector(
+          onTap: widget.onTapHandler,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                widget.thumbnail == null
-                    ? Container(
-                      height: 120,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    )
-                    : ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        widget.thumbnail!,
-                        fit: BoxFit.cover,
-                        height: 120,
-                        width: double.infinity,
-                      ),
-                    ),
-                if (widget.showFavorite == true)
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      size: 24,
-                      color: isFavorite ? Colors.amber : Colors.black,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black87,
-                          blurRadius: 8,
-                          offset: Offset(0, 0),
+                Stack(
+                  children: [
+                    widget.thumbnail == null
+                        ? Container(
+                          height: 120,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        )
+                        : ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            widget.thumbnail!,
+                            fit: BoxFit.cover,
+                            height: 120,
+                            width: double.infinity,
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
+                    if (widget.showFavorite == true)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: Icon(
+                          isFavorite ? Icons.star : Icons.star_border,
+                          size: 24,
+                          color: isFavorite ? Colors.amber : Colors.black,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black87,
+                              blurRadius: 8,
+                              offset: Offset(0, 0),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.name,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.description,
+                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                ),
+                const Spacer(),
+                Text("Mulai dari", style: TextStyle(fontSize: 8)),
+                Text(
+                  formatCurrency(widget.price),
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(widget.name, style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(
-              widget.description,
-              style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-            ),
-            const Spacer(),
-            Text("Mulai dari", style: TextStyle(fontSize: 8)),
-            Text(
-              formatCurrency(widget.price),
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
+          ),
+        )
+        : Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            widthFactor: double.infinity,
+            heightFactor: double.infinity,
+            child: CircularProgressIndicator(color: Colors.grey[300]),
+          ),
+        );
   }
 }
