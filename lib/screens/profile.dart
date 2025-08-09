@@ -40,14 +40,6 @@ class _ProfilePageState extends State<ProfilePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit_outlined, color: Colors.black),
-            onPressed: () {
-              _showEditProfileDialog();
-            },
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -391,24 +383,6 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Divider(height: 1, color: Colors.grey.shade200),
-    );
-  }
-
-  void _showEditProfileDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Edit Profil'),
-          content: Text('Fitur edit profil akan segera hadir.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Tutup'),
-            ),
-          ],
-        );
-      },
     );
   }
 

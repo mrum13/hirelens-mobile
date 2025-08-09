@@ -16,7 +16,7 @@ class _CartPageState extends State<CartPage> {
     final client = Supabase.instance.client;
     final results = await client
         .from('shopping_cart')
-        .select('id, item_id(id,name,,description,thumbnail,address,price)');
+        .select('id, item_id(id,name,description,thumbnail,address,price)');
 
     setState(() {
       isLoading = false;
@@ -37,6 +37,7 @@ class _CartPageState extends State<CartPage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: fetchDatas,
+          // URGENT: Show the widget as ListView instead to maintain individual size
           child: GridView.builder(
             physics: AlwaysScrollableScrollPhysics(),
             itemCount: items.length,
@@ -63,6 +64,7 @@ class _CartPageState extends State<CartPage> {
   }
 }
 
+// URGENT: Finish this widget
 class CartItem extends StatefulWidget {
   final int itemId;
   final String itemName;

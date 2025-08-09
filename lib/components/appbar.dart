@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Custom AppBar as per TODO on line 52
-
 class HomeCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onCartPressed;
   final VoidCallback onProfilePressed;
