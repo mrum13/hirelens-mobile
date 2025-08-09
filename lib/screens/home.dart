@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-      // TODO: Refactor the whole UI
+      // LATER: Refactor the whole UI
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),

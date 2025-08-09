@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "D:/CHANDRA/TUGAS/unsplash_clone/windows"
+    "cmake.sourceDirectory": "D:/CHANDRA/TUGAS/unsplash_clone/windows",
+    "todo-tree.tree.showCountsInTree": true
 }

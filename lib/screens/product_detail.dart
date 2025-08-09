@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/screens/checkout.dart';
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key, required this.dataId});
@@ -155,13 +156,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              // LATER: Use GestureDetector instead
               ElevatedButton(
                 onPressed: toggleCart,
                 child:
                     isOnCart ? Text("Sudah di Keranjang") : Text("Keranjang"),
               ),
               ElevatedButton(
-                onPressed: () => {},
+                onPressed:
+                    () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => CheckoutPage(dataId: dataId),
+                      ),
+                    ),
                 child: Text("Pesan Langsung"),
               ),
             ],
@@ -309,4 +316,3 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     );
   }
 }
-// TODO: Create checkout page
