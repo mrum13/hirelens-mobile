@@ -8,50 +8,19 @@ class CartPage extends StatefulWidget {
   State<CartPage> createState() => _CartPageState();
 }
 
-class CartItemModel {
-  final int id;
-  final DateTime createdAt;
-  final int item_id;
-  final int user_id;
-
-  CartItemModel({
-    required this.id,
-    required this.createdAt,
-    required this.item_id,
-    required this.user_id,
-  });
-
-  factory CartItemModel.fromJson(Map<String, dynamic> json) => CartItemModel(
-    id: json['id'] as int,
-    createdAt: DateTime.parse(json['created_at'] as String),
-    item_id: json['item_id'] as int,
-    user_id: json['user_id'] as int,
-  );
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'created_at': createdAt.toIso8601String(),
-    'item_id': item_id,
-    'user_id': user_id,
-  };
-}
-
 class _CartPageState extends State<CartPage> {
-  List<CartItemModel> items = [];
+  List<Map<String, dynamic>> items = [];
   bool isLoading = true;
 
-  void fetchDatas() async {
+  Future<void> fetchDatas() async {
     final client = Supabase.instance.client;
-    final results = await client.from('shopping_cart').select();
+    final results = await client
+        .from('shopping_cart')
+        .select('id, item_id(id,name,,description,thumbnail,address,price)');
 
     setState(() {
       isLoading = false;
-      items =
-          (results as List)
-              .map(
-                (json) => CartItemModel.fromJson(json as Map<String, dynamic>),
-              )
-              .toList();
+      items = results;
     });
   }
 
@@ -65,11 +34,63 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Keranjang Belanja')),
-      body: Center(
-        child: Text(
-          'Ini halaman keranjang belanja',
-          style: TextStyle(fontSize: 18),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: fetchDatas,
+          child: GridView.builder(
+            physics: AlwaysScrollableScrollPhysics(),
+            itemCount: items.length,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              mainAxisSpacing: 12,
+              childAspectRatio: 3,
+            ),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return CartItem(
+                itemAddress: item['item_id']['address'],
+                itemId: item['item_id']['id'],
+                itemName: item['item_id']['name'],
+                itemPrice: item['item_id']['price'],
+                itemThumbnail: item['item_id']['thumbnail'],
+              );
+            },
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class CartItem extends StatefulWidget {
+  final int itemId;
+  final String itemName;
+  final String itemThumbnail;
+  final int itemPrice;
+  final String itemAddress;
+
+  const CartItem({
+    super.key,
+    required this.itemId,
+    required this.itemName,
+    required this.itemThumbnail,
+    required this.itemPrice,
+    required this.itemAddress,
+  });
+
+  @override
+  State<CartItem> createState() => _CartItemState();
+}
+
+class _CartItemState extends State<CartItem> {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 40,
+      child: Row(
+        children: [ClipRRect(child: Image.network(widget.itemThumbnail))],
       ),
     );
   }

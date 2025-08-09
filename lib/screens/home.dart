@@ -72,66 +72,76 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 16),
-            // Search bar with suggestions
-            SearchBarWithSuggestions(
-              suggestionsData: suggestionTitles,
-              onSearch: (query) {
-                // You can implement actual filtering logic here if needed
-                debugPrint('Search: $query');
-              },
-            ),
-            const SizedBox(height: 16),
-            // Grid konten
-            Expanded(
-              child:
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : items.isEmpty
-                      ? const Center(child: Text('Belum ada item.'))
-                      : Container(
-                        color: Colors.white,
-                        child: RefreshIndicator(
-                          onRefresh: fetchItems,
-                          child: GridView.builder(
-                            physics: AlwaysScrollableScrollPhysics(),
-                            itemCount: items.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  mainAxisSpacing: 12,
-                                  crossAxisSpacing: 12,
-                                  childAspectRatio: 0.65,
-                                ),
-                            itemBuilder: (context, index) {
-                              final item = items[index];
-                              return ItemCard(
-                                name: item.name,
-                                vendor: item.vendor,
-                                price: item.price,
-                                thumbnail: item.thumbnail,
-                                description: item.description ?? '',
-                                onTapHandler:
-                                    () => Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => ProductDetailPage(
-                                              dataId: item.id,
-                                            ),
+      // LATER: Refactor the whole UI
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 16),
+              // Search bar with suggestions
+              SearchBarWithSuggestions(
+                suggestionsData: suggestionTitles,
+                onSearch: (query) {
+                  // You can implement actual filtering logic here if needed
+                  debugPrint('Search: $query');
+                },
+              ),
+              const SizedBox(height: 16),
+              // Grid konten
+              Expanded(
+                child:
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : items.isEmpty
+                        ? Container(
+                          color: Colors.white,
+                          child: RefreshIndicator(
+                            onRefresh: fetchItems,
+                            child: Center(child: Text('Belum ada item.')),
+                          ),
+                        )
+                        : Container(
+                          color: Colors.white,
+                          child: RefreshIndicator(
+                            onRefresh: fetchItems,
+                            child: GridView.builder(
+                              physics: AlwaysScrollableScrollPhysics(),
+                              itemCount: items.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    childAspectRatio: 0.65,
+                                  ),
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                return ItemCard(
+                                  id: item.id,
+                                  name: item.name,
+                                  vendor: item.vendor,
+                                  price: item.price,
+                                  thumbnail: item.thumbnail,
+                                  description: item.description ?? '',
+                                  onTapHandler:
+                                      () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder:
+                                              (_) => ProductDetailPage(
+                                                dataId: item.id,
+                                              ),
+                                        ),
                                       ),
-                                    ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );

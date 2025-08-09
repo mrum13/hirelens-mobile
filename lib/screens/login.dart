@@ -54,7 +54,7 @@ class _LoginPageState extends State<LoginPage> {
 
         // Pisahkan home vendor dan home customer
         if (user.role == 'vendor') {
-          // TODO: Replace with your VendorHomePage
+          // URGENT: Create VendorHomePage and replace HomePage below
           Navigator.of(
             context,
           ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));

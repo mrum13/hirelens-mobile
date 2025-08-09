@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
+import 'package:unsplash_clone/screens/vendor_profile.dart';
 import 'package:unsplash_clone/utils/auth_storage.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/providers/user_provider.dart';
@@ -244,9 +245,15 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           _buildMenuItem(
             icon: Icons.list,
-            title: 'Portfolio',
-            subtitle: 'Cek portfolio anda',
-            onTap: _onComingSoonTM,
+            title: 'Your Page',
+            subtitle: 'Cek halaman profil anda sebagai vendor.',
+            onTap:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const VendorProfilePage(),
+                  ),
+                ),
           ),
           _buildMenuItemDivider(),
           _buildMenuItem(
@@ -345,7 +352,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildMenuItem(
             icon: Icons.info_outline,
             title: 'Info Aplikasi',
-            subtitle: 'Versi : 0.01_dev',
+            subtitle: 'Versi : 0.02_dev',
             onTap: () {},
           ),
         ],
