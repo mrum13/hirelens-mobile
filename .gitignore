@@ -50,3 +50,5 @@ windows/
 linux/
 macos/
 web/
+
+*.pem
