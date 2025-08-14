@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:unsplash_clone/components/item_card.dart';
-import 'package:unsplash_clone/providers/user_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/profile.dart';
-import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/components/appbar.dart';
 import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
-import 'package:unsplash_clone/models/item_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomePage extends StatefulWidget {
@@ -17,8 +15,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  List<ItemModel> items = [];
+class _HomePageState extends State<HomePage> with RouteAware {
+  List<Map<String, dynamic>> items = [];
   bool isLoading = true;
 
   @override
@@ -38,23 +36,28 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       isLoading = false;
-      items =
-          (response as List)
-              .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
-              .toList();
+      items = response;
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-
-    if (user == null) {
-      return const Center(child: Text('Belum login'));
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
     }
+  }
 
+  @override
+  void didPopNext() {
+    fetchItems();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final List<String> suggestionTitles =
-        items.map((item) => item.name).toList();
+        items.map((item) => item['name'] as String).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -119,21 +122,16 @@ class _HomePageState extends State<HomePage> {
                               itemBuilder: (context, index) {
                                 final item = items[index];
                                 return ItemCard(
-                                  id: item.id,
-                                  name: item.name,
-                                  vendor: item.vendor,
-                                  price: item.price,
-                                  thumbnail: item.thumbnail,
-                                  description: item.description ?? '',
+                                  id: item['id'],
+                                  name: item['name'],
+                                  vendor: item['vendor'],
+                                  price: item['price'],
+                                  thumbnail: item['thumbnail'],
+                                  description: item['description'] ?? '',
                                   onTapHandler:
-                                      () => Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder:
-                                              (_) => ProductDetailPage(
-                                                dataId: item.id,
-                                              ),
-                                        ),
-                                      ),
+                                      () => GoRouter.of(
+                                        context,
+                                      ).push("/item/detail/${item['id']}"),
                                 );
                               },
                             ),

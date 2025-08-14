@@ -1,21 +1,22 @@
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/checkout.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
+import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
 
-// LATER: You need to refactor the whole project to use this code
-// LATER: Create and implement layout for each pages
-
 final router = GoRouter(
   routes: [
-    GoRoute(path: "/", builder: (context, state) => LoginPage()),
+    GoRoute(path: '/', builder: (context, state) => LoadingScreen()),
+    GoRoute(path: "/login", builder: (context, state) => LoginPage()),
     GoRoute(path: "/home", builder: (context, state) => HomePage()),
     GoRoute(path: "/cart", builder: (context, state) => CartPage()),
     GoRoute(path: "/profile", builder: (context, state) => ProfilePage()),
@@ -50,4 +51,18 @@ final router = GoRouter(
               CheckoutPage(dataId: int.parse(state.pathParameters['dataId']!)),
     ),
   ],
+  initialLocation: '/',
+  redirect: (ctx, state) {
+    final logged = Supabase.instance.client.auth.currentSession != null;
+    final onLogin = state.matchedLocation == '/login';
+    final onSplash = state.matchedLocation == '/';
+    if (!logged && !onLogin) return '/login';
+    if (logged && onLogin) return '/home';
+    if (logged && (onSplash || onLogin)) {
+      return '/home';
+    }
+
+    return null;
+  },
+  observers: [routeObserver],
 );

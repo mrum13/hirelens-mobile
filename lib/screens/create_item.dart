@@ -25,11 +25,11 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
   @override
   void dispose() {
+    super.dispose();
     _nameController.dispose();
     _descController.dispose();
     _priceController.dispose();
     _addressController.dispose();
-    super.dispose();
   }
 
   Future<String> uploadImage(File imageFile) async {
