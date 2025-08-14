@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:unsplash_clone/models/user_model.dart';
-import 'package:unsplash_clone/providers/user_provider.dart';
 import 'package:unsplash_clone/screens/register.dart';
-import 'package:unsplash_clone/screens/home.dart';
-import 'package:unsplash_clone/utils//auth_storage.dart';
-import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,28 +37,12 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (response.user != null) {
-        await saveAuthSession(response.session!.toJson());
-        final userMeta = response.user!.userMetadata ?? {};
-        final user = UserModel(
-          id: response.user!.id,
-          email: response.user!.email ?? '',
-          displayName: userMeta['displayName'],
-          role:
-              userMeta['role'] ?? 'customer', // fallback to customer if missing
-        );
-        Provider.of<UserProvider>(context, listen: false).setUser(user);
-
-        // Pisahkan home vendor dan home customer
-        if (user.role == 'vendor') {
+        // URGENT : Pisahkan home vendor dan home customer
+        if (response.user!.userMetadata!['role'] == 'vendor') {
           // URGENT: Create VendorHomePage and replace HomePage below
-          Navigator.of(
-            context,
-          ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+          GoRouter.of(context).replace('/home');
         } else {
-          // Default to customer home
-          Navigator.of(
-            context,
-          ).pushReplacement(MaterialPageRoute(builder: (_) => HomePage()));
+          GoRouter.of(context).replace('/home');
         }
       } else {
         _showError('Login gagal. Silakan coba lagi.');

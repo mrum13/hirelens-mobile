@@ -1,9 +1,6 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:midtrans_sdk/midtrans_sdk.dart';
 
 class CheckoutPage extends StatefulWidget {
   final int dataId;
@@ -23,7 +20,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   List<dynamic> durations = [];
   bool isLoading = true;
   late dynamic selectedDuration;
-  MidtransSDK? _midtrans;
 
   Future<void> fetchData() async {
     final client = Supabase.instance.client;
@@ -52,47 +48,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
   }
 
-  void initSDK() async {
-    _midtrans = await MidtransSDK.init(
-      config: MidtransConfig(
-        clientKey: "SB-Mid-client-jl2-CLqAiTGWyi41",
-        merchantBaseUrl:
-            "https://lebuzerrmpjjugoxaaav.supabase.co/functions/v1/midtrans-snap-generator",
-        enableLog: true,
-      ),
-    );
-    _midtrans!.setTransactionFinishedCallback((result) {
-      print(result.transactionId);
-      print(result.status);
-      print(result.message);
-      print(result.paymentType);
-    });
-  }
-
-  // Future<String> fetchSnapToken() async {
-
-  // }
-
   void payPanjar() async {
     setState(() {
       isLoading = true;
     });
-
-    initSDK();
-
-    _midtrans!.setTransactionFinishedCallback((result) {
-      log(result.transactionId.toString());
-      log(result.status);
-      log(result.message ?? '');
-      log(result.paymentType ?? '');
-    });
-
-    _midtrans!.startPaymentUiFlow(token: 'QSl5lV3C-G973510659-SNAP');
   }
 
   void payFull() async {
     // URGENT: Finish this function
-    // LATER: Use color #004030 (primary) and #fff9e5
   }
 
   String formatCurrency(int price) {
@@ -121,7 +84,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   @override
   void dispose() {
-    _midtrans?.removeTransactionFinishedCallback();
     super.dispose();
   }
 
@@ -173,7 +135,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
+              : 
+              SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

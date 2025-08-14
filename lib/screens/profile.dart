@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
-import 'package:unsplash_clone/utils/auth_storage.dart';
-import 'package:unsplash_clone/screens/login.dart';
-import 'package:unsplash_clone/providers/user_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -18,11 +15,21 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   bool notificationsEnabled = true;
   bool darkModeEnabled = false;
+  late User user;
+
+  void loadUserData() async {
+    final client = Supabase.instance.client;
+    user = client.auth.currentUser!;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    final role = (user?.role ?? '-');
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
@@ -46,7 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             _buildProfileHeader(),
             SizedBox(height: 20),
-            role.toLowerCase() == 'customer'
+            user.userMetadata!['role'].toLowerCase() == 'customer'
                 ? _buildCustomerMenuSection()
                 : _buildVendorMenuSection(),
             SizedBox(height: 20),
@@ -61,13 +68,12 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildProfileHeader() {
-    final user = Provider.of<UserProvider>(context, listen: false).user;
-    final name = user?.displayName ?? '-';
-    final email = user?.email ?? '-';
+    final name = user.userMetadata!['displayName'] ?? '-';
+    final email = user.email ?? '-';
     final role =
-        (user?.role ?? '-').isNotEmpty
-            ? (user!.role[0].toUpperCase() +
-                user.role.substring(1).toLowerCase())
+        (user.userMetadata!['role'] ?? '-').isNotEmpty
+            ? (user.userMetadata!['role'].toUpperCase() +
+                user.userMetadata!['role'].toLowerCase())
             : '-';
     return Container(
       width: double.infinity,
@@ -91,7 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
               CircleAvatar(
                 radius: 50,
                 backgroundImage: NetworkImage(
-                  'https://ui-avatars.com/api/?background=6777cc&color=fff&name=${user!.displayName!.toUpperCase()}',
+                  'https://ui-avatars.com/api/?background=6777cc&color=fff&name=${user.userMetadata!['displayName'].toUpperCase()}',
                 ),
               ),
               Positioned(
@@ -430,13 +436,9 @@ class _ProfilePageState extends State<ProfilePage> {
     );
     if (confirm == true) {
       await Supabase.instance.client.auth.signOut();
-      await clearAuthSession();
+
       if (mounted) {
-        Provider.of<UserProvider>(context, listen: false).clearUser();
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => LoginPage()),
-          (route) => false,
-        );
+        GoRouter.of(context).replace("/login");
       }
     }
   }

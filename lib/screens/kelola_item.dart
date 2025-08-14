@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:unsplash_clone/components/item_card.dart';
-import 'package:unsplash_clone/models/item_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
-import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 
 class KelolaItemPage extends StatefulWidget {
@@ -14,7 +13,7 @@ class KelolaItemPage extends StatefulWidget {
 }
 
 class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
-  List<ItemModel> items = [];
+  List<Map<String, dynamic>> items = [];
   bool isLoading = true;
 
   @override
@@ -45,10 +44,7 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
         .eq('vendor', vendorId)
         .order('created_at', ascending: false);
     setState(() {
-      items =
-          (response as List)
-              .map((json) => ItemModel.fromJson(json as Map<String, dynamic>))
-              .toList();
+      items = response;
       isLoading = false;
     });
   }
@@ -137,19 +133,16 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                         itemBuilder: (context, index) {
                           final item = items[index];
                           return ItemCard(
-                            id: item.id,
-                            name: item.name,
-                            price: item.price,
-                            vendor: item.vendor,
-                            thumbnail: item.thumbnail,
-                            description: item.description ?? '',
+                            id: item['id'],
+                            name: item['name'],
+                            price: item['price'],
+                            vendor: item['vendor'],
+                            thumbnail: item['thumbnail'],
+                            description: item['description'] ?? '',
                             showFavorite: false,
                             onTapHandler:
-                                () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder:
-                                        (_) => EditItemPage(dataId: item.id),
-                                  ),
+                                () => GoRouter.of(context).push(
+                                  "/vendor/kelola_item/edit/${item['id']}",
                                 ),
                           );
                         },

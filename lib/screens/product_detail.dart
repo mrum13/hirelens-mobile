@@ -10,6 +10,7 @@ class ProductDetailPage extends StatefulWidget {
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
+// TODO: use atypical design as reference
 class _ProductDetailPageState extends State<ProductDetailPage> {
   late int dataId;
   String name = '';
