@@ -13,9 +13,6 @@ import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
 
-// LATER: You need to refactor the whole project to use this code
-// LATER: Create and implement layout for each pages
-
 final router = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => LoadingScreen()),
