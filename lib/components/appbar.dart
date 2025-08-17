@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// TODO: Redesign this widget
 class HomeCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onCartPressed;
   final VoidCallback onProfilePressed;
@@ -19,23 +18,16 @@ class HomeCustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         height: 48,
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        // color: Colors.white,
         child: Row(
           children: [
             const Spacer(),
             IconButton(
-              icon: const Icon(
-                Icons.shopping_bag_outlined,
-                // color: Colors.black,
-              ),
+              icon: const Icon(Icons.shopping_bag_outlined),
               onPressed: onCartPressed,
               tooltip: 'Keranjang',
             ),
             IconButton(
-              icon: const Icon(
-                Icons.person_outline,
-                // color: Colors.black
-              ),
+              icon: const Icon(Icons.person_outline),
               onPressed: onProfilePressed,
               tooltip: 'Profile',
             ),

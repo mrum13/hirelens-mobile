@@ -1,8 +1,37 @@
 import "package:flutter/material.dart";
 
-// URGENT: Find dark color scheme with black and green
-// Primary Color = 697565
-// Background Colors = 181c14
+ThemeData hirelensDarkTheme = ThemeData(
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Color(0xff0f6855),
+    surface: Color(0xff181C14),
+    tertiary: Color(0xff006874),
+    brightness: Brightness.dark,
+  ),
+  textTheme: TextTheme(
+    displayLarge: TextStyle(fontWeight: FontWeight.w700, fontSize: 32),
+    displayMedium: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+    displaySmall: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+  ),
+  inputDecorationTheme: InputDecorationTheme(
+    border: OutlineInputBorder(
+      borderSide: BorderSide(color: Color.fromARGB(60, 255, 255, 255)),
+    ),
+    outlineBorder: BorderSide(color: Color.fromARGB(60, 255, 255, 255)),
+    activeIndicatorBorder: BorderSide(
+      color: Color.fromARGB(160, 255, 255, 255),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Color.fromARGB(220, 255, 255, 255)),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: Color.fromARGB(220, 255, 255, 255)),
+    ),
+  ),
+);
+
+ThemeData themeFromContext(BuildContext context) {
+  return Theme.of(context);
+}
 
 class HirelensTheme {
   final TextTheme textTheme;

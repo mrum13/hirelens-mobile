@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 
@@ -49,20 +51,17 @@ class _RegisterPageState extends State<RegisterPage> {
               return SizedBox(
                 height: constraints.maxHeight,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(32, 16, 32, 16 + bottomInset),
+                  padding: EdgeInsets.fromLTRB(32, 48, 32, 16 + bottomInset),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Welcome to',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                        style: themeFromContext(context).textTheme.displaySmall,
                       ),
-                      const Text(
+                      Text(
                         'Project HireLens',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: themeFromContext(context).textTheme.displayLarge,
                       ),
                       const SizedBox(height: 24),
 
@@ -86,11 +85,18 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             child: TabBar(
                               indicator: BoxDecoration(
-                                color: const Color.fromARGB(255, 41, 41, 41),
+                                color:
+                                    themeFromContext(
+                                      context,
+                                    ).colorScheme.primary,
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              labelColor: Colors.white,
-                              unselectedLabelColor: Colors.black87,
+                              labelColor:
+                                  themeFromContext(context).colorScheme.surface,
+                              unselectedLabelColor:
+                                  themeFromContext(
+                                    context,
+                                  ).colorScheme.surfaceBright,
                               overlayColor: WidgetStateProperty.all(
                                 Colors.transparent,
                               ),
@@ -126,7 +132,11 @@ class _RegisterPageState extends State<RegisterPage> {
                           children: [
                             // Customer Tab
                             ListView(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: EdgeInsets.only(
+                                top: 8,
+                                left: 8,
+                                right: 8,
+                              ),
                               children: [
                                 inputField(
                                   "Nama Lengkap",
@@ -157,16 +167,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                       labelText: "Jenis Kelamin",
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      focusedBorder: const OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                          color: Color.fromARGB(
-                                            255,
-                                            41,
-                                            41,
-                                            41,
-                                          ),
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -200,53 +200,29 @@ class _RegisterPageState extends State<RegisterPage> {
                                   obscure: true,
                                 ),
                                 const SizedBox(height: 16),
-                                SizedBox(
+                                MyFilledButton(
+                                  isLoading: _isLoading,
                                   width: double.infinity,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color.fromARGB(
-                                        255,
-                                        41,
-                                        41,
-                                        41,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
+                                  variant: MyFilledButtonVariant.primary,
+                                  onTap:
+                                      () =>
+                                          !_isLoading
+                                              ? _onRegisterPressed('customer')
+                                              : null,
+                                  child: Text(
+                                    "Sign Up",
+                                    style: TextStyle(
+                                      color:
+                                          themeFromContext(
+                                            context,
+                                          ).colorScheme.surface,
                                     ),
-                                    onPressed:
-                                        _isLoading
-                                            ? null
-                                            : () =>
-                                                _onRegisterPressed('customer'),
-                                    child:
-                                        _isLoading
-                                            ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(Colors.white),
-                                              ),
-                                            )
-                                            : const Text(
-                                              'Sign Up',
-                                              style: TextStyle(
-                                                color: Colors.white70,
-                                              ),
-                                            ),
                                   ),
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
                                   'Dengan mendaftar, kamu menyetujui syarat & ketentuan kami.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
+                                  style: TextStyle(fontSize: 12),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
@@ -256,7 +232,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                     Text(
                                       "Sudah punya akun? ",
                                       style: TextStyle(
-                                        color: Colors.black87,
                                         fontWeight: FontWeight.normal,
                                       ),
                                     ),
@@ -267,10 +242,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                               : () {
                                                 Navigator.pop(context);
                                               },
-                                      child: const Text(
+                                      child: Text(
                                         'Login',
                                         style: TextStyle(
-                                          color: Colors.black87,
+                                          color:
+                                              themeFromContext(
+                                                context,
+                                              ).colorScheme.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -281,7 +259,11 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             // Vendor Tab
                             ListView(
-                              padding: EdgeInsets.only(top: 8),
+                              padding: EdgeInsets.only(
+                                top: 8,
+                                left: 8,
+                                right: 8,
+                              ),
                               children: [
                                 inputField(
                                   "Nama Vendor",
@@ -313,53 +295,29 @@ class _RegisterPageState extends State<RegisterPage> {
                                   obscure: true,
                                 ),
                                 const SizedBox(height: 16),
-                                SizedBox(
+                                MyFilledButton(
+                                  isLoading: _isLoading,
                                   width: double.infinity,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color.fromARGB(
-                                        255,
-                                        41,
-                                        41,
-                                        41,
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
+                                  variant: MyFilledButtonVariant.primary,
+                                  onTap:
+                                      () =>
+                                          !_isLoading
+                                              ? _onRegisterPressed('vendor')
+                                              : null,
+                                  child: Text(
+                                    "Sign Up",
+                                    style: TextStyle(
+                                      color:
+                                          themeFromContext(
+                                            context,
+                                          ).colorScheme.surface,
                                     ),
-                                    onPressed:
-                                        _isLoading
-                                            ? null
-                                            : () =>
-                                                _onRegisterPressed('vendor'),
-                                    child:
-                                        _isLoading
-                                            ? const SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                valueColor:
-                                                    AlwaysStoppedAnimation<
-                                                      Color
-                                                    >(Colors.white),
-                                              ),
-                                            )
-                                            : const Text(
-                                              'Sign Up',
-                                              style: TextStyle(
-                                                color: Colors.white70,
-                                              ),
-                                            ),
                                   ),
                                 ),
                                 const SizedBox(height: 16),
                                 const Text(
                                   'Dengan mendaftar, kamu menyetujui syarat & ketentuan kami.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
+                                  style: TextStyle(fontSize: 12),
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
@@ -369,7 +327,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                     Text(
                                       "Sudah punya akun? ",
                                       style: TextStyle(
-                                        color: Colors.black87,
                                         fontWeight: FontWeight.normal,
                                       ),
                                     ),
@@ -380,10 +337,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                               : () {
                                                 Navigator.pop(context);
                                               },
-                                      child: const Text(
+                                      child: Text(
                                         'Login',
                                         style: TextStyle(
-                                          color: Colors.black87,
+                                          color:
+                                              themeFromContext(
+                                                context,
+                                              ).colorScheme.primary,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -418,16 +378,7 @@ class _RegisterPageState extends State<RegisterPage> {
         controller: controller,
         obscureText: obscure,
         keyboardType: type,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(
-              color: Color.fromARGB(255, 41, 41, 41),
-            ),
-          ),
-        ),
+        decoration: InputDecoration(labelText: label),
       ),
     );
   }

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:unsplash_clone/components/item_card.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
-import 'package:unsplash_clone/screens/cart.dart';
-import 'package:unsplash_clone/screens/profile.dart';
-import 'package:unsplash_clone/components/appbar.dart';
+// import 'package:unsplash_clone/screens/cart.dart';
+// import 'package:unsplash_clone/screens/profile.dart';
+// import 'package:unsplash_clone/components/appbar.dart';
 import 'package:unsplash_clone/components/search_bar_with_suggestions.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -60,37 +61,59 @@ class _HomePageState extends State<HomePage> with RouteAware {
         items.map((item) => item['name'] as String).toList();
 
     return Scaffold(
-      // backgroundColor: Colors.white,
-      appBar: HomeCustomAppBar(
-        onCartPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CartPage()),
-          );
-        },
-        onProfilePressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ProfilePage()),
-          );
-        },
+      // URGENT: Re-create the custom appbar
+      // URGENT: Re-create the search bar with suggestion that can fit as leading
+      appBar: AppBar(
+        leadingWidth: 120,
+        leading: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: themeFromContext(context).colorScheme.primary,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: TextField(
+            decoration: InputDecoration(
+              icon: Icon(Icons.search),
+              border: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              hintText: "Search...",
+            ),
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              GoRouter.of(context).push('/cart');
+            },
+            icon: Icon(Icons.shopping_bag_outlined),
+          ),
+          IconButton(
+            onPressed: () {
+              GoRouter.of(context).push('/profile');
+            },
+            icon: Icon(Icons.person_outline),
+          ),
+        ],
       ),
-      // LATER: Refactor the whole UI
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 16),
-              // Search bar with suggestions
-              SearchBarWithSuggestions(
-                suggestionsData: suggestionTitles,
-                onSearch: (query) {
-                  // You can implement actual filtering logic here if needed
-                  debugPrint('Search: $query');
-                },
-              ),
+              // const SizedBox(height: 16),
+
+              // SearchBarWithSuggestions(
+              //   suggestionsData: suggestionTitles,
+              //   onSearch: (query) {
+              //     debugPrint('Search: $query');
+              //   },
+              // ),
               const SizedBox(height: 16),
               // Grid konten
               Expanded(
@@ -99,14 +122,12 @@ class _HomePageState extends State<HomePage> with RouteAware {
                         ? const Center(child: CircularProgressIndicator())
                         : items.isEmpty
                         ? Container(
-                          // color: Colors.white,
                           child: RefreshIndicator(
                             onRefresh: fetchItems,
                             child: Center(child: Text('Belum ada item.')),
                           ),
                         )
                         : Container(
-                          // color: Colors.white,
                           child: RefreshIndicator(
                             onRefresh: fetchItems,
                             child: GridView.builder(

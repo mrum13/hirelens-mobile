@@ -96,8 +96,8 @@ class _SearchBarWithSuggestionsState extends State<SearchBarWithSuggestions> {
                   focusNode: _focusNode,
                   decoration: const InputDecoration(
                     hintText: 'Search...',
-                    border: InputBorder.none,
-                    isDense: true,
+                    // border: InputBorder.none,
+                    // isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
                   style: const TextStyle(fontSize: 16),

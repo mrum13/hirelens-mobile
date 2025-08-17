@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/components/buttons.dart';
 import 'package:unsplash_clone/screens/register.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -65,13 +67,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: const OutlineInputBorder(),
-      focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Color.fromARGB(255, 41, 41, 41)),
-      ),
-    );
+    return InputDecoration(labelText: label);
   }
 
   @override
@@ -85,13 +81,13 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Welcome to',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  style: Theme.of(context).textTheme.displaySmall,
                 ),
-                const Text(
+                Text(
                   'Project HireLens',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.displayLarge,
                 ),
                 const SizedBox(height: 12),
                 const Text(
@@ -129,24 +125,15 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 41, 41, 41),
+                MyFilledButton(
+                  variant: MyFilledButtonVariant.primary,
+                  onTap: _isLoading ? null : _login,
+                  isLoading: _isLoading,
+                  child: Text(
+                    "Login",
+                    style: TextStyle(
+                      color: themeFromContext(context).colorScheme.surface,
                     ),
-                    onPressed: _isLoading ? null : _login,
-                    child:
-                        _isLoading
-                            ? const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            )
-                            : const Text(
-                              'Login',
-                              style: TextStyle(color: Colors.white70),
-                            ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -162,9 +149,11 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         );
                       },
-                      child: const Text(
+                      child: Text(
                         'Daftar',
-                        style: TextStyle(color: Colors.black87),
+                        style: TextStyle(
+                          color: themeFromContext(context).colorScheme.primary,
+                        ),
                       ),
                     ),
                   ],

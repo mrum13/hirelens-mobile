@@ -30,22 +30,23 @@ class MyApp extends StatelessWidget {
       routerConfig: router,
       title: 'Project Hirelens',
       theme:
-          HirelensTheme(
-            TextTheme(
-              displayLarge: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 48,
-              ),
-              displayMedium: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 24,
-              ),
-              displaySmall: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-              ),
-            ),
-          ).dark(),
+          // HirelensTheme(
+          //   TextTheme(
+          //     displayLarge: TextStyle(
+          //       fontWeight: FontWeight.w700,
+          //       fontSize: 32,
+          //     ),
+          //     displayMedium: TextStyle(
+          //       fontWeight: FontWeight.w600,
+          //       fontSize: 16,
+          //     ),
+          //     displaySmall: TextStyle(
+          //       fontWeight: FontWeight.w600,
+          //       fontSize: 12,
+          //     ),
+          //   ),
+          // ).dark(),
+          hirelensDarkTheme,
     );
   }
 }

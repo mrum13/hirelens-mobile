@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class VerifyRegistrationPage extends StatefulWidget {
   final String email;
@@ -76,7 +78,7 @@ class _VerifyRegistrationPageState extends State<VerifyRegistrationPage> {
               const Text(
                 'Masukkan kode OTP yang dikirim ke email Anda',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 24),
               TextField(
@@ -91,30 +93,15 @@ class _VerifyRegistrationPageState extends State<VerifyRegistrationPage> {
                 enabled: !_isLoading,
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _verifyOtp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 41, 41, 41),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+              MyFilledButton(
+                isLoading: _isLoading,
+                variant: MyFilledButtonVariant.primary,
+                onTap: !_isLoading ? _verifyOtp : null,
+                child: Text(
+                  "Verifikasi",
+                  style: TextStyle(
+                    color: themeFromContext(context).colorScheme.surface,
                   ),
-                  child:
-                      _isLoading
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                          : const Text(
-                            'Verifikasi',
-                            style: TextStyle(color: Colors.white70),
-                          ),
                 ),
               ),
             ],
