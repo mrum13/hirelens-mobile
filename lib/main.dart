@@ -32,9 +32,6 @@ class MyApp extends StatelessWidget {
       theme:
           HirelensTheme(
             TextTheme(
-              bodyLarge: TextStyle(fontSize: 32),
-              bodyMedium: TextStyle(fontSize: 16),
-              bodySmall: TextStyle(fontSize: 12),
               displayLarge: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 48,
@@ -48,7 +45,7 @@ class MyApp extends StatelessWidget {
                 fontSize: 16,
               ),
             ),
-          ).light(),
+          ).dark(),
     );
   }
 }

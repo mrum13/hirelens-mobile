@@ -145,134 +145,130 @@ class _CreateItemPageState extends State<CreateItemPage> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text(
+          title: Text(
             'Buat Item Baru',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
-            ),
+            style: Theme.of(context).textTheme.displaySmall,
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Item',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Nama item wajib diisi'
-                                : null,
+        body: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ImagePickerWidget(
+                  initialImage: _selectedImage,
+                  enabled: !_isLoading,
+                  height: 240,
+                  onImageSelected: (file) {
+                    setState(() {
+                      _selectedImage = file;
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Item',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Deskripsi',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
+                  style: TextStyle(fontSize: 16),
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Nama item wajib diisi'
+                              : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descController,
+                  decoration: const InputDecoration(
+                    labelText: 'Deskripsi',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Thumbnail',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  minLines: 3,
+                  maxLines: 5,
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _priceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 8),
-                  ImagePickerWidget(
-                    initialImage: _selectedImage,
-                    enabled: !_isLoading,
-                    onImageSelected: (file) {
-                      setState(() {
-                        _selectedImage = file;
-                      });
-                    },
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontSize: 16),
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Harga wajib diisi'
+                              : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(
+                    labelText: 'Alamat',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Harga',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Harga wajib diisi'
-                                : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Alamat',
-                      border: OutlineInputBorder(),
-                    ),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Alamat wajib diisi'
-                                : null,
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 41, 41, 41),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        textStyle: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 0,
+                  style: TextStyle(fontSize: 16),
+                  maxLines: 2,
+                  validator:
+                      (value) =>
+                          value == null || value.isEmpty
+                              ? 'Alamat wajib diisi'
+                              : null,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-                      onPressed:
-                          _isLoading
-                              ? null
-                              : () {
-                                if (_formKey.currentState!.validate()) {
-                                  _createItem();
-                                }
-                              },
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                              : const Text('Simpan'),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
                     ),
+                    onPressed:
+                        _isLoading
+                            ? null
+                            : () {
+                              if (_formKey.currentState!.validate()) {
+                                _createItem();
+                              }
+                            },
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                // color: Colors.white,
+                              ),
+                            )
+                            : const Text('Simpan'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

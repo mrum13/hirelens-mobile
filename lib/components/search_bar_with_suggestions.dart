@@ -76,13 +76,19 @@ class _SearchBarWithSuggestionsState extends State<SearchBarWithSuggestions> {
         Container(
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: Theme.of(context).colorScheme.surfaceBright,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(width: 8),
-              const Icon(Icons.search, color: Colors.grey, size: 22),
+              Icon(
+                Icons.search,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
@@ -94,7 +100,7 @@ class _SearchBarWithSuggestionsState extends State<SearchBarWithSuggestions> {
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(vertical: 10),
                   ),
-                  style: const TextStyle(color: Colors.black87, fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                   onSubmitted: (value) => widget.onSearch(value),
                 ),
               ),
@@ -105,7 +111,7 @@ class _SearchBarWithSuggestionsState extends State<SearchBarWithSuggestions> {
           Container(
             margin: const EdgeInsets.only(top: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
@@ -122,7 +128,12 @@ class _SearchBarWithSuggestionsState extends State<SearchBarWithSuggestions> {
               itemBuilder: (context, index) {
                 final suggestion = _filteredSuggestions[index];
                 return ListTile(
-                  title: Text(suggestion),
+                  title: Text(
+                    suggestion,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
                   onTap: () => _onSuggestionTap(suggestion),
                 );
               },

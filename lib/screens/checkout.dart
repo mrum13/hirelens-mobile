@@ -20,6 +20,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   List<dynamic> durations = [];
   bool isLoading = true;
   late dynamic selectedDuration;
+  DateTime? selectedDate;
 
   Future<void> fetchData() async {
     final client = Supabase.instance.client;
@@ -91,52 +92,82 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      bottomNavigationBar: Container(
-        height: 100,
-        decoration: BoxDecoration(color: Colors.white),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              // LATER: Use GestureDetector instead
-              ElevatedButton(
-                onPressed: payPanjar,
-                child: Row(
-                  spacing: 8,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Panjar"),
-                    Text(
-                      formatCurrency(calculatePanjar(currentPrice).round()),
-                      style: TextStyle(fontSize: 8, color: Colors.black38),
-                    ),
-                  ],
+      bottomNavigationBar:
+          isLoading
+              ? null
+              : SizedBox(
+                height: 100,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: payPanjar,
+                        child: Container(
+                          width: double.infinity,
+                          height: 56,
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            spacing: 16,
+                            children: [
+                              Text("Panjar"),
+                              Text(
+                                formatCurrency(
+                                  calculatePanjar(currentPrice).round(),
+                                ),
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceBright,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: payFull,
+                        child: Container(
+                          width: double.infinity,
+                          height: 56,
+                          padding: EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            spacing: 16,
+                            children: [
+                              Text("Full"),
+                              Text(
+                                formatCurrency(currentPrice),
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceBright,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              ElevatedButton(
-                onPressed: payFull,
-                child: Row(
-                  spacing: 8,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Bayar Full"),
-                    Text(
-                      formatCurrency(currentPrice),
-                      style: TextStyle(fontSize: 8, color: Colors.black38),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
-              : 
-              SingleChildScrollView(
+              : SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,9 +221,49 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       onChanged: changeSelectedDuration,
                     ),
                     const SizedBox(height: 16),
-                    DatePickerDialog(
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now(),
+                    DatePickerTheme(
+                      data: DatePickerThemeData(
+                        dayStyle: TextStyle(fontSize: 16),
+                        yearStyle: TextStyle(fontSize: 16),
+                        weekdayStyle: TextStyle(fontSize: 16),
+                        inputDecorationTheme: InputDecorationTheme(
+                          labelStyle: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () async {
+                          DateTime? tmpSelectedDate;
+                          tmpSelectedDate = await showDatePicker(
+                            context: context,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(DateTime.now().year + 2),
+                          );
+
+                          setState(() {
+                            selectedDate = tmpSelectedDate;
+                          });
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(
+                                  context,
+                                ).buttonTheme.colorScheme!.tertiary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            selectedDate != null
+                                ? "Pilih Tanggal : ${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}"
+                                : "Pilih Tanggal",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onTertiary,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

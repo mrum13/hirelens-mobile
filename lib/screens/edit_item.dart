@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 
-// URGENT: Refactor this code to actually update data
 class EditItemPage extends StatefulWidget {
   const EditItemPage({super.key, required this.dataId});
   final int dataId;
@@ -89,6 +88,7 @@ class _EditItemPageState extends State<EditItemPage> {
     return fullPath;
   }
 
+  // URGENT: Refactor this function to actually update data
   Future<void> updateItem({
     required int dataId,
     required String name,
@@ -155,17 +155,15 @@ class _EditItemPageState extends State<EditItemPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Edit Item',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),

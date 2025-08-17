@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
         items.map((item) => item['name'] as String).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
       appBar: HomeCustomAppBar(
         onCartPressed: () {
           Navigator.push(
@@ -99,14 +99,14 @@ class _HomePageState extends State<HomePage> with RouteAware {
                         ? const Center(child: CircularProgressIndicator())
                         : items.isEmpty
                         ? Container(
-                          color: Colors.white,
+                          // color: Colors.white,
                           child: RefreshIndicator(
                             onRefresh: fetchItems,
                             child: Center(child: Text('Belum ada item.')),
                           ),
                         )
                         : Container(
-                          color: Colors.white,
+                          // color: Colors.white,
                           child: RefreshIndicator(
                             onRefresh: fetchItems,
                             child: GridView.builder(
