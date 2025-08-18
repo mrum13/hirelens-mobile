@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -77,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: EdgeInsets.all(20),
       margin: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceBright,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
@@ -113,11 +114,8 @@ class _ProfilePageState extends State<ProfilePage> {
           SizedBox(height: 16),
           Text(
             name,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              // color: Colors.black87,
-            ),
+            style: themeFromContext(context).textTheme.displayLarge,
+            textAlign: TextAlign.center,
           ),
           SizedBox(height: 4),
           Text(
@@ -168,15 +166,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
       child: Column(
         children: [
@@ -209,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceBright,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
@@ -284,7 +276,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceBright,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
@@ -295,7 +287,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: EdgeInsets.all(20),
             child: Text(
               'Informasi',
-              style: Theme.of(context).textTheme.displaySmall,
+              style: themeFromContext(context).textTheme.displaySmall,
             ),
           ),
           _buildMenuItem(
@@ -332,7 +324,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }) {
     return ListTile(
       leading: Icon(icon),
-      title: Text(title, style: Theme.of(context).textTheme.displaySmall),
+      title: Text(
+        title,
+        style: themeFromContext(context).textTheme.displayMedium,
+      ),
       subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade500)),
       trailing: trailing,
       onTap: onTap,
@@ -352,8 +347,8 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.error,
-          foregroundColor: Theme.of(context).colorScheme.onError,
+          backgroundColor: themeFromContext(context).colorScheme.error,
+          foregroundColor: themeFromContext(context).colorScheme.onError,
           minimumSize: Size(double.infinity, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -364,8 +359,10 @@ class _ProfilePageState extends State<ProfilePage> {
         label: Text(
           'Keluar',
           style: TextStyle(
-            fontWeight: Theme.of(context).textTheme.displaySmall!.fontWeight,
-            fontSize: Theme.of(context).textTheme.displaySmall!.fontSize,
+            fontWeight:
+                themeFromContext(context).textTheme.displaySmall!.fontWeight,
+            fontSize:
+                themeFromContext(context).textTheme.displaySmall!.fontSize,
           ),
         ),
         onPressed: _onLogoutPressed,
