@@ -72,7 +72,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    // URGENT: Recreate the
+    // URGENT: Recreate the suggestion box functionality
     // final List<String> suggestionTitles =
     //     items.map((item) => item['name'] as String).toList();
 
@@ -126,8 +126,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
                       children: [
                         Text(
                           "${getTimedMessage()},",
-                          style:
-                              themeFromContext(context).textTheme.displayMedium,
+                          style: themeFromContext(context).textTheme.bodyMedium,
                         ),
                         Text(
                           (fetchUserData().userMetadata!['displayName']!

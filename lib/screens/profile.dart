@@ -128,23 +128,14 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: BoxDecoration(
               color:
                   role.toLowerCase() == 'customer'
-                      ? const Color.fromARGB(175, 90, 245, 201)
-                      : const Color.fromARGB(175, 245, 201, 90),
+                      ? themeFromContext(context).colorScheme.tertiary
+                      : themeFromContext(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color:
-                    role.toLowerCase() == 'customer'
-                        ? Colors.green.shade700
-                        : Colors.yellow.shade700,
-              ),
             ),
             child: Text(
               role,
               style: TextStyle(
-                color:
-                    role.toLowerCase() == 'customer'
-                        ? Colors.green.shade200
-                        : Colors.yellow.shade200,
+                color: themeFromContext(context).colorScheme.onSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -163,34 +154,127 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildCustomerMenuSection() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: themeFromContext(context).colorScheme.surfaceBright,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
-      ),
-      child: Column(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        spacing: 16,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildMenuItem(
-            icon: Icons.history,
-            title: 'Riwayat Pesanan',
-            subtitle: 'Lihat pesanan sebelumnya',
+          GestureDetector(
             onTap: _onOrderHistory,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 96,
+                  width: 172,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: themeFromContext(context).colorScheme.surfaceBright,
+                  ),
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Riwayat Pesanan",
+                    style: themeFromContext(context).textTheme.displayMedium,
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  top: -32,
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: themeFromContext(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.history_outlined, size: 40),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.payment,
-            title: 'Metode Pembayaran',
-            subtitle: 'Kelola opsi pembayaran',
+          GestureDetector(
             onTap: _onPaymentMethods,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 96,
+                  width: 172,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: themeFromContext(context).colorScheme.surfaceBright,
+                  ),
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Metode Pembayaran",
+                    style: themeFromContext(context).textTheme.displayMedium,
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  top: -32,
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: themeFromContext(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.credit_card_outlined, size: 40),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.location_on_outlined,
-            title: 'Alamat',
-            subtitle: 'Kelola alamat pengiriman',
+          GestureDetector(
             onTap: _onAddresses,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 96,
+                  width: 172,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: themeFromContext(context).colorScheme.surfaceBright,
+                  ),
+                  padding: EdgeInsets.all(12),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Alamat",
+                    style: themeFromContext(context).textTheme.displayMedium,
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  top: -32,
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: themeFromContext(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.location_on_outlined, size: 40),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

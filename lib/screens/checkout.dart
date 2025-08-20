@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class CheckoutPage extends StatefulWidget {
   final int dataId;
@@ -49,6 +51,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
   }
 
+  // URGENT: Implement the payment logics
   void payPanjar() async {
     setState(() {
       isLoading = true;
@@ -56,7 +59,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void payFull() async {
-    // URGENT: Finish this function
+    setState(() {
+      isLoading = true;
+    });
   }
 
   String formatCurrency(int price) {
@@ -92,78 +97,71 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      bottomNavigationBar:
-          isLoading
-              ? null
-              : SizedBox(
-                height: 100,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      bottomNavigationBar: SizedBox(
+        height: 80,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 16,
+            children: [
+              Expanded(
+                child: MyFilledButton(
+                  variant: MyFilledButtonVariant.neutral,
+                  onTap: payPanjar,
+                  child: Column(
+                    spacing: 4,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: payPanjar,
-                        child: Container(
-                          width: double.infinity,
-                          height: 56,
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            spacing: 16,
-                            children: [
-                              Text("Panjar"),
-                              Text(
-                                formatCurrency(
-                                  calculatePanjar(currentPrice).round(),
-                                ),
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceBright,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      Text(
+                        "Panjar",
+                        style: themeFromContext(context).textTheme.bodyLarge,
                       ),
-                      GestureDetector(
-                        onTap: payFull,
-                        child: Container(
-                          width: double.infinity,
-                          height: 56,
-                          padding: EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            spacing: 16,
-                            children: [
-                              Text("Full"),
-                              Text(
-                                formatCurrency(currentPrice),
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceBright,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
+                      Text(
+                        formatCurrency(calculatePanjar(currentPrice).round()),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+              Expanded(
+                child: MyFilledButton(
+                  variant: MyFilledButtonVariant.primary,
+                  onTap: payFull,
+                  child: Column(
+                    spacing: 4,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Full",
+                        style: themeFromContext(
+                          context,
+                        ).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                      Text(
+                        formatCurrency(currentPrice),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -251,7 +249,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                             color:
                                 Theme.of(
                                   context,
-                                ).buttonTheme.colorScheme!.tertiary,
+                                ).buttonTheme.colorScheme!.primary,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(

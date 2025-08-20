@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/checkout.dart';
+// import 'package:unsplash_clone/theme.dart';
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key, required this.dataId});
@@ -23,6 +26,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   double price = 0;
   bool isLoading = true;
   bool isOnCart = false;
+  List<String> galleryImages = [];
 
   Future<bool> checkIsAlreadyOnCart() async {
     final client = Supabase.instance.client;
@@ -78,6 +82,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
+  void fetchGalleryImages() async {
+    final client = Supabase.instance.client;
+    try {
+      final response = await client
+          .from('item_images')
+          .select('image_url')
+          .eq('item_id', dataId);
+
+      if (response.isNotEmpty) {
+        setState(() {
+          galleryImages = List<String>.from(
+            response.map((item) => item['image_url']),
+          );
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error while fetching product galery: $e")),
+      );
+    }
+  }
+
   void toggleCart() async {
     final client = Supabase.instance.client;
     setState(() {
@@ -125,6 +151,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   void initState() {
     super.initState();
     fetchAndSetData();
+    fetchGalleryImages();
   }
 
   @override
@@ -141,6 +168,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           body: Center(child: CircularProgressIndicator()),
         )
         : Scaffold(
+          // URGENT: Redesign the shape and buttons
           bottomNavigationBar: SizedBox(
             height: 100,
             child: Padding(
@@ -148,7 +176,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // LATER: Use GestureDetector instead
+                  // TODO: Use GestureDetector instead
                   ElevatedButton(
                     onPressed: toggleCart,
                     child:
@@ -175,79 +203,40 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               initialIndex: 0,
               child: CustomScrollView(
                 slivers: [
-                  // URGENT: Find out why it's still overflowing
                   SliverAppBar(
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    expandedHeight: 440,
                     pinned: true,
+                    surfaceTintColor: Colors.transparent,
                     leading: IconButton(
                       icon: const Icon(Icons.arrow_back),
                       onPressed: () => GoRouter.of(context).pop(),
                     ),
-                    flexibleSpace: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final percent = ((constraints.maxHeight -
-                                    kToolbarHeight) /
-                                (240 - kToolbarHeight))
-                            .clamp(0.0, 1.0);
+                  ),
 
-                        final imageSize = 80 + (160 * percent);
-                        final titleSize = 18 + (14 * percent);
-
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            top:
-                                percent > 0.5
-                                    ? MediaQuery.of(context).padding.top + 8
-                                    : 0,
-                            left: percent > 0.5 ? 16 : 0,
-                            right: percent > 0.5 ? 16 : 0,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  thumbnail,
-                                  width: double.infinity,
-                                  height: imageSize,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                name,
-                                style: TextStyle(
-                                  fontSize: titleSize,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                "dari $vendorName",
-                                style: TextStyle(
-                                  fontSize: 12 + (4 * percent),
-                                  fontWeight: FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: CollapsibleHeaderDelegate(
+                      maxExtentHeight: 300,
+                      minExtentHeight: 120,
+                      imageUrl: thumbnail,
+                      title: name,
+                      subtitle: "Dari $vendorName",
                     ),
-                    bottom: TabBar(
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.start,
-                      tabs: [
-                        Tab(text: "Deskripsi"),
-                        Tab(text: "Galeri"),
-                        Tab(text: "Behind the Scenes"),
-                      ],
+                  ),
+
+                  // SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: TabBarHeaderDelegate(
+                      TabBar(
+                        tabAlignment: TabAlignment.start,
+                        isScrollable: true,
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        tabs: [
+                          Tab(text: "Deskripsi"),
+                          Tab(text: "Galeri"),
+                          Tab(text: "Behind the Scene"),
+                        ],
+                      ),
                     ),
                   ),
 
@@ -256,10 +245,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       children: [
                         // Deskripsi
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              SizedBox(height: 32),
                               Text("Alamat : $address"),
                               SizedBox(height: 8),
                               Text(description),
@@ -270,41 +260,55 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         // Galeri
                         Container(
                           padding: const EdgeInsets.all(16),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                            itemCount: 5,
-                            itemBuilder: (context, index) {
-                              // TODO: Create an expandable image viewer widget
-                              return Placeholder();
-                            },
-                          ),
+                          child:
+                              galleryImages.isNotEmpty
+                                  ? GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 8,
+                                          mainAxisSpacing: 8,
+                                        ),
+                                    itemCount: galleryImages.length,
+                                    itemBuilder: (context, index) {
+                                      // TODO: Create an expandable image viewer widget
+                                      return Placeholder();
+                                    },
+                                  )
+                                  : Center(
+                                    child: Text(
+                                      "Belum ada gambar untuk produk ini.",
+                                    ),
+                                  ),
                         ),
 
                         // Behind the Scene
                         Container(
                           padding: const EdgeInsets.all(16),
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                            itemCount: 8,
-                            itemBuilder: (context, index) {
-                              // TODO: Create an expandable image and video viewer widget
-                              return Placeholder();
-                            },
-                          ),
+                          child:
+                              galleryImages.isNotEmpty
+                                  ? GridView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: 8,
+                                          mainAxisSpacing: 8,
+                                        ),
+                                    itemCount: 8,
+                                    itemBuilder: (context, index) {
+                                      // TODO: Create an expandable image and video viewer widget
+                                      return Placeholder();
+                                    },
+                                  )
+                                  : Center(
+                                    child: Text(
+                                      "Belum ada media untuk produk ini.",
+                                    ),
+                                  ),
                         ),
                       ],
                     ),
@@ -314,5 +318,156 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             ),
           ),
         );
+  }
+}
+
+class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final double maxExtentHeight;
+  final double minExtentHeight;
+  final String imageUrl;
+  final String title;
+  final String subtitle;
+
+  CollapsibleHeaderDelegate({
+    required this.maxExtentHeight,
+    required this.minExtentHeight,
+    required this.imageUrl,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  double get maxExtent => maxExtentHeight;
+
+  @override
+  double get minExtent => minExtentHeight;
+
+  @override
+  bool shouldRebuild(covariant CollapsibleHeaderDelegate old) =>
+      old.maxExtent != maxExtent ||
+      old.minExtent != minExtent ||
+      old.imageUrl != imageUrl ||
+      old.title != title ||
+      old.subtitle != subtitle;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final screenW = MediaQuery.of(context).size.width;
+    final t = (shrinkOffset / (maxExtent - minExtent)).clamp(0.0, 1.0);
+    final curved = Curves.easeInOut.transform(t);
+
+    final startW = screenW - 36;
+    final startH = startW * 10 / 16;
+
+    final horizontalPadding = 24.0;
+    final endW = 160 - (horizontalPadding * 2);
+    final endH = endW; // 1:1
+
+    final imageW = lerpDouble(startW, endW, curved)!;
+    final imageH = lerpDouble(startH, endH, curved)!;
+
+    final startLeft = (screenW - startW) / 2;
+    final endLeft = horizontalPadding;
+    final imageLeft = lerpDouble(startLeft, endLeft, curved)!;
+
+    final startTop = 8.0;
+    final endTop = (minExtent - imageH) / 2;
+    final imageTop = lerpDouble(startTop, endTop, curved)!;
+
+    // Title: below image when expanded (centered), moves to the right of image when collapsed
+    final titleStartTop = startTop + startH + 12.0; // below the big image
+    // when collapsed, keep it vertically centered in minExtent
+    final titleEndTop = (minExtent - 20.0) / 2;
+    final titleTop = lerpDouble(titleStartTop, titleEndTop, curved)!;
+
+    // title left: centered -> to right of small image
+    final titleStartLeft = 24;
+    final titleEndLeft = imageLeft + imageW + 12.0;
+    final titleLeft = lerpDouble(titleStartLeft, titleEndLeft, curved)!;
+
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // background optional (blur/gradient) - tweak if desired
+          Positioned.fill(child: Container()),
+
+          // image
+          Positioned(
+            left: imageLeft,
+            top: imageTop,
+            width: imageW,
+            height: imageH,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(imageUrl, fit: BoxFit.cover),
+            ),
+          ),
+
+          // Title & subtitle
+          Positioned(
+            left: titleLeft,
+            top: titleTop,
+            right: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // title
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: lerpDouble(20, 16, curved),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// small helper to pin TabBar as its own sliver (prevents overlap)
+class TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  TabBarHeaderDelegate(this.tabBar);
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  bool shouldRebuild(covariant TabBarHeaderDelegate old) => false;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: tabBar,
+    );
   }
 }

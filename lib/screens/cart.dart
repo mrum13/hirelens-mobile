@@ -40,29 +40,31 @@ class _CartPageState extends State<CartPage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: fetchDatas,
-          child: ListView(
-            padding: EdgeInsets.symmetric(horizontal: 8),
-            children:
-                items
-                    .map(
-                      ((item) => CartItem(
-                        itemAddress: item['item_id']['address'],
-                        itemId: item['item_id']['id'],
-                        itemName: item['item_id']['name'],
-                        itemVendor: item['item_id']['vendor']['name'],
-                        itemPrice: item['item_id']['price'],
-                        itemThumbnail: item['item_id']['thumbnail'],
-                      )),
-                    )
-                    .toList(),
-          ),
+          child:
+              !isLoading
+                  ? ListView(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    children:
+                        items
+                            .map(
+                              ((item) => CartItem(
+                                itemAddress: item['item_id']['address'],
+                                itemId: item['item_id']['id'],
+                                itemName: item['item_id']['name'],
+                                itemVendor: item['item_id']['vendor']['name'],
+                                itemPrice: item['item_id']['price'],
+                                itemThumbnail: item['item_id']['thumbnail'],
+                              )),
+                            )
+                            .toList(),
+                  )
+                  : Center(child: CircularProgressIndicator()),
         ),
       ),
     );
   }
 }
 
-// URGENT: Finish this widget
 class CartItem extends StatefulWidget {
   final int itemId;
   final String itemName;
@@ -118,7 +120,12 @@ class _CartItemState extends State<CartItem> {
                   spacing: 4,
                   children: [
                     Icon(Icons.location_on, size: 12),
-                    Text(widget.itemAddress, style: TextStyle(fontSize: 12)),
+                    Text(
+                      widget.itemAddress.length > 16
+                          ? "${widget.itemAddress.substring(0, 16)}..."
+                          : widget.itemAddress,
+                      style: TextStyle(fontSize: 12),
+                    ),
                   ],
                 ),
               ],
