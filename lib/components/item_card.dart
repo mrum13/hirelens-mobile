@@ -71,7 +71,7 @@ class _ItemCardState extends State<ItemCard> {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: Theme.of(context).colorScheme.surfaceBright,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -84,7 +84,7 @@ class _ItemCardState extends State<ItemCard> {
                           height: 120,
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                            color: Theme.of(context).colorScheme.surfaceBright,
                             borderRadius: BorderRadius.circular(8),
                           ),
                         )
@@ -124,7 +124,10 @@ class _ItemCardState extends State<ItemCard> {
                 const SizedBox(height: 4),
                 Text(
                   widget.description,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const Spacer(),
                 Text("Mulai dari", style: TextStyle(fontSize: 8)),
@@ -139,13 +142,15 @@ class _ItemCardState extends State<ItemCard> {
         : Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: Theme.of(context).colorScheme.surfaceBright,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             widthFactor: double.infinity,
             heightFactor: double.infinity,
-            child: CircularProgressIndicator(color: Colors.grey[300]),
+            child: CircularProgressIndicator(
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         );
   }

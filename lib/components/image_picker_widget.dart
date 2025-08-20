@@ -6,14 +6,16 @@ class ImagePickerWidget extends StatefulWidget {
   final File? initialImage;
   final ValueChanged<File?> onImageSelected;
   final bool enabled;
-  final double size;
+  final double width;
+  final double height;
 
   const ImagePickerWidget({
     super.key,
     this.initialImage,
     required this.onImageSelected,
     this.enabled = true,
-    this.size = 120,
+    this.width = double.infinity,
+    this.height = 120,
   });
 
   @override
@@ -50,24 +52,22 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
                 borderRadius: BorderRadius.circular(8),
                 child: Image.file(
                   _image!,
-                  width: widget.size,
-                  height: widget.size,
+                  width: widget.width,
+                  height: widget.height,
                   fit: BoxFit.cover,
                 ),
               )
               : Container(
-                width: widget.size,
-                height: widget.size,
+                width: widget.width,
+                height: widget.height,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  // color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.add_a_photo,
-                  size: 40,
-                  color: Colors.grey,
-                ),
+                child: const Icon(Icons.add_a_photo, size: 40),
               ),
     );
   }

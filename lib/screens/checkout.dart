@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class CheckoutPage extends StatefulWidget {
   final int dataId;
@@ -20,6 +22,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   List<dynamic> durations = [];
   bool isLoading = true;
   late dynamic selectedDuration;
+  DateTime? selectedDate;
 
   Future<void> fetchData() async {
     final client = Supabase.instance.client;
@@ -48,6 +51,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
   }
 
+  // URGENT: Implement the payment logics
   void payPanjar() async {
     setState(() {
       isLoading = true;
@@ -55,7 +59,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void payFull() async {
-    // URGENT: Finish this function
+    setState(() {
+      isLoading = true;
+    });
   }
 
   String formatCurrency(int price) {
@@ -91,41 +97,65 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      bottomNavigationBar: Container(
-        height: 100,
-        decoration: BoxDecoration(color: Colors.white),
+      bottomNavigationBar: SizedBox(
+        height: 80,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            spacing: 16,
             children: [
-              // LATER: Use GestureDetector instead
-              ElevatedButton(
-                onPressed: payPanjar,
-                child: Row(
-                  spacing: 8,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Panjar"),
-                    Text(
-                      formatCurrency(calculatePanjar(currentPrice).round()),
-                      style: TextStyle(fontSize: 8, color: Colors.black38),
-                    ),
-                  ],
+              Expanded(
+                child: MyFilledButton(
+                  variant: MyFilledButtonVariant.neutral,
+                  onTap: payPanjar,
+                  child: Column(
+                    spacing: 4,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Panjar",
+                        style: themeFromContext(context).textTheme.bodyLarge,
+                      ),
+                      Text(
+                        formatCurrency(calculatePanjar(currentPrice).round()),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              ElevatedButton(
-                onPressed: payFull,
-                child: Row(
-                  spacing: 8,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text("Bayar Full"),
-                    Text(
-                      formatCurrency(currentPrice),
-                      style: TextStyle(fontSize: 8, color: Colors.black38),
-                    ),
-                  ],
+              Expanded(
+                child: MyFilledButton(
+                  variant: MyFilledButtonVariant.primary,
+                  onTap: payFull,
+                  child: Column(
+                    spacing: 4,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Full",
+                        style: themeFromContext(
+                          context,
+                        ).textTheme.bodyLarge!.copyWith(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                      Text(
+                        formatCurrency(currentPrice),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -135,8 +165,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
-              : 
-              SingleChildScrollView(
+              : SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,9 +219,49 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       onChanged: changeSelectedDuration,
                     ),
                     const SizedBox(height: 16),
-                    DatePickerDialog(
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now(),
+                    DatePickerTheme(
+                      data: DatePickerThemeData(
+                        dayStyle: TextStyle(fontSize: 16),
+                        yearStyle: TextStyle(fontSize: 16),
+                        weekdayStyle: TextStyle(fontSize: 16),
+                        inputDecorationTheme: InputDecorationTheme(
+                          labelStyle: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      child: GestureDetector(
+                        onTap: () async {
+                          DateTime? tmpSelectedDate;
+                          tmpSelectedDate = await showDatePicker(
+                            context: context,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(DateTime.now().year + 2),
+                          );
+
+                          setState(() {
+                            selectedDate = tmpSelectedDate;
+                          });
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(
+                                  context,
+                                ).buttonTheme.colorScheme!.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            selectedDate != null
+                                ? "Pilih Tanggal : ${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}"
+                                : "Pilih Tanggal",
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onTertiary,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

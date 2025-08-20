@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -31,21 +32,15 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Profil',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -72,23 +67,20 @@ class _ProfilePageState extends State<ProfilePage> {
     final email = user.email ?? '-';
     final role =
         (user.userMetadata!['role'] ?? '-').isNotEmpty
-            ? (user.userMetadata!['role'].toUpperCase() +
-                user.userMetadata!['role'].toLowerCase())
+            ? (user.userMetadata!['role'].toString()[0].toUpperCase() +
+                user.userMetadata!['role']
+                    .toString()
+                    .substring(1)
+                    .toLowerCase())
             : '-';
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(20),
       margin: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
       child: Column(
         children: [
@@ -111,13 +103,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     decoration: BoxDecoration(
                       color: Colors.black,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(),
                     ),
-                    child: Icon(
-                      Icons.camera_alt,
-                      color: Colors.white,
-                      size: 16,
-                    ),
+                    child: Icon(Icons.camera_alt, size: 16),
                   ),
                 ),
               ),
@@ -126,11 +114,8 @@ class _ProfilePageState extends State<ProfilePage> {
           SizedBox(height: 16),
           Text(
             name,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+            style: themeFromContext(context).textTheme.displayLarge,
+            textAlign: TextAlign.center,
           ),
           SizedBox(height: 4),
           Text(
@@ -143,23 +128,14 @@ class _ProfilePageState extends State<ProfilePage> {
             decoration: BoxDecoration(
               color:
                   role.toLowerCase() == 'customer'
-                      ? const Color.fromARGB(250, 160, 250, 161)
-                      : const Color.fromARGB(177, 250, 225, 161),
+                      ? themeFromContext(context).colorScheme.tertiary
+                      : themeFromContext(context).colorScheme.primary,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color:
-                    role.toLowerCase() == 'customer'
-                        ? Colors.green.shade700
-                        : Colors.yellow.shade700,
-              ),
             ),
             child: Text(
               role,
               style: TextStyle(
-                color:
-                    role.toLowerCase() == 'customer'
-                        ? Colors.green.shade900
-                        : Colors.yellow.shade900,
+                color: themeFromContext(context).colorScheme.onSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -178,47 +154,127 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildCustomerMenuSection() {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Row(
+        spacing: 16,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildMenuItem(
-            icon: Icons.history,
-            title: 'Riwayat Pesanan',
-            subtitle: 'Lihat pesanan sebelumnya',
+          GestureDetector(
             onTap: _onOrderHistory,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 96,
+                  width: 172,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: themeFromContext(context).colorScheme.surfaceBright,
+                  ),
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Riwayat Pesanan",
+                    style: themeFromContext(context).textTheme.displayMedium,
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  top: -32,
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: themeFromContext(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.history_outlined, size: 40),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.favorite_outline,
-            title: 'Favorit Saya',
-            subtitle: 'Layanan fotografi yang disimpan',
-            onTap: _onFavorites,
-          ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.payment,
-            title: 'Metode Pembayaran',
-            subtitle: 'Kelola opsi pembayaran',
+          GestureDetector(
             onTap: _onPaymentMethods,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 96,
+                  width: 172,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: themeFromContext(context).colorScheme.surfaceBright,
+                  ),
+                  alignment: Alignment.centerLeft,
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    "Metode Pembayaran",
+                    style: themeFromContext(context).textTheme.displayMedium,
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  top: -32,
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: themeFromContext(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.credit_card_outlined, size: 40),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          _buildMenuItemDivider(),
-          _buildMenuItem(
-            icon: Icons.location_on_outlined,
-            title: 'Alamat',
-            subtitle: 'Kelola alamat pengiriman',
+          GestureDetector(
             onTap: _onAddresses,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  height: 96,
+                  width: 172,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: themeFromContext(context).colorScheme.surfaceBright,
+                  ),
+                  padding: EdgeInsets.all(12),
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    "Alamat",
+                    style: themeFromContext(context).textTheme.displayMedium,
+                  ),
+                ),
+                Positioned(
+                  left: 12,
+                  top: -32,
+                  child: Transform.rotate(
+                    angle: -0.12,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: themeFromContext(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(Icons.location_on_outlined, size: 40),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -229,15 +285,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
       child: Column(
         children: [
@@ -294,12 +344,6 @@ class _ProfilePageState extends State<ProfilePage> {
     ).showSnackBar(SnackBar(content: Text('Menu Riwayat Pesanan dibuka.')));
   }
 
-  void _onFavorites() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Menu Favorit Saya dibuka.')));
-  }
-
   void _onPaymentMethods() {
     ScaffoldMessenger.of(
       context,
@@ -316,15 +360,9 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeFromContext(context).colorScheme.surfaceBright,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(blurRadius: 10, offset: Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,11 +371,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: EdgeInsets.all(20),
             child: Text(
               'Informasi',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
+              style: themeFromContext(context).textTheme.displaySmall,
             ),
           ),
           _buildMenuItem(
@@ -350,7 +384,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildMenuItem(
             icon: Icons.info_outline,
             title: 'Info Aplikasi',
-            subtitle: 'Versi : 0.02_dev',
+            subtitle: 'Versi : 0.03_dev',
             onTap: () {},
           ),
         ],
@@ -373,12 +407,12 @@ class _ProfilePageState extends State<ProfilePage> {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.black54),
+      leading: Icon(icon),
       title: Text(
         title,
-        style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black87),
+        style: themeFromContext(context).textTheme.displayMedium,
       ),
-      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
+      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade500)),
       trailing: trailing,
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
@@ -388,7 +422,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildMenuItemDivider() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Divider(height: 1, color: Colors.grey.shade200),
+      child: Divider(height: 1, color: Colors.grey.shade400),
     );
   }
 
@@ -397,8 +431,8 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red.shade50,
-          foregroundColor: Colors.red,
+          backgroundColor: themeFromContext(context).colorScheme.error,
+          foregroundColor: themeFromContext(context).colorScheme.onError,
           minimumSize: Size(double.infinity, 48),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -408,7 +442,12 @@ class _ProfilePageState extends State<ProfilePage> {
         icon: Icon(Icons.logout),
         label: Text(
           'Keluar',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+          style: TextStyle(
+            fontWeight:
+                themeFromContext(context).textTheme.displaySmall!.fontWeight,
+            fontSize:
+                themeFromContext(context).textTheme.displaySmall!.fontSize,
+          ),
         ),
         onPressed: _onLogoutPressed,
       ),
@@ -424,11 +463,11 @@ class _ProfilePageState extends State<ProfilePage> {
             content: Text('Apakah Anda yakin ingin keluar?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () => GoRouter.of(context).pop(),
                 child: Text('Batal'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () => GoRouter.of(context).pop(),
                 child: Text('Keluar'),
               ),
             ],

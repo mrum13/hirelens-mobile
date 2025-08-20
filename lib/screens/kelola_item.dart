@@ -66,17 +66,15 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Kelola Item',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -92,8 +90,8 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                 icon: const Icon(Icons.add),
                 label: const Text('Buat Item Baru'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 41, 41, 41),
-                  foregroundColor: Colors.white,
+                  // backgroundColor: const Color.fromARGB(255, 41, 41, 41),
+                  // foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   textStyle: const TextStyle(
                     fontSize: 16,
