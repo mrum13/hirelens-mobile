@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
@@ -127,18 +125,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       midtrans = await MidtransSDK.init(config: config);
       midtrans!.setTransactionFinishedCallback((result) {
-        log(result.status);
-        log(result.paymentType ?? 'none');
+        if (result.status == 'canceled') {
+          GoRouter.of(context).pop();
+        } else {
+          // URGENT: Replace location to /checkout_success
+          GoRouter.of(context).push('/home');
+        }
       });
 
       await midtrans!.startPaymentUiFlow(token: token);
-
-      // if (transactionResult!['status'] == 'canceled') {
-      //   GoRouter.of(context).pop();
-      // }
-
-      // // URGENT: Replace with location to /checkout_success
-      // GoRouter.of(context).push('/home');
 
       setState(() {
         isLoading = false;
