@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/midtrans.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -23,6 +26,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isLoading = true;
   late dynamic selectedDuration;
   DateTime? selectedDate;
+  MidtransSDK? midtrans;
 
   Future<void> fetchData() async {
     final client = Supabase.instance.client;
@@ -51,17 +55,98 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
   }
 
-  // URGENT: Implement the payment logics
   void payPanjar() async {
-    setState(() {
-      isLoading = true;
-    });
+    try {
+      if (selectedDate == null) {
+        throw Exception("Harap pilih tanggal foto!");
+      }
+      setState(() {
+        isLoading = true;
+      });
+
+      final client = Supabase.instance.client;
+      final res = await client.functions.invoke(
+        'midtrans-merchant-backend',
+        body: {
+          'orderId': 'order-${DateTime.now().millisecondsSinceEpoch}',
+          'price': calculatePanjar(currentPrice).round(),
+          'itemName': name,
+        },
+      );
+
+      final token = res.data['snapToken'];
+
+      midtrans = await MidtransSDK.init(config: config);
+      midtrans!.setTransactionFinishedCallback((result) {
+        if (result.status == 'canceled') {
+          GoRouter.of(context).pop();
+        } else {
+          // URGENT: Replace location to /checkout_success
+          GoRouter.of(context).push('/home');
+        }
+      });
+
+      await midtrans!.startPaymentUiFlow(token: token);
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   void payFull() async {
-    setState(() {
-      isLoading = true;
-    });
+    try {
+      if (selectedDate == null) {
+        throw Exception("Harap pilih tanggal foto!");
+      }
+      setState(() {
+        isLoading = true;
+      });
+
+      final client = Supabase.instance.client;
+      final res = await client.functions.invoke(
+        'midtrans-merchant-backend',
+        body: {
+          'orderId': 'order-${DateTime.now().millisecondsSinceEpoch}',
+          'price': currentPrice,
+          'itemName': name,
+        },
+      );
+
+      final token = res.data['snapToken'];
+
+      midtrans = await MidtransSDK.init(config: config);
+      midtrans!.setTransactionFinishedCallback((result) {
+        if (result.status == 'canceled') {
+          GoRouter.of(context).pop();
+        } else {
+          // URGENT: Replace location to /checkout_success
+          GoRouter.of(context).push('/home');
+        }
+      });
+
+      await midtrans!.startPaymentUiFlow(token: token);
+
+      setState(() {
+        isLoading = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   String formatCurrency(int price) {
