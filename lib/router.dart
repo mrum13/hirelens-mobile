@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/checkout.dart';
+import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
@@ -49,6 +50,15 @@ final router = GoRouter(
       builder:
           (context, state) =>
               CheckoutPage(dataId: int.parse(state.pathParameters['dataId']!)),
+    ),
+    // URGENT: Create CheckoutSuccess screen
+    GoRoute(
+      path: '/checkout_success',
+      builder: (context, state) {
+        final orderId = state.uri.queryParameters['order_id'];
+        final result = state.uri.queryParameters['result'];
+        return CheckoutSuccessPage(orderId: orderId!, result: result!);
+      },
     ),
   ],
   initialLocation: '/',
