@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -9,16 +13,110 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
+  int _currentIndex = 0;
+  late Timer _timer;
+
+  final List<String> _images = List.generate(
+    5,
+    (i) => 'assets/images/${i + 1}.jpg',
+  );
+
   @override
   void initState() {
     super.initState();
-    // TODO: Add animation here
-    GoRouter.of(context).replace('/login');
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % _images.length;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Create splashscreen animation
-    return SafeArea(child: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      body: Stack(
+        children: [
+          Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(seconds: 3),
+              reverseDuration: const Duration(seconds: 3),
+              child: Image.asset(
+                _images[_currentIndex],
+                key: ValueKey(_images[_currentIndex]),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.black54, // dark tint
+                colorBlendMode: BlendMode.darken,
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.height * 0.35,
+            left: 24,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Project",
+                  style: themeFromContext(context).textTheme.displayMedium,
+                ),
+                Text(
+                  "Hirelens",
+                  style: themeFromContext(
+                    context,
+                  ).textTheme.displayLarge!.copyWith(fontSize: 48),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 32,
+            left: 0,
+            height: 120,
+            width: MediaQuery.of(context).size.width,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Column(
+                spacing: 8,
+                children: [
+                  MyFilledButton(
+                    width: double.infinity,
+                    height: 48,
+                    variant: MyFilledButtonVariant.primary,
+                    onTap:
+                        () => Future.microtask(
+                          () => GoRouter.of(context).go('/register'),
+                        ),
+                    child: Text(
+                      "Daftar",
+                      style: TextStyle(
+                        color: themeFromContext(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                  MyFilledButton(
+                    width: double.infinity,
+                    height: 48,
+                    variant: MyFilledButtonVariant.neutral,
+                    onTap:
+                        () => Future.microtask(
+                          () => GoRouter.of(context).go('/login'),
+                        ),
+                    child: Text("Masuk"),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/buttons.dart';
-import 'package:unsplash_clone/screens/register.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class LoginPage extends StatefulWidget {
@@ -137,26 +136,16 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Baru disini?"),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterPage(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Daftar',
-                        style: TextStyle(
-                          color: themeFromContext(context).colorScheme.primary,
-                        ),
-                      ),
+                MyFilledButton(
+                  variant: MyFilledButtonVariant.neutral,
+                  onTap: () => GoRouter.of(context).go('/'),
+                  isLoading: _isLoading,
+                  child: Text(
+                    "Kembali",
+                    style: TextStyle(
+                      color: themeFromContext(context).colorScheme.onSurface,
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
