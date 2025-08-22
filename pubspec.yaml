@@ -30,6 +30,7 @@ flutter:
 
   assets:
     - assets/.env
+    - assets/images/
 
 flutter_icons:
   android: true

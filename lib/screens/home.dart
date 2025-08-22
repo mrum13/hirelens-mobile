@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:unsplash_clone/components/bottomnav.dart';
 import 'package:unsplash_clone/components/item_card.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,10 +16,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with RouteAware {
   List<Map<String, dynamic>> items = [];
   bool isLoading = true;
+  int itemCartCount = 0;
 
   @override
   void initState() {
     super.initState();
+    countCartItems();
     fetchItems();
   }
 
@@ -40,6 +43,16 @@ class _HomePageState extends State<HomePage> with RouteAware {
       isLoading = false;
       items = response;
     });
+  }
+
+  void countCartItems() async {
+    final client = Supabase.instance.client;
+    final response = await client
+        .from('shopping_cart')
+        .count()
+        .eq('user_id', client.auth.currentUser!.id);
+
+    itemCartCount = response;
   }
 
   String getTimedMessage() {
@@ -67,6 +80,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
 
   @override
   void didPopNext() {
+    countCartItems();
     fetchItems();
   }
 
@@ -77,6 +91,7 @@ class _HomePageState extends State<HomePage> with RouteAware {
     //     items.map((item) => item['name'] as String).toList();
 
     return Scaffold(
+      bottomNavigationBar: MyBottomNavbar(curIndex: 0),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: fetchItems,
@@ -85,33 +100,34 @@ class _HomePageState extends State<HomePage> with RouteAware {
               SliverAppBar(
                 pinned: true,
                 floating: false,
+                automaticallyImplyLeading: false,
                 elevation: 0,
                 backgroundColor: themeFromContext(context).colorScheme.surface,
                 expandedHeight: 240,
                 surfaceTintColor: Colors.transparent,
-                // leadingWidth: double.infinity,
                 title: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        GestureDetector(
-                          onTap: () => GoRouter.of(context).push('/profile'),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundImage: NetworkImage(
-                              'https://ui-avatars.com/api/?background=6777cc&color=fff&name=${fetchUserData().userMetadata!['displayName'].toUpperCase()}',
-                              scale: 1,
+                        itemCartCount > 0
+                            ? Badge.count(
+                              offset: Offset(-6, 8),
+                              count: itemCartCount,
+                              child: IconButton(
+                                icon: Icon(Icons.shopping_bag_outlined),
+                                onPressed:
+                                    () => GoRouter.of(context).push('/cart'),
+                              ),
+                            )
+                            : IconButton(
+                              icon: Icon(Icons.shopping_bag_outlined),
+                              onPressed:
+                                  () => GoRouter.of(context).push('/cart'),
                             ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.shopping_bag_outlined),
-                          onPressed: () => GoRouter.of(context).push('/cart'),
-                        ),
                       ],
                     ),
                   ],

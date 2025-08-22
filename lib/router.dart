@@ -10,6 +10,7 @@ import 'package:unsplash_clone/screens/home.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/login.dart';
+import 'package:unsplash_clone/screens/register.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
@@ -18,6 +19,7 @@ final router = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (context, state) => LoadingScreen()),
     GoRoute(path: "/login", builder: (context, state) => LoginPage()),
+    GoRoute(path: "/register", builder: (context, state) => RegisterPage()),
     GoRoute(path: "/home", builder: (context, state) => HomePage()),
     GoRoute(path: "/cart", builder: (context, state) => CartPage()),
     GoRoute(path: "/profile", builder: (context, state) => ProfilePage()),
@@ -64,11 +66,19 @@ final router = GoRouter(
   initialLocation: '/',
   redirect: (ctx, state) {
     final logged = Supabase.instance.client.auth.currentSession != null;
-    final onLogin = state.matchedLocation == '/login';
-    final onSplash = state.matchedLocation == '/';
-    if (!logged && !onLogin) return '/login';
-    if (logged && onLogin) return '/home';
-    if (logged && (onSplash || onLogin)) {
+    final loc = state.matchedLocation;
+
+    final onLogin = loc == '/login';
+    final onRegister = loc == '/register';
+    final onSplash = loc == '/';
+
+    // Not logged in → allow only '/', '/login', '/register'
+    if (!logged && !(onLogin || onRegister || onSplash)) {
+      return '/';
+    }
+
+    // Logged in → prevent '/', '/login', '/register'
+    if (logged && (onLogin || onRegister || onSplash)) {
       return '/home';
     }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:unsplash_clone/components/buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -210,7 +211,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                               ? _onRegisterPressed('customer')
                                               : null,
                                   child: Text(
-                                    "Sign Up",
+                                    "Daftar",
                                     style: TextStyle(
                                       color:
                                           themeFromContext(
@@ -226,34 +227,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Sudah punya akun? ",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                      ),
+                                MyFilledButton(
+                                  variant: MyFilledButtonVariant.neutral,
+                                  onTap: () => GoRouter.of(context).go('/'),
+                                  isLoading: _isLoading,
+                                  child: Text(
+                                    "Kembali",
+                                    style: TextStyle(
+                                      color:
+                                          themeFromContext(
+                                            context,
+                                          ).colorScheme.onSurface,
                                     ),
-                                    TextButton(
-                                      onPressed:
-                                          _isLoading
-                                              ? null
-                                              : () {
-                                                Navigator.pop(context);
-                                              },
-                                      child: Text(
-                                        'Login',
-                                        style: TextStyle(
-                                          color:
-                                              themeFromContext(
-                                                context,
-                                              ).colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -305,7 +291,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                               ? _onRegisterPressed('vendor')
                                               : null,
                                   child: Text(
-                                    "Sign Up",
+                                    "Daftar",
                                     style: TextStyle(
                                       color:
                                           themeFromContext(
@@ -321,34 +307,19 @@ class _RegisterPageState extends State<RegisterPage> {
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      "Sudah punya akun? ",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                      ),
+                                MyFilledButton(
+                                  variant: MyFilledButtonVariant.neutral,
+                                  onTap: () => GoRouter.of(context).go('/'),
+                                  isLoading: _isLoading,
+                                  child: Text(
+                                    "Kembali",
+                                    style: TextStyle(
+                                      color:
+                                          themeFromContext(
+                                            context,
+                                          ).colorScheme.onSurface,
                                     ),
-                                    TextButton(
-                                      onPressed:
-                                          _isLoading
-                                              ? null
-                                              : () {
-                                                Navigator.pop(context);
-                                              },
-                                      child: Text(
-                                        'Login',
-                                        style: TextStyle(
-                                          color:
-                                              themeFromContext(
-                                                context,
-                                              ).colorScheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),

@@ -69,10 +69,10 @@ class _ItemCardState extends State<ItemCard> {
         ? GestureDetector(
           onTap: widget.onTapHandler,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            // padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceBright,
-              borderRadius: BorderRadius.circular(12),
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,11 +85,17 @@ class _ItemCardState extends State<ItemCard> {
                           width: double.infinity,
                           decoration: BoxDecoration(
                             color: Theme.of(context).colorScheme.surfaceBright,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(8),
+                              topRight: Radius.circular(8),
+                            ),
                           ),
                         )
                         : ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            topRight: Radius.circular(8),
+                          ),
                           child: Image.network(
                             widget.thumbnail!,
                             fit: BoxFit.cover,
@@ -104,7 +110,7 @@ class _ItemCardState extends State<ItemCard> {
                         child: Icon(
                           isFavorite ? Icons.star : Icons.star_border,
                           size: 24,
-                          color: isFavorite ? Colors.amber : Colors.black,
+                          color: isFavorite ? Colors.amber : Colors.white,
                           shadows: [
                             Shadow(
                               color: Colors.black87,
@@ -116,24 +122,33 @@ class _ItemCardState extends State<ItemCard> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.name,
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurface,
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.name,
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.description,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text("Mulai dari", style: TextStyle(fontSize: 8)),
+                        Text(
+                          formatCurrency(widget.price),
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Spacer(),
-                Text("Mulai dari", style: TextStyle(fontSize: 8)),
-                Text(
-                  formatCurrency(widget.price),
-                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),

@@ -3,8 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:unsplash_clone/screens/checkout.dart';
-// import 'package:unsplash_clone/theme.dart';
+import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key, required this.dataId});
@@ -168,30 +168,40 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
           body: Center(child: CircularProgressIndicator()),
         )
         : Scaffold(
-          // URGENT: Redesign the shape and buttons
           bottomNavigationBar: SizedBox(
             height: 100,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                spacing: 16,
                 children: [
-                  // TODO: Use GestureDetector instead
-                  ElevatedButton(
-                    onPressed: toggleCart,
-                    child:
-                        isOnCart
-                            ? Text("Sudah di Keranjang")
-                            : Text("Keranjang"),
+                  Expanded(
+                    child: MyFilledButton(
+                      height: 48,
+                      variant: MyFilledButtonVariant.neutral,
+                      onTap: toggleCart,
+                      child: Text(
+                        isOnCart ? 'Sudah di Keranjang' : 'Keranjang',
+                      ),
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed:
-                        () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => CheckoutPage(dataId: dataId),
-                          ),
+                  Expanded(
+                    child: MyFilledButton(
+                      height: 48,
+                      variant: MyFilledButtonVariant.primary,
+                      onTap:
+                          () => GoRouter.of(
+                            context,
+                          ).push('/checkout/${widget.dataId}'),
+                      child: Text(
+                        "Pesan Langsung",
+                        style: TextStyle(
+                          color:
+                              themeFromContext(context).colorScheme.onPrimary,
                         ),
-                    child: Text("Pesan Langsung"),
+                      ),
+                    ),
                   ),
                 ],
               ),

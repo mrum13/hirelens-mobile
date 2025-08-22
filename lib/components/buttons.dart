@@ -23,8 +23,8 @@ class MyFilledButton extends StatefulWidget {
     this.alignment = Alignment.center,
     this.width = double.infinity,
     required this.variant,
-    required this.child,
     required this.onTap,
+    required this.child,
   });
 
   @override

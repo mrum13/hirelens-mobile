@@ -82,7 +82,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
           GoRouter.of(context).pop();
         } else {
           // URGENT: Replace location to /checkout_success
-          GoRouter.of(context).push('/home');
+          while (GoRouter.of(context).canPop() == true) {
+            GoRouter.of(context).pop();
+          }
+
+          GoRouter.of(context).pushReplacement('/home');
         }
       });
 
@@ -128,6 +132,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         if (result.status == 'canceled') {
           GoRouter.of(context).pop();
         } else {
+          while (GoRouter.of(context).canPop() == true) {
+            GoRouter.of(context).pop();
+          }
           // URGENT: Replace location to /checkout_success
           GoRouter.of(context).push('/home');
         }
