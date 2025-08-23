@@ -1,16 +1,32 @@
-# unsplash_clone
+# Project Hirelens (Android)
 
-A new Flutter project.
+## PERINGATAN!!
 
-## Getting Started
+Sebelum project ini dijalankan, selalu jalankan perintah ini jika VS Code tidak menjalankannya secara otomatis!
 
-This project is a starting point for a Flutter application.
+```
+flutter pub get
+```
 
-A few resources to get you started if this is your first Flutter project:
+- ### Cara Jalankan (development)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+    - Colok Handphone ke PC (pastikan anda sudah menginstal ADB atau Android Studio)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+    - Pastikan debug USB di Handphone (android) sudah aktif di menu pengembang (Developer Options)
+
+    - Pastikan Handphone sudah terbaca di VS Code
+
+        ![alt text](<docs_src/Cuplikan layar 2025-08-23 210410.png>)
+
+    - Tekan `F5` untuk menjalankan aplikasi.
+
+- ### Cara Build APK (release)
+
+    - Jalankan command ini.
+
+        ```
+        flutter clean build && flutter pub get && flutter build apk --release
+        ```
+
+    - Hasil build tersimpan di folder
+    `build/app/outputs/apk/release/app-release.apk`
