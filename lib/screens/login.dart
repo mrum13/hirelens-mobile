@@ -38,13 +38,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (response.user != null) {
-        // URGENT : Pisahkan home vendor dan home customer
-        if (response.user!.userMetadata!['role'] == 'vendor') {
-          // URGENT: Create VendorHomePage and replace HomePage below
-          GoRouter.of(context).replace('/home');
-        } else {
-          GoRouter.of(context).replace('/home');
-        }
+        GoRouter.of(context).replace('/home');
       } else {
         _showError('Login gagal. Silakan coba lagi.');
       }
