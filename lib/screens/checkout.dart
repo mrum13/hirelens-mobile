@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/midtrans.dart';
 import 'package:unsplash_clone/theme.dart';
 
@@ -20,6 +20,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String thumbnail = '';
   String address = '';
   String description = '';
+  String vendorName = '';
   int price = 0;
   int currentPrice = 0;
   List<dynamic> durations = [];
@@ -32,10 +33,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final client = Supabase.instance.client;
     try {
       final response =
-          await client.from('items').select().eq('id', widget.dataId).single();
+          await client
+              .from('items')
+              .select('*, vendor(id,name)')
+              .eq('id', widget.dataId)
+              .single();
 
       setState(() {
         name = response['name'];
+        vendorName = response['vendor']['name'];
         thumbnail = response['thumbnail'];
         address = response['address'];
         price = response['price'];
@@ -81,7 +87,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         if (result.status == 'canceled') {
           GoRouter.of(context).pop();
         } else {
-          // URGENT: Replace location to /checkout_success
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
           }
@@ -135,7 +140,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
           }
-          // URGENT: Replace location to /checkout_success
           GoRouter.of(context).push('/home');
         }
       });
@@ -189,71 +193,45 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      bottomNavigationBar: SizedBox(
-        height: 80,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            spacing: 16,
-            children: [
-              Expanded(
-                child: MyFilledButton(
-                  variant: MyFilledButtonVariant.neutral,
-                  onTap: payPanjar,
-                  child: Column(
-                    spacing: 4,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Panjar",
-                        style: themeFromContext(context).textTheme.bodyLarge,
-                      ),
-                      Text(
-                        formatCurrency(calculatePanjar(currentPrice).round()),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 12,
+      bottomNavigationBar:
+          !isLoading
+              ? Container(
+                width: MediaQuery.of(context).size.width,
+                height: 112,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 8,
+                  children: [
+                    Expanded(
+                      child: MyFilledButton(
+                        variant: MyButtonVariant.neutral,
+                        onTap: payPanjar,
+                        child: Text(
+                          "Bayar Panjar",
+                          style: themeFromContext(context).textTheme.bodyLarge,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    Expanded(
+                      child: MyFilledButton(
+                        variant: MyButtonVariant.primary,
+                        onTap: payFull,
+                        child: Text(
+                          "Bayar Full",
+                          style: themeFromContext(
+                            context,
+                          ).textTheme.bodyLarge!.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Expanded(
-                child: MyFilledButton(
-                  variant: MyFilledButtonVariant.primary,
-                  onTap: payFull,
-                  child: Column(
-                    spacing: 4,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Full",
-                        style: themeFromContext(
-                          context,
-                        ).textTheme.bodyLarge!.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      ),
-                      Text(
-                        formatCurrency(currentPrice),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+              )
+              : null,
       body:
           isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -263,13 +241,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      spacing: 16,
+                      spacing: 12,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Image.network(
                           thumbnail,
-                          width: 120,
-                          height: 120,
+                          width: 96,
+                          height: 96,
                           fit: BoxFit.cover,
                         ),
                         Column(
@@ -277,12 +255,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           children: [
                             Text(
                               name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style:
+                                  themeFromContext(
+                                    context,
+                                  ).textTheme.displayMedium,
                             ),
+                            Text(
+                              "Dari $vendorName",
+                              style:
+                                  themeFromContext(
+                                    context,
+                                  ).textTheme.displaySmall,
+                            ),
+                            SizedBox(height: 32),
                             Row(
+                              spacing: 4,
                               children: [
                                 const Icon(Icons.pin_drop_outlined, size: 12),
                                 Text(

@@ -11,6 +11,7 @@ import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/screens/register.dart';
+import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/screens/vendor_profile.dart';
@@ -20,6 +21,13 @@ final router = GoRouter(
     GoRoute(path: '/', builder: (context, state) => LoadingScreen()),
     GoRoute(path: "/login", builder: (context, state) => LoginPage()),
     GoRoute(path: "/register", builder: (context, state) => RegisterPage()),
+    GoRoute(
+      path: "/verify_registration",
+      builder:
+          (context, state) => VerifyRegistrationPage(
+            email: state.uri.queryParameters['email']!,
+          ),
+    ),
     GoRoute(path: "/home", builder: (context, state) => HomePage()),
     GoRoute(path: "/cart", builder: (context, state) => CartPage()),
     GoRoute(path: "/profile", builder: (context, state) => ProfilePage()),
@@ -53,7 +61,6 @@ final router = GoRouter(
           (context, state) =>
               CheckoutPage(dataId: int.parse(state.pathParameters['dataId']!)),
     ),
-    // URGENT: Create CheckoutSuccess screen
     GoRoute(
       path: '/checkout_success',
       builder: (context, state) {
@@ -70,15 +77,17 @@ final router = GoRouter(
 
     final onLogin = loc == '/login';
     final onRegister = loc == '/register';
+    final onVerifyRegistration = loc == '/verify_registration';
     final onSplash = loc == '/';
 
     // Not logged in → allow only '/', '/login', '/register'
-    if (!logged && !(onLogin || onRegister || onSplash)) {
+    if (!logged &&
+        !(onLogin || onRegister || onSplash || onVerifyRegistration)) {
       return '/';
     }
 
     // Logged in → prevent '/', '/login', '/register'
-    if (logged && (onLogin || onRegister || onSplash)) {
+    if (logged && (onLogin || onRegister || onSplash || onVerifyRegistration)) {
       return '/home';
     }
 

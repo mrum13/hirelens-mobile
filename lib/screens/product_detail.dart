@@ -3,7 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:unsplash_clone/components/buttons.dart';
+// import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class ProductDetailPage extends StatefulWidget {
@@ -174,22 +175,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                spacing: 16,
+                spacing: 8,
                 children: [
                   Expanded(
-                    child: MyFilledButton(
+                    child: MyOutlinedButton(
                       height: 48,
-                      variant: MyFilledButtonVariant.neutral,
+                      borderRadius: 4,
+                      variant: MyButtonVariant.white,
                       onTap: toggleCart,
                       child: Text(
                         isOnCart ? 'Sudah di Keranjang' : 'Keranjang',
+                        style: TextStyle(
+                          color:
+                              themeFromContext(context).colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ),
                   Expanded(
                     child: MyFilledButton(
                       height: 48,
-                      variant: MyFilledButtonVariant.primary,
+                      borderRadius: 4,
+                      variant: MyButtonVariant.primary,
                       onTap:
                           () => GoRouter.of(
                             context,
@@ -213,6 +220,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               initialIndex: 0,
               child: CustomScrollView(
                 slivers: [
+                  // URGENT: Fix the issue where SliverFillRemaining get covered by all the pinned Headers
                   SliverAppBar(
                     pinned: true,
                     surfaceTintColor: Colors.transparent,
@@ -233,7 +241,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                     ),
                   ),
 
-                  // SliverToBoxAdapter(child: SizedBox(height: 32)),
                   SliverPersistentHeader(
                     pinned: true,
                     delegate: TabBarHeaderDelegate(

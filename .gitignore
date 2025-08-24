@@ -54,3 +54,6 @@ web/
 *.pem
 
 assets/.env
+
+*.mp4
+start_scrcpy.bat
