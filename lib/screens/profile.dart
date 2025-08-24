@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/bottomnav.dart';
-import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 import 'package:go_router/go_router.dart';
 
@@ -40,7 +41,11 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             children: [
               _ProfileHeader(
-                displayName: userData.userMetadata!['displayName'],
+                displayName:
+                    (userData.userMetadata!['displayName'] as String).length >
+                            18
+                        ? "${(userData.userMetadata!['displayName'] as String).substring(0, 18)}..."
+                        : userData.userMetadata!['displayName'],
                 email: userData.email!,
                 profileImage:
                     (userData.userMetadata!['profileImage'] as String?) ??
@@ -160,7 +165,7 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// TODO: Add link to each button here
+// URGENT: Add link to each button here
 class _CustomerMenuSection extends StatelessWidget {
   const _CustomerMenuSection();
 
@@ -237,6 +242,23 @@ class _VendorMenuSection extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => GoRouter.of(context).push('/vendor/kelola_item'),
+              child: SizedBox(
+                height: 80,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 16,
+                  children: [
+                    Icon(Icons.inbox_outlined, size: 24),
+                    Text("Items", textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: GestureDetector(
               onTap: () {},
@@ -323,7 +345,7 @@ class _InformationSection extends StatelessWidget {
                 "Versi Aplikasi",
                 style: themeFromContext(context).textTheme.displayMedium,
               ),
-              subtitle: Text("Versi : 0.04_dev"),
+              subtitle: Text("Versi : ${dotenv.env['APP_VERSION'] ?? 'dev'}"),
             ),
           ),
           GestureDetector(
@@ -340,7 +362,7 @@ class _InformationSection extends StatelessWidget {
                           children: [
                             Expanded(
                               child: MyFilledButton(
-                                variant: MyFilledButtonVariant.neutral,
+                                variant: MyButtonVariant.neutral,
                                 onTap: () {
                                   Navigator.of(context).pop();
                                 },
@@ -349,7 +371,7 @@ class _InformationSection extends StatelessWidget {
                             ),
                             Expanded(
                               child: MyFilledButton(
-                                variant: MyFilledButtonVariant.primary,
+                                variant: MyButtonVariant.primary,
                                 onTap: () async {
                                   final client = Supabase.instance.client;
 

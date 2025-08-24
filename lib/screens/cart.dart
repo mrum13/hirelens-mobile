@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
+import 'package:unsplash_clone/theme.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -47,7 +49,7 @@ class _CartPageState extends State<CartPage> {
                     children:
                         items
                             .map(
-                              ((item) => CartItem(
+                              ((item) => _CartItem(
                                 itemAddress: item['item_id']['address'],
                                 itemId: item['item_id']['id'],
                                 itemName: item['item_id']['name'],
@@ -65,7 +67,7 @@ class _CartPageState extends State<CartPage> {
   }
 }
 
-class CartItem extends StatefulWidget {
+class _CartItem extends StatefulWidget {
   final int itemId;
   final String itemName;
   final String itemVendor;
@@ -73,8 +75,7 @@ class CartItem extends StatefulWidget {
   final int itemPrice;
   final String itemAddress;
 
-  const CartItem({
-    super.key,
+  const _CartItem({
     required this.itemId,
     required this.itemName,
     required this.itemVendor,
@@ -84,13 +85,14 @@ class CartItem extends StatefulWidget {
   });
 
   @override
-  State<CartItem> createState() => _CartItemState();
+  State<_CartItem> createState() => _CartItemState();
 }
 
-class _CartItemState extends State<CartItem> {
+class _CartItemState extends State<_CartItem> {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 8),
       width: double.infinity,
       height: 80,
       child: Row(
@@ -131,24 +133,48 @@ class _CartItemState extends State<CartItem> {
               ],
             ),
           ),
-          GestureDetector(
+          // GestureDetector(
+          //   onTap:
+          //       () =>
+          //           GoRouter.of(context).push("/item/detail/${widget.itemId}"),
+          //   child: Container(
+          //     width: 100,
+          //     height: 32,
+          //     alignment: Alignment.center,
+          //     decoration: BoxDecoration(
+          //       color: Theme.of(context).colorScheme.primary,
+          //       borderRadius: BorderRadius.circular(8),
+          //     ),
+          //     child: Text(
+          //       "Detail Item",
+          //       style: TextStyle(
+          //         color: Theme.of(context).colorScheme.onPrimary,
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          MyFilledButton(
+            width: 100,
+            height: 32,
+            variant: MyButtonVariant.primary,
+            padding: EdgeInsets.all(4),
             onTap:
                 () =>
                     GoRouter.of(context).push("/item/detail/${widget.itemId}"),
-            child: Container(
-              width: 100,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "Detail Item",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
+            child: Row(
+              spacing: 4,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.info, size: 14),
+                Text(
+                  "Detail Item",
+                  style: TextStyle(
+                    color: themeFromContext(context).colorScheme.onPrimary,
+                    fontSize: 12,
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],

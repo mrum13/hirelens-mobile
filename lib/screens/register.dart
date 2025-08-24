@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:unsplash_clone/screens/verify_registration.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -204,7 +203,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 MyFilledButton(
                                   isLoading: _isLoading,
                                   width: double.infinity,
-                                  variant: MyFilledButtonVariant.primary,
+                                  variant: MyButtonVariant.primary,
                                   onTap:
                                       () =>
                                           !_isLoading
@@ -228,7 +227,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                                 const SizedBox(height: 16),
                                 MyFilledButton(
-                                  variant: MyFilledButtonVariant.neutral,
+                                  variant: MyButtonVariant.neutral,
                                   onTap: () => GoRouter.of(context).go('/'),
                                   isLoading: _isLoading,
                                   child: Text(
@@ -284,7 +283,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 MyFilledButton(
                                   isLoading: _isLoading,
                                   width: double.infinity,
-                                  variant: MyFilledButtonVariant.primary,
+                                  variant: MyButtonVariant.primary,
                                   onTap:
                                       () =>
                                           !_isLoading
@@ -308,7 +307,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                                 const SizedBox(height: 16),
                                 MyFilledButton(
-                                  variant: MyFilledButtonVariant.neutral,
+                                  variant: MyButtonVariant.neutral,
                                   onTap: () => GoRouter.of(context).go('/'),
                                   isLoading: _isLoading,
                                   child: Text(
@@ -416,11 +415,9 @@ class _RegisterPageState extends State<RegisterPage> {
             'city': city,
           });
         }
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => VerifyRegistrationPage(email: email),
-          ),
-        );
+        GoRouter.of(
+          context,
+        ).pushReplacement('/verify_registration?email=$email');
       } else {
         _showError('Registrasi gagal. Silakan coba lagi.');
       }

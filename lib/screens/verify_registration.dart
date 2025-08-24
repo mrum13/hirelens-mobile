@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class VerifyRegistrationPage extends StatefulWidget {
@@ -44,15 +44,19 @@ class _VerifyRegistrationPageState extends State<VerifyRegistrationPage> {
       if (response.user != null) {
         // Sukses, bisa navigate ke halaman login atau home
         if (!mounted) return;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verifikasi berhasil! Silakan login.')),
+          const SnackBar(
+            content: Text(
+              'Verifikasi berhasil! Selamat Datang di Project Hirelens',
+            ),
+          ),
         );
-        Navigator.of(context).pop();
       } else {
         _showError('Kode OTP salah atau sudah kadaluarsa.');
       }
     } catch (e) {
-      _showError('Verifikasi gagal: e.toString()}');
+      _showError('Verifikasi gagal: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -95,7 +99,7 @@ class _VerifyRegistrationPageState extends State<VerifyRegistrationPage> {
               const SizedBox(height: 24),
               MyFilledButton(
                 isLoading: _isLoading,
-                variant: MyFilledButtonVariant.primary,
+                variant: MyButtonVariant.primary,
                 onTap: !_isLoading ? _verifyOtp : null,
                 child: Text(
                   "Verifikasi",

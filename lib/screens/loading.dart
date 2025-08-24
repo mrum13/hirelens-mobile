@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:unsplash_clone/components/buttons.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -89,7 +89,8 @@ class _LoadingScreenState extends State<LoadingScreen> {
                   MyFilledButton(
                     width: double.infinity,
                     height: 48,
-                    variant: MyFilledButtonVariant.primary,
+                    borderRadius: 4,
+                    variant: MyButtonVariant.primary,
                     onTap:
                         () => Future.microtask(
                           () => GoRouter.of(context).go('/register'),
@@ -101,10 +102,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
                       ),
                     ),
                   ),
-                  MyFilledButton(
+                  MyOutlinedButton(
                     width: double.infinity,
                     height: 48,
-                    variant: MyFilledButtonVariant.neutral,
+                    borderRadius: 4,
+                    variant: MyButtonVariant.white,
                     onTap:
                         () => Future.microtask(
                           () => GoRouter.of(context).go('/login'),
