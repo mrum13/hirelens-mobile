@@ -252,8 +252,8 @@ class _VendorMenuSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
                   children: [
-                    Icon(Icons.inbox_outlined, size: 24),
-                    Text("Items", textAlign: TextAlign.center),
+                    Icon(Icons.list_alt_outlined, size: 24),
+                    Text("Kelola Item", textAlign: TextAlign.center),
                   ],
                 ),
               ),

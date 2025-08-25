@@ -15,7 +15,6 @@ class ProductDetailPage extends StatefulWidget {
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
-// TODO: use atypical design as reference
 class _ProductDetailPageState extends State<ProductDetailPage> {
   late int dataId;
   String name = '';
@@ -218,119 +217,115 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             child: DefaultTabController(
               length: 3,
               initialIndex: 0,
-              child: CustomScrollView(
-                slivers: [
-                  // URGENT: Fix the issue where SliverFillRemaining get covered by all the pinned Headers
-                  SliverAppBar(
-                    pinned: true,
-                    surfaceTintColor: Colors.transparent,
-                    leading: IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => GoRouter.of(context).pop(),
-                    ),
-                  ),
-
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: CollapsibleHeaderDelegate(
-                      maxExtentHeight: 300,
-                      minExtentHeight: 120,
-                      imageUrl: thumbnail,
-                      title: name,
-                      subtitle: "Dari $vendorName",
-                    ),
-                  ),
-
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: TabBarHeaderDelegate(
-                      TabBar(
-                        tabAlignment: TabAlignment.start,
-                        isScrollable: true,
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        tabs: [
-                          Tab(text: "Deskripsi"),
-                          Tab(text: "Galeri"),
-                          Tab(text: "Behind the Scene"),
-                        ],
+              child: NestedScrollView(
+                floatHeaderSlivers: true,
+                headerSliverBuilder:
+                    (context, innerBoxIsScrolled) => [
+                      SliverAppBar(
+                        pinned: true,
+                        surfaceTintColor: Colors.transparent,
+                        leading: IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => GoRouter.of(context).pop(),
+                        ),
                       ),
-                    ),
-                  ),
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: CollapsibleHeaderDelegate(
+                          maxExtentHeight: 300,
+                          minExtentHeight: 150,
+                          imageUrl: thumbnail,
+                          title: name,
+                          subtitle: "Dari $vendorName",
+                        ),
+                      ),
 
-                  SliverFillRemaining(
-                    child: TabBarView(
-                      children: [
-                        // Deskripsi
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 32),
-                              Text("Alamat : $address"),
-                              SizedBox(height: 8),
-                              Text(description),
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: TabBarHeaderDelegate(
+                          TabBar(
+                            tabAlignment: TabAlignment.start,
+                            isScrollable: true,
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            tabs: [
+                              Tab(text: "Deskripsi"),
+                              Tab(text: "Galeri"),
+                              Tab(text: "Behind the Scene"),
                             ],
                           ),
                         ),
-
-                        // Galeri
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          child:
-                              galleryImages.isNotEmpty
-                                  ? GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 8,
-                                          mainAxisSpacing: 8,
-                                        ),
-                                    itemCount: galleryImages.length,
-                                    itemBuilder: (context, index) {
-                                      // TODO: Create an expandable image viewer widget
-                                      return Placeholder();
-                                    },
-                                  )
-                                  : Center(
-                                    child: Text(
-                                      "Belum ada gambar untuk produk ini.",
-                                    ),
-                                  ),
-                        ),
-
-                        // Behind the Scene
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          child:
-                              galleryImages.isNotEmpty
-                                  ? GridView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    gridDelegate:
-                                        SliverGridDelegateWithFixedCrossAxisCount(
-                                          crossAxisCount: 2,
-                                          crossAxisSpacing: 8,
-                                          mainAxisSpacing: 8,
-                                        ),
-                                    itemCount: 8,
-                                    itemBuilder: (context, index) {
-                                      // TODO: Create an expandable image and video viewer widget
-                                      return Placeholder();
-                                    },
-                                  )
-                                  : Center(
-                                    child: Text(
-                                      "Belum ada media untuk produk ini.",
-                                    ),
-                                  ),
-                        ),
-                      ],
+                      ),
+                    ],
+                body: TabBarView(
+                  children: [
+                    // Deskripsi
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Alamat : $address"),
+                          SizedBox(height: 8),
+                          Text(description),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Galeri
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      child:
+                          galleryImages.isNotEmpty
+                              ? GridView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 8,
+                                    ),
+                                itemCount: galleryImages.length,
+                                itemBuilder: (context, index) {
+                                  // TODO: Create an expandable image viewer widget
+                                  return Placeholder();
+                                },
+                              )
+                              : Center(
+                                child: Text(
+                                  "Belum ada gambar untuk produk ini.",
+                                ),
+                              ),
+                    ),
+
+                    // Behind the Scene
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      child:
+                          galleryImages.isNotEmpty
+                              ? GridView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      crossAxisSpacing: 8,
+                                      mainAxisSpacing: 8,
+                                    ),
+                                itemCount: 8,
+                                itemBuilder: (context, index) {
+                                  // TODO: Create an expandable image and video viewer widget
+                                  return Placeholder();
+                                },
+                              )
+                              : Center(
+                                child: Text(
+                                  "Belum ada media untuk produk ini.",
+                                ),
+                              ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

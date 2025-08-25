@@ -25,12 +25,19 @@ final router = GoRouter(
       path: "/verify_registration",
       builder:
           (context, state) => VerifyRegistrationPage(
-            email: state.uri.queryParameters['email']!,
+            email: (state.uri.queryParameters['email'] as String),
           ),
     ),
-    GoRoute(path: "/home", builder: (context, state) => HomePage()),
+
+    GoRoute(
+      path: "/home",
+      pageBuilder: (context, state) => NoTransitionPage(child: HomePage()),
+    ),
     GoRoute(path: "/cart", builder: (context, state) => CartPage()),
-    GoRoute(path: "/profile", builder: (context, state) => ProfilePage()),
+    GoRoute(
+      path: "/profile",
+      pageBuilder: (context, state) => NoTransitionPage(child: ProfilePage()),
+    ),
     GoRoute(path: "/vendor", builder: (context, state) => VendorProfilePage()),
     // TODO: Create VendorDetailPage
     // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
