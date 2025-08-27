@@ -7,6 +7,9 @@ import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
+import 'package:unsplash_clone/screens/pesanan_vendor.dart';
+import 'package:unsplash_clone/screens/pesanan_detail_vendor.dart';
+import 'package:unsplash_clone/screens/pesanan_customer.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/login.dart';
@@ -14,7 +17,6 @@ import 'package:unsplash_clone/screens/register.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
-import 'package:unsplash_clone/screens/vendor_profile.dart';
 
 final router = GoRouter(
   routes: [
@@ -38,7 +40,7 @@ final router = GoRouter(
       path: "/profile",
       pageBuilder: (context, state) => NoTransitionPage(child: ProfilePage()),
     ),
-    GoRoute(path: "/vendor", builder: (context, state) => VendorProfilePage()),
+
     // TODO: Create VendorDetailPage
     // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
     GoRoute(
@@ -55,6 +57,29 @@ final router = GoRouter(
       path: "/vendor/kelola_item/create",
       builder: (context, state) => CreateItemPage(),
     ),
+
+    GoRoute(
+      path: "/vendor/pesanan",
+      builder:
+          (context, state) =>
+              PesananVendorPage(filter: state.uri.queryParameters['filter']),
+    ),
+
+    GoRoute(
+      path: "/vendor/pesanan/:dataId",
+      builder:
+          (context, state) => PesananDetailVendorPage(
+            dataId: int.parse(state.pathParameters['dataId']!),
+          ),
+    ),
+
+    GoRoute(
+      path: "/customer/pesanan",
+      builder:
+          (context, state) =>
+              PesananCustomerPage(filter: state.uri.queryParameters['filter']),
+    ),
+
     GoRoute(
       path: "/item/detail/:dataId",
       builder:

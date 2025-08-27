@@ -232,7 +232,6 @@ class _CustomerMenuSection extends StatelessWidget {
   }
 }
 
-// TODO: Add link to each button here
 class _VendorMenuSection extends StatelessWidget {
   const _VendorMenuSection();
 
@@ -261,7 +260,7 @@ class _VendorMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap: () => GoRouter.of(context).push('/vendor/pesanan'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -278,7 +277,10 @@ class _VendorMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/vendor/pesanan?filter=process'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -295,7 +297,10 @@ class _VendorMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/vendor/pesanan?filter=complete'),
               child: SizedBox(
                 height: 80,
                 child: Column(

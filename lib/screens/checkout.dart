@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
@@ -85,23 +87,45 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final token = res.data['snapToken'];
 
       midtrans = await MidtransSDK.init(config: config);
-      midtrans!.setTransactionFinishedCallback((result) {
+      midtrans!.setTransactionFinishedCallback((result) async {
         if (result.status == 'canceled') {
           GoRouter.of(context).pop();
+        } else if (result.status == 'pending') {
+          while (GoRouter.of(context).canPop() == true) {
+            GoRouter.of(context).pop();
+          }
+
+          await sendTransactionData(
+            result.transactionId!,
+            'panjar',
+            result.paymentType!,
+            (calculatePanjar(currentPrice) +
+                    (calculatePanjar(currentPrice) * 0.025))
+                .round(),
+            result.status,
+          );
+
+          GoRouter.of(context).pushReplacement('/home');
         } else {
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
           }
+
+          await sendTransactionData(
+            result.transactionId!,
+            'panjar',
+            result.paymentType!,
+            (calculatePanjar(currentPrice) +
+                    (calculatePanjar(currentPrice) * 0.025))
+                .round(),
+            result.status,
+          );
 
           GoRouter.of(context).pushReplacement('/home');
         }
       });
 
       await midtrans!.startPaymentUiFlow(token: token);
-
-      setState(() {
-        isLoading = false;
-      });
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -136,22 +160,37 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final token = res.data['snapToken'];
 
       midtrans = await MidtransSDK.init(config: config);
-      midtrans!.setTransactionFinishedCallback((result) {
+      midtrans!.setTransactionFinishedCallback((result) async {
         if (result.status == 'canceled') {
           GoRouter.of(context).pop();
+        } else if (result.status == 'pending') {
+          while (GoRouter.of(context).canPop() == true) {
+            GoRouter.of(context).pop();
+          }
+          await sendTransactionData(
+            result.transactionId!,
+            'full_paid',
+            result.paymentType!,
+            currentPrice + (currentPrice * 0.025).round(),
+            result.status,
+          );
+          GoRouter.of(context).pushReplacement('/home');
         } else {
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
           }
-          GoRouter.of(context).push('/home');
+          await sendTransactionData(
+            result.transactionId!,
+            'full_paid',
+            result.paymentType!,
+            currentPrice + (currentPrice * 0.025).round(),
+            result.status,
+          );
+          GoRouter.of(context).pushReplacement('/home');
         }
       });
 
       await midtrans!.startPaymentUiFlow(token: token);
-
-      setState(() {
-        isLoading = false;
-      });
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -160,6 +199,66 @@ class _CheckoutPageState extends State<CheckoutPage> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<int> fetchVendorIdByItemId(int itemId) async {
+    final client = Supabase.instance.client;
+
+    final response =
+        await client
+            .from('items')
+            .select('vendor(id)')
+            .eq('id', itemId)
+            .single();
+    return response['vendor']['id'] as int;
+  }
+
+  Future<void> sendTransactionData(
+    String transactionId,
+    String paymentType,
+    String paymentMethod,
+    int amount,
+    String transactionStatus,
+  ) async {
+    final client = Supabase.instance.client;
+    final vendorId = await fetchVendorIdByItemId(widget.dataId);
+
+    try {
+      await client.from('transactions').insert({
+        'user_id': client.auth.currentUser!.id,
+        'item_id': widget.dataId,
+        'payment_type': paymentType,
+        'payment_method': paymentMethod,
+        'durasi': selectedDuration,
+        'tgl_foto': selectedDate!.toLocal().toString(),
+        'waktu_foto':
+            DateTime(
+              selectedDate!.year,
+              selectedDate!.month,
+              selectedDate!.day,
+              selectedTime!.hour,
+              selectedTime!.minute,
+            ).toLocal().toString(),
+        'midtrans_order_id': transactionId,
+        'amount': amount,
+        'user_displayName':
+            client.auth.currentUser!.userMetadata!['displayName'],
+        "vendor_id": vendorId,
+        "status_payment":
+            transactionStatus == 'pending'
+                ? 'pending'
+                : paymentType == 'full_paid'
+                ? 'complete'
+                : 'panjar_paid',
+        "status_work": 'pending',
+        "status_administration": 'pending_work',
+      });
+    } catch (e) {
+      log(e.toString());
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
     }
   }
 

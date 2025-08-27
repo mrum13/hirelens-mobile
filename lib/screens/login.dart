@@ -96,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
                 Text(
-                  'Project HireLens',
+                  'HireLens',
                   style: Theme.of(context).textTheme.displayLarge,
                 ),
                 const SizedBox(height: 12),
