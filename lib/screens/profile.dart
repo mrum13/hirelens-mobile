@@ -165,7 +165,6 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// URGENT: Add link to each button here
 class _CustomerMenuSection extends StatelessWidget {
   const _CustomerMenuSection();
 
@@ -177,7 +176,10 @@ class _CustomerMenuSection extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan?filter=pending'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -194,7 +196,10 @@ class _CustomerMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan?filter=processing'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -211,7 +216,10 @@ class _CustomerMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan?filter=complete'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -280,7 +288,7 @@ class _VendorMenuSection extends StatelessWidget {
               onTap:
                   () => GoRouter.of(
                     context,
-                  ).push('/vendor/pesanan?filter=process'),
+                  ).push('/vendor/pesanan?filter=processing'),
               child: SizedBox(
                 height: 80,
                 child: Column(

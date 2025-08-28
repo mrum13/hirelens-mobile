@@ -1,11 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as p;
-import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
+import 'package:http/http.dart' as http;
 
 class EditItemPage extends StatefulWidget {
   const EditItemPage({super.key, required this.dataId});
@@ -16,7 +18,6 @@ class EditItemPage extends StatefulWidget {
   State<EditItemPage> createState() => _EditItemPageState();
 }
 
-// URGENT: Finish this page data functions
 // TODO: Vendor can upload image and behind the scene media (image and videos) in edit_item
 class _EditItemPageState extends State<EditItemPage> {
   final _formKey = GlobalKey<FormState>();
@@ -27,6 +28,7 @@ class _EditItemPageState extends State<EditItemPage> {
   final TextEditingController _durasiController = TextEditingController();
   List<int> durationList = [];
   bool _isLoading = false;
+  bool _isImageUpdated = false;
   File? _selectedImage;
 
   @override
@@ -78,51 +80,91 @@ class _EditItemPageState extends State<EditItemPage> {
     return null;
   }
 
-  // Future<void> _createItem() async {
-  //   if (_selectedImage == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Pilih gambar terlebih dahulu')),
-  //     );
-  //     return;
-  //   }
+  Future<File> _loadImageFromUrl(String url) async {
+    final Directory tempDir = await getTemporaryDirectory();
+    final tempDirPath = tempDir.path;
+    final curTime = DateTime.now();
 
-  //   setState(() => _isLoading = true);
+    final response = await http.get(Uri.parse(url));
+    final file = File(
+      "$tempDirPath/img/${curTime.year}${curTime.month}${curTime.day}${curTime.hour}${curTime.minute}${curTime.second}${curTime.millisecond}.jpg",
+    );
 
-  //   try {
-  //     final url = await uploadImage(_selectedImage!);
-  //     final vendorId = await findVendorId();
+    file.writeAsBytes(response.bodyBytes);
 
-  //     await Supabase.instance.client.from('items').insert({
-  //       'name': _nameController.text.trim(),
-  //       'thumbnail': url,
-  //       'price': _priceController.text.trim(),
-  //       'address': _addressController.text.trim(),
-  //       'description': _descController.text.trim(),
-  //       'vendor': vendorId,
-  //       'durations':
-  //           durationList.map((duration) => duration.toString()).toList(),
-  //     });
+    return file;
+  }
 
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text(
-  //           'Item berhasil disimpan! Menunggu verifikasi dari Admin Hirelens',
-  //         ),
-  //       ),
-  //     );
-  //     GoRouter.of(context).pop();
-  //   } catch (e) {
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Gagal menyimpan item: $e')));
-  //   } finally {
-  //     setState(() => _isLoading = false);
-  //   }
-  // }
+  Future<void> _fetchAndSetData() async {
+    final client = Supabase.instance.client;
+    final response =
+        await client.from('items').select().eq('id', widget.dataId).single();
 
-  Future<void> _updateItem() async {}
+    _nameController.text = response['name'];
+    _addressController.text = response['address'];
+    _descController.text = response['description'];
+    _priceController.text = response['price'];
+    final thumbnailFile = await _loadImageFromUrl(response['thumbnail']);
 
-  Future<void> _deleteItem() async {}
+    setState(() {
+      durationList =
+          (response['durations'] as List<String>)
+              .map((d) => int.parse(d))
+              .toList();
+      _selectedImage = thumbnailFile;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _updateItem() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final client = Supabase.instance.client;
+    final vendorId = await findVendorId();
+    String? url;
+    Map<String, dynamic> data = {};
+
+    if (_isImageUpdated) {
+      url = await uploadImage(_selectedImage!);
+      data['thumbnail'] = url;
+    }
+
+    data['name'] = _nameController.text.trim();
+    data['price'] = _priceController.text.trim();
+    data['address'] = _addressController.text.trim();
+    data['description'] = _descController.text.trim();
+    data['vendor'] = vendorId;
+    data['durations'] =
+        durationList.map((duration) => duration.toString()).toList();
+
+    try {
+      await client.from('items').update(data).eq('id', widget.dataId);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Item berhasil disimpan!')));
+
+      GoRouter.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan item: $e')));
+
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Future<void> _deleteItem() async {}
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAndSetData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +196,7 @@ class _EditItemPageState extends State<EditItemPage> {
                     onImageSelected: (file) {
                       setState(() {
                         _selectedImage = file;
+                        _isImageUpdated = true;
                       });
                     },
                   ),

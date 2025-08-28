@@ -252,7 +252,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ? 'complete'
                 : 'panjar_paid',
         "status_work": 'pending',
-        "status_administration": 'pending_work',
+        "status_payout": 'pending_work',
       });
     } catch (e) {
       log(e.toString());

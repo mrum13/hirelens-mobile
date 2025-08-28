@@ -11,7 +11,7 @@ class PesananDetailVendorPage extends StatefulWidget {
       _PesananDetailVendorPageState();
 }
 
-// URGENT: Work on this page's UI
+// URGENT: Show the transaction detail and add buttons to accept the job
 class _PesananDetailVendorPageState extends State<PesananDetailVendorPage> {
   bool isLoading = true;
   late Map<String, dynamic> data;

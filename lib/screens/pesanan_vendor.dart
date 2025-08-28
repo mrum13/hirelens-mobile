@@ -14,7 +14,6 @@ String formatCurrency(int price) {
   return formatter.format(price);
 }
 
-// URGENT: Apply what's in here to PesananCustomerPage with a bit of adjustment
 class PesananVendorPage extends StatefulWidget {
   PesananVendorPage({super.key, this.filter});
 
@@ -41,19 +40,49 @@ class _PesananVendorPageState extends State<PesananVendorPage> {
     return response['id'] as int;
   }
 
-  // URGENT: Fix this if necessary and add trycatch block for it. Make sure it's able to utilize optional filter parameter
+  // NOTE: status_payment (pending, panjar_paid, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
   Future<void> fetchDatas() async {
     final client = Supabase.instance.client;
-    final vendorId = await fetchVendorId();
 
-    final response = await client
-        .from('transactions')
-        .select("*, item_id(id, name)")
-        .eq('vendor_id', vendorId);
+    try {
+      final vendorId = await fetchVendorId();
+      List<Map<String, dynamic>> responseData = [];
 
-    setState(() {
-      transactions = response;
-    });
+      if (widget.filter != null && widget.filter!.isNotEmpty) {
+        switch (widget.filter) {
+          case 'processing':
+            responseData = await client
+                .from('transactions')
+                .select("*, item_id(id, name)")
+                .eq('vendor_id', vendorId)
+                .or('status_work.eq.editing,status_work.eq.post_processing')
+                .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+            break;
+          case 'complete':
+            responseData = await client
+                .from('transactions')
+                .select("*, item_id(id, name)")
+                .eq('vendor_id', vendorId)
+                .eq('status_work', 'complete');
+            break;
+        }
+      } else {
+        responseData = await client
+            .from('transactions')
+            .select("*, item_id(id, name)")
+            .eq('vendor_id', vendorId)
+            .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
+            .or('status_work.eq.pending,status_work.eq.waiting');
+      }
+
+      setState(() {
+        transactions = responseData;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
+    }
   }
 
   @override

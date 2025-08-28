@@ -77,7 +77,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     });
   }
 
-  // NOTE: status_payment (pending, panjar_paid, complete), status_work (pending, waiting, editing, post-processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
+  // NOTE: status_payment (pending, panjar_paid, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
   Future<void> fetchAllTransactions() async {
     final client = Supabase.instance.client;
     final vendorId = await fetchVendorId();
@@ -97,7 +97,12 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     List<Map<String, dynamic>> orders,
   ) {
     final result =
-        orders.where((order) => order['status'] == 'paid_success').toList();
+        orders
+            .where(
+              (order) =>
+                  ['panjar_paid', 'complete'].contains(order['status_payment']),
+            )
+            .toList();
 
     return result;
   }
@@ -123,8 +128,14 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
   List<Map<String, dynamic>> filterLatestOrder(
     List<Map<String, dynamic>> orders,
   ) {
-    final result =
-        orders.getRange(0, orders.length < 6 ? orders.length : 5).toList();
+    final tmp =
+        orders
+            .where(
+              (order) =>
+                  ['panjar_paid', 'complete'].contains(order['status_payment']),
+            )
+            .toList();
+    final result = tmp.getRange(0, tmp.length < 6 ? tmp.length : 5).toList();
 
     return result;
   }
@@ -137,6 +148,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
         .from('transactions')
         .select("*, item_id(id, name)")
         .eq('vendor_id', vendorId)
+        .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
         .order('created_at')
         .order('tgl_foto')
         .limit(10);
