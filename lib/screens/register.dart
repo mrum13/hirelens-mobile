@@ -60,7 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: themeFromContext(context).textTheme.displaySmall,
                       ),
                       Text(
-                        'Project HireLens',
+                        'HireLens',
                         style: themeFromContext(context).textTheme.displayLarge,
                       ),
                       const SizedBox(height: 24),

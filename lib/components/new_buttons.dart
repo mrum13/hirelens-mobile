@@ -2,7 +2,7 @@
 
 import "package:flutter/material.dart";
 
-enum MyButtonVariant { primary, secondary, tertiary, neutral, white }
+enum MyButtonVariant { primary, secondary, tertiary, neutral, white, danger }
 
 Color _getVariantColor(MyButtonVariant variant, ThemeData theme) {
   switch (variant) {
@@ -16,6 +16,8 @@ Color _getVariantColor(MyButtonVariant variant, ThemeData theme) {
       return theme.colorScheme.surfaceBright;
     case MyButtonVariant.white:
       return Colors.white60;
+    case MyButtonVariant.danger:
+      return theme.colorScheme.error;
   }
 }
 
@@ -31,6 +33,8 @@ Color _getOnVariantColor(MyButtonVariant variant, ThemeData theme) {
       return theme.colorScheme.onSurface;
     case MyButtonVariant.white:
       return theme.colorScheme.onSurface;
+    case MyButtonVariant.danger:
+      return theme.colorScheme.onError;
   }
 }
 

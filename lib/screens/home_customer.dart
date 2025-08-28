@@ -178,33 +178,61 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                   child: Center(child: Text('Belum ada item.')),
                 )
               else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverGrid(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final item = items[index];
-                      return ItemCard(
-                        id: item['id'],
-                        name: item['name'],
-                        vendor: item['vendor'],
-                        price: item['price'],
-                        thumbnail: item['thumbnail'],
-                        description: item['description'] ?? '',
-                        onTapHandler:
-                            () => GoRouter.of(
-                              context,
-                            ).push("/item/detail/${item['id']}"),
-                      );
-                    }, childCount: items.length),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.65,
-                        ),
-                  ),
-                ),
+                MediaQuery.of(context).size.width < 720
+                    ? SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = items[index];
+                          return ItemCard(
+                            id: item['id'],
+                            name: item['name'],
+                            vendor: item['vendor'],
+                            price: item['price'],
+                            thumbnail: item['thumbnail'],
+                            description: item['description'] ?? '',
+                            onTapHandler:
+                                () => GoRouter.of(
+                                  context,
+                                ).push("/item/detail/${item['id']}"),
+                          );
+                        }, childCount: items.length),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.65,
+                            ),
+                      ),
+                    )
+                    : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverGrid(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final item = items[index];
+                          return ItemCard(
+                            id: item['id'],
+                            name: item['name'],
+                            vendor: item['vendor'],
+                            price: item['price'],
+                            thumbnail: item['thumbnail'],
+                            description: item['description'] ?? '',
+                            onTapHandler:
+                                () => GoRouter.of(
+                                  context,
+                                ).push("/item/detail/${item['id']}"),
+                          );
+                        }, childCount: items.length),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.65,
+                            ),
+                      ),
+                    ),
 
               SliverToBoxAdapter(child: SizedBox(height: 16)),
             ],

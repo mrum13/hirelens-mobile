@@ -165,7 +165,6 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// URGENT: Add link to each button here
 class _CustomerMenuSection extends StatelessWidget {
   const _CustomerMenuSection();
 
@@ -177,7 +176,10 @@ class _CustomerMenuSection extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan?filter=pending'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -194,7 +196,10 @@ class _CustomerMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan?filter=processing'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -211,7 +216,10 @@ class _CustomerMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan?filter=complete'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -232,7 +240,6 @@ class _CustomerMenuSection extends StatelessWidget {
   }
 }
 
-// TODO: Add link to each button here
 class _VendorMenuSection extends StatelessWidget {
   const _VendorMenuSection();
 
@@ -252,8 +259,8 @@ class _VendorMenuSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
                   children: [
-                    Icon(Icons.inbox_outlined, size: 24),
-                    Text("Items", textAlign: TextAlign.center),
+                    Icon(Icons.list_alt_outlined, size: 24),
+                    Text("Kelola Item", textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -261,7 +268,7 @@ class _VendorMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap: () => GoRouter.of(context).push('/vendor/pesanan'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -278,7 +285,10 @@ class _VendorMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/vendor/pesanan?filter=processing'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -295,7 +305,10 @@ class _VendorMenuSection extends StatelessWidget {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/vendor/pesanan?filter=complete'),
               child: SizedBox(
                 height: 80,
                 child: Column(

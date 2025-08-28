@@ -26,11 +26,12 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
+    final client = Supabase.instance.client;
 
     setState(() => _isLoading = true);
 
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
+      final response = await client.auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -47,7 +48,20 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (mounted) {
-        _showError('Terjadi kesalahan: ${e.toString()}');
+        if (e is AuthApiException) {
+          if (e.code == 'email_not_confirmed') {
+            GoRouter.of(context).push(
+              '/verify_registration?email=${_emailController.text.trim()}',
+            );
+
+            await client.auth.resend(
+              type: OtpType.signup,
+              email: _emailController.text.trim(),
+            );
+          }
+        } else {
+          _showError('Terjadi kesalahan: ${e.toString()}');
+        }
       }
     } finally {
       if (mounted) {
@@ -82,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
                 Text(
-                  'Project HireLens',
+                  'HireLens',
                   style: Theme.of(context).textTheme.displayLarge,
                 ),
                 const SizedBox(height: 12),

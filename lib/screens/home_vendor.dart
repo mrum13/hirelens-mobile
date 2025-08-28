@@ -77,6 +77,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     });
   }
 
+  // NOTE: status_payment (pending, panjar_paid, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
   Future<void> fetchAllTransactions() async {
     final client = Supabase.instance.client;
     final vendorId = await fetchVendorId();
@@ -96,7 +97,12 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     List<Map<String, dynamic>> orders,
   ) {
     final result =
-        orders.where((order) => order['status'] == 'pending').toList();
+        orders
+            .where(
+              (order) =>
+                  ['panjar_paid', 'complete'].contains(order['status_payment']),
+            )
+            .toList();
 
     return result;
   }
@@ -122,8 +128,14 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
   List<Map<String, dynamic>> filterLatestOrder(
     List<Map<String, dynamic>> orders,
   ) {
-    final result =
-        orders.getRange(0, orders.length < 6 ? orders.length : 5).toList();
+    final tmp =
+        orders
+            .where(
+              (order) =>
+                  ['panjar_paid', 'complete'].contains(order['status_payment']),
+            )
+            .toList();
+    final result = tmp.getRange(0, tmp.length < 6 ? tmp.length : 5).toList();
 
     return result;
   }
@@ -136,6 +148,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
         .from('transactions')
         .select("*, item_id(id, name)")
         .eq('vendor_id', vendorId)
+        .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
         .order('created_at')
         .order('tgl_foto')
         .limit(10);
@@ -150,6 +163,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     super.initState();
     fetchItemCount();
     fetchAllTransactions();
+    fetchUpcomingTransaction();
 
     setState(() {
       isLoading = false;
@@ -161,10 +175,30 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     super.didPopNext();
     fetchItemCount();
     fetchAllTransactions();
+    fetchUpcomingTransaction();
 
     setState(() {
       isLoading = false;
     });
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    fetchItemCount();
+    fetchAllTransactions();
+    fetchUpcomingTransaction();
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  void deactivate() {
+    super.deactivate();
+
+    isLoading = true;
   }
 
   @override
@@ -180,6 +214,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
 
             await fetchItemCount();
             await fetchAllTransactions();
+            await fetchUpcomingTransaction();
 
             setState(() {
               isLoading = false;
@@ -267,7 +302,6 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
 
                 SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-                // URGENT: Test this and make sure all features running normal
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(
@@ -288,13 +322,17 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                             children:
                                 filterLatestOrder(transactions)
                                     .map(
-                                      // URGENT: Fill this with actual data from transaction
                                       (transaction) => _RecentOrderItem(
-                                        customerName: "Muhammad Chandra Hasan",
-                                        itemName: "Photobooth Pra-Wedding",
-                                        duration: 2,
-                                        paymentType: 'panjar',
-                                        amount: 350000,
+                                        customerName:
+                                            transaction['user_displayName'],
+                                        itemName:
+                                            transaction['item_id']['name'],
+                                        duration: int.parse(
+                                          transaction['durasi'],
+                                        ),
+                                        paymentType:
+                                            transaction['payment_type'],
+                                        amount: transaction['amount'],
                                       ),
                                     )
                                     .toList(),
@@ -327,30 +365,23 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             spacing: 8,
                             children:
-                                // [
-                                //   _UpcomingTransactionItem(
-                                //     customerName: "Muhammad Chandra Hasan",
-                                //     itemName: "Photobooth Pra-Wedding",
-                                //     duration: 2,
-                                //     tglFoto: DateTime(2025, 08, 25, 12, 00),
-                                //     waktuFoto: DateTime(2025, 08, 25, 12, 00),
-                                //   ),
-                                // ],
                                 upcomingShoots
                                     .map(
                                       (
                                         upcomingShot,
                                       ) => _UpcomingTransactionItem(
-                                        customerName: "Muhammad Chandra Hasan",
-                                        itemName: "Photobooth Pra-Wedding",
-                                        duration: 2,
-                                        tglFoto: DateTime(2025, 08, 25, 12, 00),
-                                        waktuFoto: DateTime(
-                                          2025,
-                                          08,
-                                          25,
-                                          12,
-                                          00,
+                                        customerName:
+                                            upcomingShot['user_displayName'],
+                                        itemName:
+                                            upcomingShot['item_id']['name'],
+                                        duration: int.parse(
+                                          upcomingShot['durasi'],
+                                        ),
+                                        tglFoto: DateTime.parse(
+                                          upcomingShot['tgl_foto'],
+                                        ),
+                                        waktuFoto: DateTime.parse(
+                                          "${upcomingShot['tgl_foto']} ${upcomingShot['waktu_foto']}",
                                         ),
                                       ),
                                     )
@@ -399,7 +430,7 @@ class _RecentOrderItem extends StatelessWidget {
           height: 80,
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           decoration: BoxDecoration(
-            color: themeFromContext(context).colorScheme.primaryContainer,
+            color: themeFromContext(context).colorScheme.surfaceBright,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
@@ -441,18 +472,12 @@ class _RecentOrderItem extends StatelessWidget {
           right: -4,
           child: Container(
             decoration: BoxDecoration(
-              color:
-                  paymentType == 'panjar'
-                      ? Colors.amberAccent
-                      : Colors.lightGreenAccent,
+              color: paymentType == 'panjar' ? Colors.orange : Colors.green,
             ),
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Text(
               paymentType == 'panjar' ? "Panjar" : "Full",
-              style: TextStyle(
-                fontSize: 12,
-                color: themeFromContext(context).colorScheme.onPrimary,
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.white70),
             ),
           ),
         ),
@@ -486,42 +511,39 @@ class _UpcomingTransactionItem extends StatelessWidget {
           height: 80,
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
           decoration: BoxDecoration(
-            color: themeFromContext(context).colorScheme.primaryContainer,
+            color: themeFromContext(context).colorScheme.surfaceBright,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        customerName.length > 24
-                            ? "${customerName.substring(0, 24)}..."
-                            : customerName,
-                        style: themeFromContext(context).textTheme.bodyMedium,
-                      ),
-                      Spacer(),
-                      Opacity(
-                        opacity: 0.65,
-                        child: Text(
-                          "${itemName.length > 14 ? "${itemName.substring(0, 14)}..." : itemName} | $duration jam",
-                          style: themeFromContext(context).textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
-                  ),
                   Text(
-                    DateFormat(
-                      'EEEE, dd MMM',
-                      Locale('in', 'ID').scriptCode,
-                    ).format(tglFoto),
-                    style: themeFromContext(context).textTheme.displayMedium,
+                    customerName.length > 24
+                        ? "${customerName.substring(0, 24)}..."
+                        : customerName,
+                    style: themeFromContext(context).textTheme.bodyMedium,
+                  ),
+                  Spacer(),
+                  Opacity(
+                    opacity: 0.65,
+                    child: Text(
+                      "${itemName.length > 14 ? "${itemName.substring(0, 14)}..." : itemName} | $duration jam",
+                      style: themeFromContext(context).textTheme.bodySmall,
+                    ),
                   ),
                 ],
+              ),
+              Text(
+                DateFormat(
+                  'EEEE, dd MMM',
+                  Locale('in', 'ID').scriptCode,
+                ).format(tglFoto),
+                style: themeFromContext(context).textTheme.displayMedium,
+                textAlign: TextAlign.end,
               ),
             ],
           ),
@@ -531,14 +553,32 @@ class _UpcomingTransactionItem extends StatelessWidget {
           top: 6,
           right: -4,
           child: Container(
-            decoration: BoxDecoration(color: Colors.lightGreenAccent),
+            decoration: BoxDecoration(
+              color: themeFromContext(context).colorScheme.primaryContainer,
+            ),
             padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Text(
-              DateFormat('HH:mm').format(waktuFoto),
-              style: TextStyle(
-                fontSize: 14,
-                color: themeFromContext(context).colorScheme.onPrimary,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              spacing: 4,
+              children: [
+                Icon(
+                  Icons.alarm,
+                  size: 14,
+                  color:
+                      themeFromContext(context).colorScheme.onPrimaryContainer,
+                ),
+                Text(
+                  DateFormat('HH:mm').format(waktuFoto),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color:
+                        themeFromContext(
+                          context,
+                        ).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

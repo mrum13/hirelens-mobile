@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
@@ -27,6 +29,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isLoading = true;
   late dynamic selectedDuration;
   DateTime? selectedDate;
+  DateTime? selectedTime;
   MidtransSDK? midtrans;
 
   Future<void> fetchData() async {
@@ -63,8 +66,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   void payPanjar() async {
     try {
-      if (selectedDate == null) {
-        throw Exception("Harap pilih tanggal foto!");
+      if (selectedDate == null || selectedTime == null) {
+        throw Exception("Harap pilih tanggal dan waktu foto!");
       }
       setState(() {
         isLoading = true;
@@ -77,29 +80,52 @@ class _CheckoutPageState extends State<CheckoutPage> {
           'orderId': 'order-${DateTime.now().millisecondsSinceEpoch}',
           'price': calculatePanjar(currentPrice).round(),
           'itemName': name,
+          'duration': selectedDuration,
         },
       );
 
       final token = res.data['snapToken'];
 
       midtrans = await MidtransSDK.init(config: config);
-      midtrans!.setTransactionFinishedCallback((result) {
+      midtrans!.setTransactionFinishedCallback((result) async {
         if (result.status == 'canceled') {
           GoRouter.of(context).pop();
+        } else if (result.status == 'pending') {
+          while (GoRouter.of(context).canPop() == true) {
+            GoRouter.of(context).pop();
+          }
+
+          await sendTransactionData(
+            result.transactionId!,
+            'panjar',
+            result.paymentType!,
+            (calculatePanjar(currentPrice) +
+                    (calculatePanjar(currentPrice) * 0.025))
+                .round(),
+            result.status,
+          );
+
+          GoRouter.of(context).pushReplacement('/home');
         } else {
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
           }
+
+          await sendTransactionData(
+            result.transactionId!,
+            'panjar',
+            result.paymentType!,
+            (calculatePanjar(currentPrice) +
+                    (calculatePanjar(currentPrice) * 0.025))
+                .round(),
+            result.status,
+          );
 
           GoRouter.of(context).pushReplacement('/home');
         }
       });
 
       await midtrans!.startPaymentUiFlow(token: token);
-
-      setState(() {
-        isLoading = false;
-      });
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -127,28 +153,44 @@ class _CheckoutPageState extends State<CheckoutPage> {
           'orderId': 'order-${DateTime.now().millisecondsSinceEpoch}',
           'price': currentPrice,
           'itemName': name,
+          'duration': selectedDuration,
         },
       );
 
       final token = res.data['snapToken'];
 
       midtrans = await MidtransSDK.init(config: config);
-      midtrans!.setTransactionFinishedCallback((result) {
+      midtrans!.setTransactionFinishedCallback((result) async {
         if (result.status == 'canceled') {
           GoRouter.of(context).pop();
+        } else if (result.status == 'pending') {
+          while (GoRouter.of(context).canPop() == true) {
+            GoRouter.of(context).pop();
+          }
+          await sendTransactionData(
+            result.transactionId!,
+            'full_paid',
+            result.paymentType!,
+            currentPrice + (currentPrice * 0.025).round(),
+            result.status,
+          );
+          GoRouter.of(context).pushReplacement('/home');
         } else {
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
           }
-          GoRouter.of(context).push('/home');
+          await sendTransactionData(
+            result.transactionId!,
+            'full_paid',
+            result.paymentType!,
+            currentPrice + (currentPrice * 0.025).round(),
+            result.status,
+          );
+          GoRouter.of(context).pushReplacement('/home');
         }
       });
 
       await midtrans!.startPaymentUiFlow(token: token);
-
-      setState(() {
-        isLoading = false;
-      });
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -157,6 +199,66 @@ class _CheckoutPageState extends State<CheckoutPage> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<int> fetchVendorIdByItemId(int itemId) async {
+    final client = Supabase.instance.client;
+
+    final response =
+        await client
+            .from('items')
+            .select('vendor(id)')
+            .eq('id', itemId)
+            .single();
+    return response['vendor']['id'] as int;
+  }
+
+  Future<void> sendTransactionData(
+    String transactionId,
+    String paymentType,
+    String paymentMethod,
+    int amount,
+    String transactionStatus,
+  ) async {
+    final client = Supabase.instance.client;
+    final vendorId = await fetchVendorIdByItemId(widget.dataId);
+
+    try {
+      await client.from('transactions').insert({
+        'user_id': client.auth.currentUser!.id,
+        'item_id': widget.dataId,
+        'payment_type': paymentType,
+        'payment_method': paymentMethod,
+        'durasi': selectedDuration,
+        'tgl_foto': selectedDate!.toLocal().toString(),
+        'waktu_foto':
+            DateTime(
+              selectedDate!.year,
+              selectedDate!.month,
+              selectedDate!.day,
+              selectedTime!.hour,
+              selectedTime!.minute,
+            ).toLocal().toString(),
+        'midtrans_order_id': transactionId,
+        'amount': amount,
+        'user_displayName':
+            client.auth.currentUser!.userMetadata!['displayName'],
+        "vendor_id": vendorId,
+        "status_payment":
+            transactionStatus == 'pending'
+                ? 'pending'
+                : paymentType == 'full_paid'
+                ? 'complete'
+                : 'panjar_paid',
+        "status_work": 'pending',
+        "status_payout": 'pending_work',
+      });
+    } catch (e) {
+      log(e.toString());
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
     }
   }
 
@@ -175,6 +277,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void changeSelectedDuration(dynamic duration) {
     setState(() {
       currentPrice = price * (duration as int);
+      selectedDuration = duration;
     });
   }
 
@@ -205,25 +308,46 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   spacing: 8,
                   children: [
                     Expanded(
-                      child: MyFilledButton(
-                        variant: MyButtonVariant.neutral,
-                        onTap: payPanjar,
-                        child: Text(
-                          "Bayar Panjar",
-                          style: themeFromContext(context).textTheme.bodyLarge,
+                      child: Badge(
+                        backgroundColor: Colors.white,
+                        offset: Offset(-64, -8),
+                        label: Text(
+                          formatCurrency(
+                            calculatePanjar(currentPrice).round() +
+                                (calculatePanjar(currentPrice).round() * 0.025)
+                                    .round(),
+                          ),
+                        ),
+                        child: MyFilledButton(
+                          variant: MyButtonVariant.neutral,
+                          onTap: payPanjar,
+                          child: Text(
+                            "Bayar Panjar",
+                            style:
+                                themeFromContext(context).textTheme.bodyLarge,
+                          ),
                         ),
                       ),
                     ),
                     Expanded(
-                      child: MyFilledButton(
-                        variant: MyButtonVariant.primary,
-                        onTap: payFull,
-                        child: Text(
-                          "Bayar Full",
-                          style: themeFromContext(
-                            context,
-                          ).textTheme.bodyLarge!.copyWith(
-                            color: Theme.of(context).colorScheme.onPrimary,
+                      child: Badge(
+                        backgroundColor: Colors.white,
+                        offset: Offset(-64, -8),
+                        label: Text(
+                          formatCurrency(
+                            currentPrice + (currentPrice * 0.025).round(),
+                          ),
+                        ),
+                        child: MyFilledButton(
+                          variant: MyButtonVariant.primary,
+                          onTap: payFull,
+                          child: Text(
+                            "Bayar Full",
+                            style: themeFromContext(
+                              context,
+                            ).textTheme.bodyLarge!.copyWith(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
                           ),
                         ),
                       ),
@@ -244,11 +368,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       spacing: 12,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Image.network(
-                          thumbnail,
-                          width: 96,
-                          height: 96,
-                          fit: BoxFit.cover,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            thumbnail,
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -282,65 +409,136 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    Text("Durasi"),
+                    const SizedBox(height: 32),
                     DropdownButtonFormField(
+                      decoration: InputDecoration(label: Text("Durasi")),
                       value: durations.isNotEmpty ? durations[0] : null,
                       items:
                           durations
                               .map(
                                 (d) => DropdownMenuItem(
                                   value: d,
-                                  child: Text(d.toString()),
+                                  child: Text("${d.toString()} Jam"),
                                 ),
                               )
                               .toList(),
                       onChanged: changeSelectedDuration,
                     ),
                     const SizedBox(height: 16),
-                    DatePickerTheme(
-                      data: DatePickerThemeData(
-                        dayStyle: TextStyle(fontSize: 16),
-                        yearStyle: TextStyle(fontSize: 16),
-                        weekdayStyle: TextStyle(fontSize: 16),
-                        inputDecorationTheme: InputDecorationTheme(
-                          labelStyle: TextStyle(fontSize: 16),
-                        ),
-                      ),
-                      child: GestureDetector(
-                        onTap: () async {
-                          DateTime? tmpSelectedDate;
-                          tmpSelectedDate = await showDatePicker(
-                            context: context,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(DateTime.now().year + 2),
-                          );
+                    GestureDetector(
+                      onTap: () async {
+                        final curTime = DateTime.now();
 
-                          setState(() {
-                            selectedDate = tmpSelectedDate;
-                          });
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(
-                                  context,
-                                ).buttonTheme.colorScheme!.primary,
-                            borderRadius: BorderRadius.circular(8),
+                        final tmp = await showDatePicker(
+                          context: context,
+                          firstDate: curTime,
+                          lastDate: DateTime(
+                            curTime.year + 1,
+                            curTime.month,
+                            curTime.day,
                           ),
-                          child: Text(
-                            selectedDate != null
-                                ? "Pilih Tanggal : ${selectedDate!.day}-${selectedDate!.month}-${selectedDate!.year}"
-                                : "Pilih Tanggal",
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onTertiary,
-                            ),
+                        );
+
+                        setState(() {
+                          selectedDate = tmp!;
+                        });
+                      },
+                      child: TextField(
+                        enabled: false,
+                        decoration: InputDecoration(
+                          label: Text(
+                            selectedDate == null
+                                ? "Tanggal Foto"
+                                : DateFormat(
+                                  'dd MMMM yyyy',
+                                ).format(selectedDate!),
                           ),
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () async {
+                        final curTime = DateTime.now();
+                        final tmp = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+
+                        setState(() {
+                          selectedTime = DateTime(
+                            curTime.year,
+                            curTime.month,
+                            curTime.day,
+                            tmp!.hour,
+                            tmp.minute,
+                          );
+                        });
+                      },
+                      child: TextField(
+                        enabled: false,
+                        decoration: InputDecoration(
+                          label: Text(
+                            selectedTime == null
+                                ? "Waktu Foto"
+                                : DateFormat(
+                                  DateFormat.HOUR24_MINUTE,
+                                ).format(selectedTime!),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      "Rincian Tagihan",
+                      style: themeFromContext(context).textTheme.displayMedium,
+                    ),
+                    const SizedBox(height: 32),
+
+                    Column(
+                      spacing: 4,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Harga Item :"),
+                            Text(
+                              "${formatCurrency(price)} x $selectedDuration",
+                            ),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text("Total Harga Item :"),
+                            Text(formatCurrency(currentPrice)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [Text("Transaction Fee :"), Text("2,5%")],
+                        ),
+                        SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Subtotal :",
+                              style:
+                                  themeFromContext(context).textTheme.bodyLarge,
+                            ),
+                            Text(
+                              formatCurrency(
+                                (currentPrice + (currentPrice * 0.025)).round(),
+                              ),
+                              style:
+                                  themeFromContext(
+                                    context,
+                                  ).textTheme.displayLarge,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ],
                 ),

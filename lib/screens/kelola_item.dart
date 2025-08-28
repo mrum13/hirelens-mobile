@@ -70,11 +70,11 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => GoRouter.of(context).pop(),
         ),
         title: Text(
           'Kelola Item',
-          style: Theme.of(context).textTheme.displaySmall,
+          style: Theme.of(context).textTheme.displayMedium,
         ),
         centerTitle: true,
       ),
@@ -90,8 +90,6 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                 icon: const Icon(Icons.add),
                 label: const Text('Buat Item Baru'),
                 style: ElevatedButton.styleFrom(
-                  // backgroundColor: const Color.fromARGB(255, 41, 41, 41),
-                  // foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   textStyle: const TextStyle(
                     fontSize: 16,

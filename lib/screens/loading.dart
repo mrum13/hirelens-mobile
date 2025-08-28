@@ -64,10 +64,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Project",
-                  style: themeFromContext(context).textTheme.displayMedium,
-                ),
-                Text(
                   "Hirelens",
                   style: themeFromContext(
                     context,
@@ -77,9 +73,9 @@ class _LoadingScreenState extends State<LoadingScreen> {
             ),
           ),
           Positioned(
-            bottom: 32,
+            bottom: 56,
             left: 0,
-            height: 120,
+            height: 160,
             width: MediaQuery.of(context).size.width,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -102,6 +98,18 @@ class _LoadingScreenState extends State<LoadingScreen> {
                       ),
                     ),
                   ),
+                  SizedBox(
+                    width: 220,
+                    child: Opacity(
+                      opacity: 0.75,
+                      child: Text(
+                        "Dengan mendaftar, anda menyetujui syarat & ketentuan kami.",
+                        style: themeFromContext(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 4),
                   MyOutlinedButton(
                     width: double.infinity,
                     height: 48,
