@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// import 'package:go_router/go_router.dart';
 import 'package:unsplash_clone/components/bottomnav.dart';
+import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/theme.dart';
-
-String formatCurrency(int price) {
-  final formatter = NumberFormat.simpleCurrency(
-    locale: 'id_ID',
-    decimalDigits: 0,
-  );
-  return formatter.format(price);
-}
 
 class VendorHomePage extends StatefulWidget {
   const VendorHomePage({super.key});
@@ -72,12 +64,14 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     final vendorId = await fetchVendorId();
     final response = await client.from('items').count().eq('vendor', vendorId);
 
-    setState(() {
-      itemCount = response;
-    });
+    if (mounted) {
+      setState(() {
+        itemCount = response;
+      });
+    }
   }
 
-  // NOTE: status_payment (pending, panjar_paid, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
+  // NOTE: status_payment (pending, panjar_paid, pending_full, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
   Future<void> fetchAllTransactions() async {
     final client = Supabase.instance.client;
     final vendorId = await fetchVendorId();
@@ -88,9 +82,11 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
         .eq('vendor_id', vendorId)
         .order('created_at', ascending: false);
 
-    setState(() {
-      transactions = response;
-    });
+    if (mounted) {
+      setState(() {
+        transactions = response;
+      });
+    }
   }
 
   List<Map<String, dynamic>> filterPendingOrder(
@@ -153,45 +149,53 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
         .order('tgl_foto')
         .limit(10);
 
-    setState(() {
-      upcomingShoots = response;
-    });
+    if (mounted) {
+      setState(() {
+        upcomingShoots = response;
+      });
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    fetchItemCount();
-    fetchAllTransactions();
-    fetchUpcomingTransaction();
+    if (mounted) {
+      fetchItemCount();
+      fetchAllTransactions();
+      fetchUpcomingTransaction();
 
-    setState(() {
-      isLoading = false;
-    });
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   void didPopNext() {
     super.didPopNext();
-    fetchItemCount();
-    fetchAllTransactions();
-    fetchUpcomingTransaction();
+    if (mounted) {
+      fetchItemCount();
+      fetchAllTransactions();
+      fetchUpcomingTransaction();
 
-    setState(() {
-      isLoading = false;
-    });
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
   void activate() {
     super.activate();
-    fetchItemCount();
-    fetchAllTransactions();
-    fetchUpcomingTransaction();
+    if (mounted) {
+      fetchItemCount();
+      fetchAllTransactions();
+      fetchUpcomingTransaction();
 
-    setState(() {
-      isLoading = false;
-    });
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override

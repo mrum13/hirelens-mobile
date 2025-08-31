@@ -1,18 +1,10 @@
 // ignore_for_file: must_be_immutable
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/theme.dart';
-
-String formatCurrency(int price) {
-  final formatter = NumberFormat.simpleCurrency(
-    locale: 'id_ID',
-    decimalDigits: 0,
-  );
-  return formatter.format(price);
-}
 
 class PesananVendorPage extends StatefulWidget {
   PesananVendorPage({super.key, this.filter});
@@ -23,7 +15,7 @@ class PesananVendorPage extends StatefulWidget {
   State<PesananVendorPage> createState() => _PesananVendorPageState();
 }
 
-class _PesananVendorPageState extends State<PesananVendorPage> {
+class _PesananVendorPageState extends State<PesananVendorPage> with RouteAware {
   List<Map<String, dynamic>> transactions = [];
   bool isLoading = true;
 
@@ -40,11 +32,15 @@ class _PesananVendorPageState extends State<PesananVendorPage> {
     return response['id'] as int;
   }
 
-  // NOTE: status_payment (pending, panjar_paid, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
+  // NOTE: status_payment (pending, panjar_paid, pending_full, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
   Future<void> fetchDatas() async {
     final client = Supabase.instance.client;
 
     try {
+      setState(() {
+        isLoading = true;
+      });
+
       final vendorId = await fetchVendorId();
       List<Map<String, dynamic>> responseData = [];
 
@@ -77,11 +73,23 @@ class _PesananVendorPageState extends State<PesananVendorPage> {
 
       setState(() {
         transactions = responseData;
+        isLoading = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
+      }
+    }
+  }
+
+  @override
+  void didPopNext() {
+    super.didPopNext();
+
+    if (mounted) {
+      fetchDatas();
     }
   }
 
@@ -102,31 +110,36 @@ class _PesananVendorPageState extends State<PesananVendorPage> {
       ),
       body: RefreshIndicator(
         onRefresh: fetchDatas,
-        child: ListView.builder(
-          itemCount: transactions.length,
+        child:
+            isLoading
+                ? Center(child: CircularProgressIndicator())
+                : transactions.isNotEmpty
+                ? ListView.builder(
+                  itemCount: transactions.length,
 
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          itemBuilder: (context, index) {
-            final transaction = transactions[index];
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final transaction = transactions[index];
 
-            return GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/vendor/pesanan/${transaction['id']}'),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _RecentOrderItem(
-                  customerName: transaction['user_displayName'],
-                  itemName: transaction['item_id']['name'],
-                  duration: int.parse(transaction['durasi']),
-                  paymentType: transaction['payment_type'],
-                  amount: transaction['amount'],
-                ),
-              ),
-            );
-          },
-        ),
+                    return GestureDetector(
+                      onTap:
+                          () => GoRouter.of(
+                            context,
+                          ).push('/vendor/pesanan/${transaction['id']}'),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _RecentOrderItem(
+                          customerName: transaction['user_displayName'],
+                          itemName: transaction['item_id']['name'],
+                          duration: int.parse(transaction['durasi']),
+                          paymentType: transaction['payment_type'],
+                          amount: transaction['amount'],
+                        ),
+                      ),
+                    );
+                  },
+                )
+                : Center(child: Text("Tidak ada item...")),
       ),
     );
   }

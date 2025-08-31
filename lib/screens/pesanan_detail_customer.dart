@@ -1,24 +1,22 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:slide_to_act/slide_to_act.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/theme.dart';
 
-class PesananDetailVendorPage extends StatefulWidget {
-  const PesananDetailVendorPage({super.key, required this.dataId});
+class PesananDetailCustomerPage extends StatefulWidget {
+  const PesananDetailCustomerPage({super.key, required this.dataId});
 
   final int dataId;
 
   @override
-  State<PesananDetailVendorPage> createState() =>
-      _PesananDetailVendorPageState();
+  State<PesananDetailCustomerPage> createState() =>
+      _PesananDetailCustomerPageState();
 }
 
-class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
+class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     with RouteAware {
   bool isLoading = true;
   late Map<String, dynamic> data;
@@ -48,72 +46,9 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
     }
   }
 
-  Future<void> acceptOrder() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-      final client = Supabase.instance.client;
-      try {
-        await client
-            .from('transactions')
-            .update({'status_work': 'waiting'})
-            .eq('id', widget.dataId);
-
-        await fetchAndSetData();
-      } catch (e) {
-        log((e as PostgrestException).message);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan!")));
-      }
-    }
-  }
-
-  Future<void> finishTaking() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-      final client = Supabase.instance.client;
-      await client
-          .from('transactions')
-          .update({'status_work': 'editing'})
-          .eq('id', widget.dataId);
-
-      fetchAndSetData();
-    }
-  }
-
-  Future<void> finishEditing() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-      final client = Supabase.instance.client;
-      await client
-          .from('transactions')
-          .update({'status_work': 'post_processing'})
-          .eq('id', widget.dataId);
-
-      fetchAndSetData();
-    }
-  }
-
-  Future<void> completeOrder() async {
-    if (mounted) {
-      setState(() {
-        isLoading = true;
-      });
-      final client = Supabase.instance.client;
-      await client
-          .from('transactions')
-          .update({'status_work': 'complete'})
-          .eq('id', widget.dataId);
-
-      fetchAndSetData();
-    }
-  }
+  Future<void> _paySisa() async {}
+  Future<void> _cancelPesanan() async {}
+  Future<void> _payPesanan() async {}
 
   @override
   void initState() {
@@ -142,54 +77,42 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
     return ((price * durasi) * 0.025).round();
   }
 
-  Widget buildConfirmationBar(String workStatus) {
-    switch (workStatus) {
+  Widget buildPaymentBar(String paymentStatus) {
+    switch (paymentStatus) {
       case 'pending':
-        return SlideAction(
-          sliderRotate: false,
-          text: "Geser untuk menerima pesanan",
-          textStyle: themeFromContext(context).textTheme.displaySmall,
-          sliderButtonIconPadding: 12,
-          submittedIcon: Icon(Icons.check),
-          innerColor: themeFromContext(context).colorScheme.primary,
-          outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: finishTaking,
+        return Row(
+          spacing: 8,
+          children: [
+            Expanded(
+              child: MyOutlinedButton(
+                variant: MyButtonVariant.secondary,
+                onTap: _cancelPesanan,
+                child: Text("Cancel"),
+              ),
+            ),
+            Expanded(
+              child: MyFilledButton(
+                variant: MyButtonVariant.primary,
+                onTap: _payPesanan,
+                child: Text("Bayar"),
+              ),
+            ),
+          ],
         );
-      case 'waiting':
-        return SlideAction(
-          sliderRotate: false,
-          text: "Geser untuk memproses pesanan (editing)",
-          textStyle: themeFromContext(context).textTheme.displaySmall,
-          sliderButtonIconPadding: 12,
-          submittedIcon: Icon(Icons.check),
-          innerColor: themeFromContext(context).colorScheme.primary,
-          outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: finishTaking,
-        );
-      case 'editing':
-        return SlideAction(
-          sliderRotate: false,
-          text: "Geser untuk memproses pesanan (post processing)",
-          textStyle: themeFromContext(context).textTheme.displaySmall,
-          sliderButtonIconPadding: 12,
-          submittedIcon: Icon(Icons.check),
-          innerColor: themeFromContext(context).colorScheme.primary,
-          outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: finishEditing,
-        );
-      case 'post_processing':
-        return SlideAction(
-          sliderRotate: false,
-          text: "Geser untuk menyelesaikan pesanan",
-          textStyle: themeFromContext(context).textTheme.displaySmall,
-          sliderButtonIconPadding: 12,
-          submittedIcon: Icon(Icons.check),
-          innerColor: themeFromContext(context).colorScheme.primary,
-          outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: completeOrder,
+      case 'pending_full':
+        return Expanded(
+          child: MyFilledButton(
+            variant: MyButtonVariant.primary,
+            onTap: _paySisa,
+            child: Text("Bayar Sisa Biaya"),
+          ),
         );
       default:
-        return Center(child: Text("Dalam proses verifikasi payout"));
+        return Center(
+          child: Text(
+            "Dalam proses : ${(data['status_work'] as String).split("_").map((e) => e[0].toUpperCase() + e.substring(1, e.length)).join(" ")}",
+          ),
+        );
     }
   }
 
@@ -213,7 +136,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
             height: 72,
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: buildConfirmationBar(data['status_work']),
+              child: buildPaymentBar(data['status_work']),
             ),
           ),
           body: SafeArea(
@@ -298,40 +221,47 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                     ),
                                   ],
                                 ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("Dibayar :"),
-                                    Text(
-                                      formatCurrency(
-                                        (data['amount'] as double).round(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("Sisa :"),
-                                    Text(
-                                      formatCurrency(
-                                        _calculateSisa(
-                                          data['item_id']['price'],
-                                          int.parse(data['durasi']),
+
+                                if (data['status_payment'] != 'pending')
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Dibayar :"),
+                                      Text(
+                                        formatCurrency(
                                           (data['amount'] as double).round(),
-                                          _calculateTransactionFee(
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                SizedBox(height: 12),
+
+                                if (data['status_payment'] != 'pending')
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Sisa :"),
+                                      Text(
+                                        formatCurrency(
+                                          _calculateSisa(
                                             data['item_id']['price'],
                                             int.parse(data['durasi']),
-                                            data['payment_type'] != 'full_paid',
+                                            (data['amount'] as double).round(),
+                                            _calculateTransactionFee(
+                                              data['item_id']['price'],
+                                              int.parse(data['durasi']),
+                                              data['payment_type'] !=
+                                                  'full_paid',
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
@@ -362,6 +292,22 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                   ],
                                 ),
                               ],
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              "Note :",
+                              style: themeFromContext(context)
+                                  .textTheme
+                                  .bodySmall!
+                                  .copyWith(color: Colors.white54),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "\"Transaction Fee\" dihitung berdasarkan berapa jumlah transaksi yang akan dibayarkan. Jika anda membayar secara panjar, maka anda akan dikenakan 2 kali \"Transaction Fee\". Satu untuk 30% dari total Harga Item dan 70% dari total Harga Item.",
+                              style: themeFromContext(context)
+                                  .textTheme
+                                  .bodySmall!
+                                  .copyWith(color: Colors.white54),
                             ),
                           ],
                         ),

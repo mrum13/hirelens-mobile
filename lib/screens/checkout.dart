@@ -2,10 +2,11 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
+import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/midtrans.dart';
 import 'package:unsplash_clone/theme.dart';
 
@@ -52,9 +53,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
         durations = response['durations'];
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to fetch item detail")));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to fetch item detail")));
+      }
     }
 
     selectedDuration = durations[0];
@@ -105,7 +108,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
             result.status,
           );
 
-          GoRouter.of(context).pushReplacement('/home');
+          if (mounted) {
+            GoRouter.of(context).pushReplacement('/home');
+          }
         } else {
           while (GoRouter.of(context).canPop() == true) {
             GoRouter.of(context).pop();
@@ -121,19 +126,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
             result.status,
           );
 
-          GoRouter.of(context).pushReplacement('/home');
+          if (mounted) {
+            GoRouter.of(context).pushReplacement('/home');
+          }
         }
       });
 
       await midtrans!.startPaymentUiFlow(token: token);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
 
-      setState(() {
-        isLoading = false;
-      });
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -260,14 +269,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
     }
-  }
-
-  String formatCurrency(int price) {
-    final formatter = NumberFormat.simpleCurrency(
-      locale: 'id_ID',
-      decimalDigits: 0,
-    );
-    return formatter.format(price);
   }
 
   double calculatePanjar(int input) {
@@ -516,7 +517,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [Text("Transaction Fee :"), Text("2,5%")],
+                          children: [
+                            Text("Transaction Fee :"),
+                            Text("2,5%/transaksi"),
+                          ],
                         ),
                         SizedBox(height: 32),
                         Row(
@@ -539,6 +543,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           ],
                         ),
                       ],
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      "Note :",
+                      style: themeFromContext(
+                        context,
+                      ).textTheme.bodySmall!.copyWith(color: Colors.white54),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      "\"Transaction Fee\" dihitung berdasarkan berapa jumlah transaksi yang akan dibayarkan. Jika anda membayar secara panjar, maka anda akan dikenakan 2 kali \"Transaction Fee\". Satu untuk 30% dari total Harga Item dan 70% dari total Harga Item.",
+                      style: themeFromContext(
+                        context,
+                      ).textTheme.bodySmall!.copyWith(color: Colors.white54),
                     ),
                   ],
                 ),

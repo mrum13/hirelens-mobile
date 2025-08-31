@@ -7,6 +7,7 @@ import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
+import 'package:unsplash_clone/screens/pesanan_detail_customer.dart';
 import 'package:unsplash_clone/screens/pesanan_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_detail_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_customer.dart';
@@ -14,6 +15,7 @@ import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/screens/register.dart';
+import 'package:unsplash_clone/screens/search_result.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
@@ -43,6 +45,13 @@ final router = GoRouter(
 
     // TODO: Create VendorDetailPage
     // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
+    GoRoute(
+      path: '/search',
+      builder:
+          (context, state) =>
+              SearchResultPage(keyword: state.uri.queryParameters['keyword']!),
+    ),
+
     GoRoute(
       path: "/vendor/kelola_item",
       builder: (context, state) => KelolaItemPage(),
@@ -80,6 +89,13 @@ final router = GoRouter(
               PesananCustomerPage(filter: state.uri.queryParameters['filter']),
     ),
 
+    GoRoute(
+      path: "/customer/pesanan/:dataId",
+      builder:
+          (context, state) => PesananDetailCustomerPage(
+            dataId: int.parse(state.pathParameters['dataId']!),
+          ),
+    ),
     GoRoute(
       path: "/item/detail/:dataId",
       builder:

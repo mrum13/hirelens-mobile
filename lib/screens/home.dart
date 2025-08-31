@@ -9,10 +9,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: Create a SearchResultPage
-    final _client = Supabase.instance.client;
-    final String _role = _client.auth.currentUser!.userMetadata!['role'];
+    final client = Supabase.instance.client;
+    final String role = client.auth.currentUser!.userMetadata!['role'];
 
-    return _role == 'customer' ? CustomerHomePage() : VendorHomePage();
+    return role == 'customer' ? CustomerHomePage() : VendorHomePage();
   }
 }
