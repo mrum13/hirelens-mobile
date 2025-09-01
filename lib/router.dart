@@ -7,6 +7,7 @@ import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
+import 'package:unsplash_clone/screens/payment.dart';
 import 'package:unsplash_clone/screens/pesanan_detail_customer.dart';
 import 'package:unsplash_clone/screens/pesanan_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_detail_vendor.dart';
@@ -110,11 +111,18 @@ final router = GoRouter(
               CheckoutPage(dataId: int.parse(state.pathParameters['dataId']!)),
     ),
     GoRoute(
+      path: "/payment/:snapToken",
+      builder:
+          (context, state) =>
+              PaymentPage(snapToken: state.pathParameters['snapToken']!),
+    ),
+
+    GoRoute(
       path: '/checkout_success',
       builder: (context, state) {
-        final orderId = state.uri.queryParameters['order_id'];
-        final result = state.uri.queryParameters['result'];
-        return CheckoutSuccessPage(orderId: orderId!, result: result!);
+        return CheckoutSuccessPage(
+          orderId: state.uri.queryParameters['order_id']!,
+        );
       },
     ),
   ],

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -89,50 +87,51 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       final token = res.data['snapToken'];
 
-      midtrans = await MidtransSDK.init(config: config);
-      midtrans!.setTransactionFinishedCallback((result) async {
-        if (result.status == 'canceled') {
-          GoRouter.of(context).pop();
-        } else if (result.status == 'pending') {
-          while (GoRouter.of(context).canPop() == true) {
-            GoRouter.of(context).pop();
-          }
+      GoRouter.of(context).push('/payment/$token');
+      // midtrans = await MidtransSDK.init(config: config);
+      // midtrans!.setTransactionFinishedCallback((result) async {
+      //   if (result.status == 'canceled') {
+      //     GoRouter.of(context).pop();
+      //   } else if (result.status == 'pending') {
+      //     while (GoRouter.of(context).canPop() == true) {
+      //       GoRouter.of(context).pop();
+      //     }
 
-          await sendTransactionData(
-            result.transactionId!,
-            'panjar',
-            result.paymentType!,
-            (calculatePanjar(currentPrice) +
-                    (calculatePanjar(currentPrice) * 0.025))
-                .round(),
-            result.status,
-          );
+      //     await sendTransactionData(
+      //       result.transactionId!,
+      //       'panjar',
+      //       result.paymentType!,
+      //       (calculatePanjar(currentPrice) +
+      //               (calculatePanjar(currentPrice) * 0.025))
+      //           .round(),
+      //       result.status,
+      //     );
 
-          if (mounted) {
-            GoRouter.of(context).pushReplacement('/home');
-          }
-        } else {
-          while (GoRouter.of(context).canPop() == true) {
-            GoRouter.of(context).pop();
-          }
+      //     if (mounted) {
+      //       GoRouter.of(context).pushReplacement('/home');
+      //     }
+      //   } else {
+      //     while (GoRouter.of(context).canPop() == true) {
+      //       GoRouter.of(context).pop();
+      //     }
 
-          await sendTransactionData(
-            result.transactionId!,
-            'panjar',
-            result.paymentType!,
-            (calculatePanjar(currentPrice) +
-                    (calculatePanjar(currentPrice) * 0.025))
-                .round(),
-            result.status,
-          );
+      //     await sendTransactionData(
+      //       result.transactionId!,
+      //       'panjar',
+      //       result.paymentType!,
+      //       (calculatePanjar(currentPrice) +
+      //               (calculatePanjar(currentPrice) * 0.025))
+      //           .round(),
+      //       result.status,
+      //     );
 
-          if (mounted) {
-            GoRouter.of(context).pushReplacement('/home');
-          }
-        }
-      });
+      //     if (mounted) {
+      //       GoRouter.of(context).pushReplacement('/home');
+      //     }
+      //   }
+      // });
 
-      await midtrans!.startPaymentUiFlow(token: token);
+      // await midtrans!.startPaymentUiFlow(token: token);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -264,7 +263,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         "status_payout": 'pending_work',
       });
     } catch (e) {
-      log(e.toString());
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
