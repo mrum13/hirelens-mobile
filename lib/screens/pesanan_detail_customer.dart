@@ -46,8 +46,50 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     }
   }
 
-  // URGENT: Work on this functions
-  Future<void> _paySisa() async {}
+  int calculateSisa(int itemPrice, int duration) {
+    final sisa = (itemPrice * duration) * 0.03;
+
+    return sisa.round();
+  }
+
+  Future<void> _paySisa() async {
+    final client = Supabase.instance.client;
+    try {
+      final selectedTransaction =
+          await client
+              .from('transactions')
+              .select("*, item_id(id, name, price)")
+              .eq('id', widget.dataId)
+              .single();
+      final selectedMidtransOrderId =
+          (selectedTransaction['midtrans_order_id'] as String).split(
+            '-panjar',
+          )[0];
+
+      final orderId =
+          "$selectedMidtransOrderId-panjarpaid-${DateTime.now().millisecondsSinceEpoch}";
+      final res = await client.functions.invoke(
+        'midtrans-merchant-backend',
+        body: {
+          'orderId': orderId,
+          'price': calculateSisa(
+            selectedTransaction['item_id']['price'],
+            int.parse(selectedTransaction['durasi']),
+          ),
+          'itemName': selectedTransaction['item_id']['name'],
+          'duration': selectedTransaction['durasi'],
+        },
+      );
+
+      final token = res.data['snapToken'];
+      GoRouter.of(context).go('/payment/$token?pay_sisa=true');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
+    }
+  }
+
   Future<void> _cancelPesanan() async {}
   Future<void> _payPesanan() async {}
 

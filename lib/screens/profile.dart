@@ -13,7 +13,7 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with RouteAware {
   bool isLoading = true;
   late User userData;
 
@@ -32,6 +32,7 @@ class _ProfilePageState extends State<ProfilePage> {
     fetchUserData();
   }
 
+  // TODO: find a way to refresh customer and vendor menu section
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,8 +166,52 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-class _CustomerMenuSection extends StatelessWidget {
+class _CustomerMenuSection extends StatefulWidget {
   const _CustomerMenuSection();
+
+  @override
+  State<_CustomerMenuSection> createState() => _CustomerMenuSectionState();
+}
+
+class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
+  int tagihanCount = 0;
+  int diprosesCount = 0;
+  bool badgeCountReady = false;
+
+  Future<void> countTagihan() async {
+    final client = Supabase.instance.client;
+
+    final response = await client
+        .from('transactions')
+        .count()
+        .eq('user_id', client.auth.currentUser!.id)
+        .eq('status_payment', 'pending');
+
+    tagihanCount = response;
+  }
+
+  Future<void> countDiproses() async {
+    final client = Supabase.instance.client;
+
+    final response = await client
+        .from('transactions')
+        .count()
+        .eq('user_id', client.auth.currentUser!.id)
+        .or('status_work.eq.editing,status_work.eq.post_processing')
+        .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+
+    diprosesCount = response;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    countTagihan();
+    countDiproses();
+    setState(() {
+      badgeCountReady = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +232,20 @@ class _CustomerMenuSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
                   children: [
-                    Icon(Icons.receipt, size: 24),
+                    Badge(
+                      isLabelVisible:
+                          badgeCountReady
+                              ? tagihanCount > 0
+                                  ? true
+                                  : false
+                              : false,
+                      label:
+                          badgeCountReady
+                              ? Text(tagihanCount.toString())
+                              : null,
+                      offset: Offset(16, -12),
+                      child: Icon(Icons.receipt, size: 24),
+                    ),
                     Text("Tagihan", textAlign: TextAlign.center),
                   ],
                 ),
@@ -207,7 +265,20 @@ class _CustomerMenuSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
                   children: [
-                    Icon(Icons.movie_edit, size: 24),
+                    Badge(
+                      isLabelVisible:
+                          badgeCountReady
+                              ? diprosesCount > 0
+                                  ? true
+                                  : false
+                              : false,
+                      label:
+                          badgeCountReady
+                              ? Text(diprosesCount.toString())
+                              : null,
+                      offset: Offset(16, -12),
+                      child: Icon(Icons.movie_edit, size: 24),
+                    ),
                     Text("Diproses", textAlign: TextAlign.center),
                   ],
                 ),
@@ -240,8 +311,85 @@ class _CustomerMenuSection extends StatelessWidget {
   }
 }
 
-class _VendorMenuSection extends StatelessWidget {
+class _VendorMenuSection extends StatefulWidget {
   const _VendorMenuSection();
+
+  @override
+  State<_VendorMenuSection> createState() => _VendorMenuSectionState();
+}
+
+class _VendorMenuSectionState extends State<_VendorMenuSection> {
+  late int pesananCount;
+  late int diprosesCount;
+  late int payoutCount;
+  bool badgeCountReady = false;
+
+  Future<int> fetchVendorId() async {
+    final client = Supabase.instance.client;
+
+    final response =
+        await client
+            .from('vendors')
+            .select('id')
+            .eq('user_id', client.auth.currentUser!.id)
+            .single();
+
+    return response['id'] as int;
+  }
+
+  Future<void> countPesanan() async {
+    final client = Supabase.instance.client;
+    final vendorId = await fetchVendorId();
+
+    final response = await client
+        .from('transactions')
+        .count()
+        .eq('vendor_id', vendorId)
+        .or('status_work.eq.editing,status_work.eq.post_processing')
+        .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+
+    pesananCount = response;
+  }
+
+  Future<void> countDiproses() async {
+    final client = Supabase.instance.client;
+    final vendorId = await fetchVendorId();
+
+    final response = await client
+        .from('transactions')
+        .count()
+        .eq('vendor_id', vendorId)
+        .or('status_work.eq.editing,status_work.eq.post_processing')
+        .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+
+    diprosesCount = response;
+  }
+
+  Future<void> countPayout() async {
+    final client = Supabase.instance.client;
+    final vendorId = await fetchVendorId();
+
+    final response = await client
+        .from('transactions')
+        .count()
+        .eq('vendor_id', vendorId)
+        .eq('status_work', 'complete');
+
+    payoutCount = response;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    countPesanan();
+    countDiproses();
+    countPayout();
+
+    setState(() {
+      badgeCountReady = true;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -276,7 +424,20 @@ class _VendorMenuSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
                   children: [
-                    Icon(Icons.inbox_outlined, size: 24),
+                    Badge(
+                      isLabelVisible:
+                          badgeCountReady
+                              ? pesananCount > 0
+                                  ? true
+                                  : false
+                              : false,
+                      label:
+                          badgeCountReady
+                              ? Text(pesananCount.toString())
+                              : null,
+                      offset: Offset(16, -12),
+                      child: Icon(Icons.inbox_outlined, size: 24),
+                    ),
                     Text("Pesanan", textAlign: TextAlign.center),
                   ],
                 ),
@@ -296,7 +457,20 @@ class _VendorMenuSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   spacing: 16,
                   children: [
-                    Icon(Icons.movie_edit, size: 24),
+                    Badge(
+                      isLabelVisible:
+                          badgeCountReady
+                              ? diprosesCount > 0
+                                  ? true
+                                  : false
+                              : false,
+                      label:
+                          badgeCountReady
+                              ? Text(diprosesCount.toString())
+                              : null,
+                      offset: Offset(16, -12),
+                      child: Icon(Icons.movie_edit, size: 24),
+                    ),
                     Text("Diproses", textAlign: TextAlign.center),
                   ],
                 ),
@@ -309,16 +483,32 @@ class _VendorMenuSection extends StatelessWidget {
                   () => GoRouter.of(
                     context,
                   ).push('/vendor/pesanan?filter=complete'),
-              child: SizedBox(
-                height: 80,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  spacing: 16,
-                  children: [
-                    Icon(Icons.price_check_outlined, size: 24),
-                    Text("Payout", textAlign: TextAlign.center),
-                  ],
+              child: Badge(
+                label: badgeCountReady ? null : Text(payoutCount.toString()),
+                child: SizedBox(
+                  height: 80,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    spacing: 16,
+                    children: [
+                      Badge(
+                        isLabelVisible:
+                            badgeCountReady
+                                ? payoutCount > 0
+                                    ? true
+                                    : false
+                                : false,
+                        label:
+                            badgeCountReady
+                                ? Text(payoutCount.toString())
+                                : null,
+                        offset: Offset(16, -12),
+                        child: Icon(Icons.price_check_outlined, size: 24),
+                      ),
+                      Text("Payout", textAlign: TextAlign.center),
+                    ],
+                  ),
                 ),
               ),
             ),

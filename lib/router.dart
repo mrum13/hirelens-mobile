@@ -46,6 +46,10 @@ final router = GoRouter(
 
     // TODO: Create VendorDetailPage
     // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
+
+    // TODO: Create FeedPage
+    // TODO: Create feed table on Supabase
+    // GoRoute(path: "/feed", builder: (context, state) => FeedPage()),
     GoRoute(
       path: '/search',
       builder:
@@ -113,8 +117,10 @@ final router = GoRouter(
     GoRoute(
       path: "/payment/:snapToken",
       builder:
-          (context, state) =>
-              PaymentPage(snapToken: state.pathParameters['snapToken']!),
+          (context, state) => PaymentPage(
+            snapToken: state.pathParameters['snapToken']!,
+            paySisa: (state.uri.queryParameters['pay_sisa'] as bool?),
+          ),
     ),
 
     GoRoute(
@@ -126,7 +132,7 @@ final router = GoRouter(
       },
     ),
   ],
-  initialLocation: '/',
+  initialLocation: '/preload',
   redirect: (ctx, state) {
     final logged = Supabase.instance.client.auth.currentSession != null;
     final loc = state.matchedLocation;

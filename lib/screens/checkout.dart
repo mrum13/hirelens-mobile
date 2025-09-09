@@ -5,7 +5,6 @@ import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/helper.dart';
-import 'package:unsplash_clone/midtrans.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -75,10 +74,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       });
 
       final client = Supabase.instance.client;
+      final orderId = 'order-${DateTime.now().millisecondsSinceEpoch}-panjar';
       final res = await client.functions.invoke(
         'midtrans-merchant-backend',
         body: {
-          'orderId': 'order-${DateTime.now().millisecondsSinceEpoch}',
+          'orderId': orderId,
           'price': calculatePanjar(currentPrice).round(),
           'itemName': name,
           'duration': selectedDuration,
@@ -87,51 +87,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       final token = res.data['snapToken'];
 
+      await sendTransactionData(
+        orderId,
+        'panjar',
+        (calculatePanjar(currentPrice) +
+                (calculatePanjar(currentPrice) * 0.025))
+            .round(),
+      );
+
       GoRouter.of(context).push('/payment/$token');
-      // midtrans = await MidtransSDK.init(config: config);
-      // midtrans!.setTransactionFinishedCallback((result) async {
-      //   if (result.status == 'canceled') {
-      //     GoRouter.of(context).pop();
-      //   } else if (result.status == 'pending') {
-      //     while (GoRouter.of(context).canPop() == true) {
-      //       GoRouter.of(context).pop();
-      //     }
-
-      //     await sendTransactionData(
-      //       result.transactionId!,
-      //       'panjar',
-      //       result.paymentType!,
-      //       (calculatePanjar(currentPrice) +
-      //               (calculatePanjar(currentPrice) * 0.025))
-      //           .round(),
-      //       result.status,
-      //     );
-
-      //     if (mounted) {
-      //       GoRouter.of(context).pushReplacement('/home');
-      //     }
-      //   } else {
-      //     while (GoRouter.of(context).canPop() == true) {
-      //       GoRouter.of(context).pop();
-      //     }
-
-      //     await sendTransactionData(
-      //       result.transactionId!,
-      //       'panjar',
-      //       result.paymentType!,
-      //       (calculatePanjar(currentPrice) +
-      //               (calculatePanjar(currentPrice) * 0.025))
-      //           .round(),
-      //       result.status,
-      //     );
-
-      //     if (mounted) {
-      //       GoRouter.of(context).pushReplacement('/home');
-      //     }
-      //   }
-      // });
-
-      // await midtrans!.startPaymentUiFlow(token: token);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -148,17 +112,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
   void payFull() async {
     try {
       if (selectedDate == null) {
-        throw Exception("Harap pilih tanggal foto!");
+        throw Exception("Harap pilih tanggal dan waktu foto!");
       }
       setState(() {
         isLoading = true;
       });
 
       final client = Supabase.instance.client;
+      final orderId = 'order-${DateTime.now().millisecondsSinceEpoch}-fullpaid';
       final res = await client.functions.invoke(
         'midtrans-merchant-backend',
         body: {
-          'orderId': 'order-${DateTime.now().millisecondsSinceEpoch}',
+          'orderId': orderId,
           'price': currentPrice,
           'itemName': name,
           'duration': selectedDuration,
@@ -167,38 +132,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       final token = res.data['snapToken'];
 
-      midtrans = await MidtransSDK.init(config: config);
-      midtrans!.setTransactionFinishedCallback((result) async {
-        if (result.status == 'canceled') {
-          GoRouter.of(context).pop();
-        } else if (result.status == 'pending') {
-          while (GoRouter.of(context).canPop() == true) {
-            GoRouter.of(context).pop();
-          }
-          await sendTransactionData(
-            result.transactionId!,
-            'full_paid',
-            result.paymentType!,
-            currentPrice + (currentPrice * 0.025).round(),
-            result.status,
-          );
-          GoRouter.of(context).pushReplacement('/home');
-        } else {
-          while (GoRouter.of(context).canPop() == true) {
-            GoRouter.of(context).pop();
-          }
-          await sendTransactionData(
-            result.transactionId!,
-            'full_paid',
-            result.paymentType!,
-            currentPrice + (currentPrice * 0.025).round(),
-            result.status,
-          );
-          GoRouter.of(context).pushReplacement('/home');
-        }
-      });
+      await sendTransactionData(
+        orderId,
+        'full_paid',
+        (currentPrice + (currentPrice * 0.025)).round(),
+      );
 
-      await midtrans!.startPaymentUiFlow(token: token);
+      GoRouter.of(context).push('/payment/$token');
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -223,11 +163,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> sendTransactionData(
-    String transactionId,
+    String orderId,
     String paymentType,
-    String paymentMethod,
     int amount,
-    String transactionStatus,
   ) async {
     final client = Supabase.instance.client;
     final vendorId = await fetchVendorIdByItemId(widget.dataId);
@@ -237,7 +175,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'user_id': client.auth.currentUser!.id,
         'item_id': widget.dataId,
         'payment_type': paymentType,
-        'payment_method': paymentMethod,
         'durasi': selectedDuration,
         'tgl_foto': selectedDate!.toLocal().toString(),
         'waktu_foto':
@@ -248,17 +185,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
               selectedTime!.hour,
               selectedTime!.minute,
             ).toLocal().toString(),
-        'midtrans_order_id': transactionId,
+        'midtrans_order_id': orderId,
         'amount': amount,
         'user_displayName':
             client.auth.currentUser!.userMetadata!['displayName'],
         "vendor_id": vendorId,
-        "status_payment":
-            transactionStatus == 'pending'
-                ? 'pending'
-                : paymentType == 'full_paid'
-                ? 'complete'
-                : 'panjar_paid',
+        "status_payment": 'pending',
         "status_work": 'pending',
         "status_payout": 'pending_work',
       });

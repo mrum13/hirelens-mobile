@@ -5,8 +5,9 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 class PaymentPage extends StatelessWidget {
   final String snapToken;
+  final bool? paySisa; // URGENT: utilize this option
 
-  const PaymentPage({super.key, required this.snapToken});
+  const PaymentPage({super.key, required this.snapToken, this.paySisa});
 
   @override
   Widget build(BuildContext context) {
