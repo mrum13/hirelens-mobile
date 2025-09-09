@@ -44,22 +44,25 @@ class _CartPageState extends State<CartPage> {
           onRefresh: fetchDatas,
           child:
               !isLoading
-                  ? ListView(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
-                    children:
-                        items
-                            .map(
-                              ((item) => _CartItem(
-                                itemAddress: item['item_id']['address'],
-                                itemId: item['item_id']['id'],
-                                itemName: item['item_id']['name'],
-                                itemVendor: item['item_id']['vendor']['name'],
-                                itemPrice: item['item_id']['price'],
-                                itemThumbnail: item['item_id']['thumbnail'],
-                              )),
-                            )
-                            .toList(),
-                  )
+                  ? items.isNotEmpty
+                      ? ListView(
+                        padding: EdgeInsets.symmetric(horizontal: 12),
+                        children:
+                            items
+                                .map(
+                                  ((item) => _CartItem(
+                                    itemAddress: item['item_id']['address'],
+                                    itemId: item['item_id']['id'],
+                                    itemName: item['item_id']['name'],
+                                    itemVendor:
+                                        item['item_id']['vendor']['name'],
+                                    itemPrice: item['item_id']['price'],
+                                    itemThumbnail: item['item_id']['thumbnail'],
+                                  )),
+                                )
+                                .toList(),
+                      )
+                      : Center(child: Text("Belum ada item"))
                   : Center(child: CircularProgressIndicator()),
         ),
       ),

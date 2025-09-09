@@ -162,6 +162,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                     child: SearchBar(
                       leading: Icon(Icons.search),
                       hintText: "Search...",
+                      onSubmitted:
+                          (value) => GoRouter.of(
+                            context,
+                          ).go("/search?keyword=${value.trim()}"),
                     ),
                   ),
                 ),

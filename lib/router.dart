@@ -7,6 +7,8 @@ import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
+import 'package:unsplash_clone/screens/payment.dart';
+import 'package:unsplash_clone/screens/pesanan_detail_customer.dart';
 import 'package:unsplash_clone/screens/pesanan_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_detail_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_customer.dart';
@@ -14,6 +16,7 @@ import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/screens/register.dart';
+import 'package:unsplash_clone/screens/search_result.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
@@ -43,6 +46,17 @@ final router = GoRouter(
 
     // TODO: Create VendorDetailPage
     // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
+
+    // TODO: Create FeedPage
+    // TODO: Create feed table on Supabase
+    // GoRoute(path: "/feed", builder: (context, state) => FeedPage()),
+    GoRoute(
+      path: '/search',
+      builder:
+          (context, state) =>
+              SearchResultPage(keyword: state.uri.queryParameters['keyword']!),
+    ),
+
     GoRoute(
       path: "/vendor/kelola_item",
       builder: (context, state) => KelolaItemPage(),
@@ -81,6 +95,13 @@ final router = GoRouter(
     ),
 
     GoRoute(
+      path: "/customer/pesanan/:dataId",
+      builder:
+          (context, state) => PesananDetailCustomerPage(
+            dataId: int.parse(state.pathParameters['dataId']!),
+          ),
+    ),
+    GoRoute(
       path: "/item/detail/:dataId",
       builder:
           (context, state) => ProductDetailPage(
@@ -94,15 +115,24 @@ final router = GoRouter(
               CheckoutPage(dataId: int.parse(state.pathParameters['dataId']!)),
     ),
     GoRoute(
+      path: "/payment/:snapToken",
+      builder:
+          (context, state) => PaymentPage(
+            snapToken: state.pathParameters['snapToken']!,
+            paySisa: (state.uri.queryParameters['pay_sisa'] as bool?),
+          ),
+    ),
+
+    GoRoute(
       path: '/checkout_success',
       builder: (context, state) {
-        final orderId = state.uri.queryParameters['order_id'];
-        final result = state.uri.queryParameters['result'];
-        return CheckoutSuccessPage(orderId: orderId!, result: result!);
+        return CheckoutSuccessPage(
+          orderId: state.uri.queryParameters['order_id']!,
+        );
       },
     ),
   ],
-  initialLocation: '/',
+  initialLocation: '/preload',
   redirect: (ctx, state) {
     final logged = Supabase.instance.client.auth.currentSession != null;
     final loc = state.matchedLocation;

@@ -2,17 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/theme.dart';
-
-String formatCurrency(int price) {
-  final formatter = NumberFormat.simpleCurrency(
-    locale: 'id_ID',
-    decimalDigits: 0,
-  );
-  return formatter.format(price);
-}
 
 class PesananCustomerPage extends StatefulWidget {
   PesananCustomerPage({super.key, this.filter});
@@ -23,7 +15,6 @@ class PesananCustomerPage extends StatefulWidget {
   State<PesananCustomerPage> createState() => _PesananCustomerPageState();
 }
 
-// URGENT: Create PesananDetailCustomerPage
 class _PesananCustomerPageState extends State<PesananCustomerPage> {
   List<Map<String, dynamic>> transactions = [];
   bool isLoading = true;
@@ -96,10 +87,10 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
             final transaction = transactions[index];
 
             return GestureDetector(
-              // onTap:
-              //     () => GoRouter.of(
-              //       context,
-              //     ).push('/customer/pesanan/${transaction['id']}'),
+              onTap:
+                  () => GoRouter.of(
+                    context,
+                  ).push('/customer/pesanan/${transaction['id']}'),
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _RecentOrderItem(
