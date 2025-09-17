@@ -228,7 +228,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                 const SizedBox(height: 16),
                                 MyFilledButton(
                                   variant: MyButtonVariant.neutral,
-                                  onTap: () => GoRouter.of(context).go('/'),
+                                  onTap:
+                                      () => GoRouter.of(context).go('/opening'),
                                   isLoading: _isLoading,
                                   child: Text(
                                     "Kembali",

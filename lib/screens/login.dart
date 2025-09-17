@@ -135,6 +135,20 @@ class _LoginPageState extends State<LoginPage> {
                   },
                 ),
                 const SizedBox(height: 24),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    MyLinkButton(
+                      variant: MyButtonVariant.secondary,
+                      onTap:
+                          () => GoRouter.of(context).go(
+                            '/reset_password?email=${_emailController.text}',
+                          ),
+                      child: Text("Forgot Password"),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 MyFilledButton(
                   variant: MyButtonVariant.primary,
                   onTap: _isLoading ? null : _login,
@@ -149,7 +163,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 8),
                 MyFilledButton(
                   variant: MyButtonVariant.neutral,
-                  onTap: () => GoRouter.of(context).go('/'),
+                  onTap: () => GoRouter.of(context).go('/opening'),
                   isLoading: _isLoading,
                   child: Text(
                     "Kembali",
