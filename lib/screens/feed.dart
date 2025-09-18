@@ -38,6 +38,7 @@ class _FeedPageState extends State<FeedPage> {
   }
 }
 
+// ignore: must_be_immutable
 class _Post extends StatelessWidget {
   int vendorId;
   String vendorName;
