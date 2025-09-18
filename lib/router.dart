@@ -23,6 +23,7 @@ import 'package:unsplash_clone/screens/search_result.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
+import 'package:unsplash_clone/screens/feed.dart';
 
 final router = GoRouter(
   routes: [
@@ -73,9 +74,8 @@ final router = GoRouter(
     // TODO: Create VendorDetailPage
     // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
 
-    // URGENT: Create FeedPage
     // URGENT: Create feed table on Supabase
-    // GoRoute(path: "/feed", builder: (context, state) => FeedPage()),
+    GoRoute(path: "/feed", builder: (context, state) => FeedPage()),
     GoRoute(
       path: '/search',
       builder:
