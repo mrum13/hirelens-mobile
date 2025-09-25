@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:unsplash_clone/components/bottomnav.dart';
 import 'package:unsplash_clone/theme.dart';
 
 //
@@ -18,21 +19,35 @@ class _FeedPageState extends State<FeedPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: MyBottomNavbar(curIndex: 1),
+      floatingActionButton: FloatingActionButton(
+        onPressed:
+            () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Coming Soon..."),
+                duration: Duration(milliseconds: 500),
+              ),
+            ),
+        child: Icon(Icons.add),
+      ),
       body: SafeArea(
-        child: ListView.builder(
-          itemBuilder: (context, index) {
-            final data = datas[index];
+        child:
+            datas.isNotEmpty
+                ? ListView.builder(
+                  itemBuilder: (context, index) {
+                    final data = datas[index];
 
-            return _Post(
-              vendorId: data['vendorId'],
-              vendorName: data['vendorName'],
-              itemName: data['itemName'],
-              itemId: data['itemId'],
-              images: data['images'],
-              createdAt: data['createdAt'],
-            );
-          },
-        ),
+                    return _Post(
+                      vendorId: data['vendorId'],
+                      vendorName: data['vendorName'],
+                      itemName: data['itemName'],
+                      itemId: data['itemId'],
+                      images: data['images'],
+                      createdAt: data['createdAt'],
+                    );
+                  },
+                )
+                : Center(child: Text("Belum ada post...")),
       ),
     );
   }

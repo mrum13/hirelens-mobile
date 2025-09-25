@@ -15,13 +15,7 @@ class MyBottomNavbar extends StatelessWidget {
             GoRouter.of(context).replace('/home');
             break;
           case 1:
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Coming Soon"),
-                duration: Duration(milliseconds: 350),
-                showCloseIcon: true,
-              ),
-            );
+            GoRouter.of(context).replace('/feed');
             break;
           case 2:
             GoRouter.of(context).replace('/profile');

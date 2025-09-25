@@ -319,9 +319,9 @@ class _VendorMenuSection extends StatefulWidget {
 }
 
 class _VendorMenuSectionState extends State<_VendorMenuSection> {
-  late int pesananCount;
-  late int diprosesCount;
-  late int payoutCount;
+  int pesananCount = 0;
+  int diprosesCount = 0;
+  int payoutCount = 0;
   bool badgeCountReady = false;
 
   Future<int> fetchVendorId() async {
@@ -483,32 +483,27 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
                   () => GoRouter.of(
                     context,
                   ).push('/vendor/pesanan?filter=complete'),
-              child: Badge(
-                label: badgeCountReady ? null : Text(payoutCount.toString()),
-                child: SizedBox(
-                  height: 80,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    spacing: 16,
-                    children: [
-                      Badge(
-                        isLabelVisible:
-                            badgeCountReady
-                                ? payoutCount > 0
-                                    ? true
-                                    : false
-                                : false,
-                        label:
-                            badgeCountReady
-                                ? Text(payoutCount.toString())
-                                : null,
-                        offset: Offset(16, -12),
-                        child: Icon(Icons.price_check_outlined, size: 24),
-                      ),
-                      Text("Payout", textAlign: TextAlign.center),
-                    ],
-                  ),
+              child: SizedBox(
+                height: 80,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  spacing: 16,
+                  children: [
+                    Badge(
+                      isLabelVisible:
+                          badgeCountReady
+                              ? payoutCount > 0
+                                  ? true
+                                  : false
+                              : false,
+                      label:
+                          badgeCountReady ? Text(payoutCount.toString()) : null,
+                      offset: Offset(16, -12),
+                      child: Icon(Icons.price_check_outlined, size: 24),
+                    ),
+                    Text("Payout", textAlign: TextAlign.center),
+                  ],
                 ),
               ),
             ),
