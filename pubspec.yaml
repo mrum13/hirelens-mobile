@@ -5,6 +5,7 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.7.2
+  flutter: 3.19.2
 
 dependencies:
   animated_svg: ^2.1.0
