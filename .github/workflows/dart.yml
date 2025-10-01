@@ -1,34 +1,28 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Dart
+name: Build and distribute
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "chandra-new" ]
+    branches:
+      - main
 
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
-      - name: Set Up Java
-        uses: actions/setup-java@v3.12.0
+      - uses: cedvdb/action-flutter-build-android@v1
         with:
-          distribution: 'oracle'
-          java-version: '17'
-
-      - name: Set Up Flutter
-        uses: subosito/flutter-action@v2
+          keystore-base64: ${{ secrets.ANDROID_RELEASE_KEY }}
+          keystore-password: "${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}"
+          # optionals
+          build-cmd: flutter build apk --release
+          working-directory: ./
+          
+      - name: Archive APK
+        uses: actions/upload-artifact@v2
         with:
-          flutter-version: '^3.19.2'
-          channel: 'stable'
-
-      - name: Install Dependencies
-        run: flutter pub get
+          name: release-apk
+          # Try running the build locally with the build command to be sure of this path
+          path: build/app/outputs/flutter-apk/app-dev-release.apk
