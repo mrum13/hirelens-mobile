@@ -9,7 +9,7 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "chandra-new" ]
 
 jobs:
   build:
@@ -28,7 +28,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.2'
-          channel: 'stable'
+          channel: 'beta'
 
       - name: Install Dependencies
         run: flutter pub get
