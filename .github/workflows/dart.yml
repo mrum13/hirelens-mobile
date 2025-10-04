@@ -3,18 +3,9 @@ name: Flutter CI
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [ main, develop ]
   pull_request:
-    branches:
-      - main
-      - develop
-
-env:
-  # Contoh environment vars global, bisa di-override di job atau di level repository secrets
-  ANDROID_SDK_ROOT: ${{ runner.tool_cache }}/android-sdk
-  # Tambah env lain kalau perlu, misal keystore alias, passwords, API keys, dll
+    branches: [ main, develop ]
 
 jobs:
   build_android:
@@ -24,42 +15,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Setup Java (Android build butuh Java)
+      # Setup Java
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 17
 
-      # Setup Flutter versi spesifik
+      # Setup Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.19.2
           channel: stable
 
-      # Cek bahwa versi Dart minimal terpenuhi
       - name: Check Dart version
-        run: |
-          dart --version  # memastikan versi yang dipakai
+        run: dart --version
 
-      # Install dependencies
       - name: Flutter pub get
         run: flutter pub get
 
-      # (Opsional) bersihkan build lama
       - name: Flutter clean
         run: flutter clean
 
-      # Build release atau debug, tergantung kebutuhan
       - name: Build APK
         run: flutter build apk --release
 
-      # Jika kamu ingin build AAB
       - name: Build AAB
         run: flutter build appbundle --release
 
-      # (Opsional) upload artifact hasil build supaya bisa diunduh
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
@@ -67,5 +51,3 @@ jobs:
           path: |
             build/app/outputs/apk/release/*.apk
             build/app/outputs/bundle/release/*.aab
-
-  # Kamu bisa tambahkan job lain: test, lint, build iOS, dsb
