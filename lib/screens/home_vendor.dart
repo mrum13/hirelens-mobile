@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:unsplash_clone/components/bottomnav.dart';
 import 'package:unsplash_clone/helper.dart';
@@ -267,32 +268,56 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid(
                     delegate: SliverChildListDelegate([
-                      _StatCard(
-                        count: itemCount?.toString() ?? '-',
-                        icon: Icons.view_module,
-                        label: "Total Item",
+                      GestureDetector(
+                        onTap:
+                            () => GoRouter.of(
+                              context,
+                            ).push('/vendor/kelola_item'),
+                        child: _StatCard(
+                          count: itemCount?.toString() ?? '-',
+                          icon: Icons.view_module,
+                          label: "Total Item",
+                        ),
                       ),
-                      _StatCard(
-                        count:
-                            filterPendingOrder(transactions).length.toString(),
-                        icon: Icons.receipt,
-                        label: "Order Pending",
+                      GestureDetector(
+                        onTap:
+                            () => GoRouter.of(context).push('/vendor/pesanan'),
+                        child: _StatCard(
+                          count:
+                              filterPendingOrder(
+                                transactions,
+                              ).length.toString(),
+                          icon: Icons.receipt,
+                          label: "Order Pending",
+                        ),
                       ),
-                      _StatCard(
-                        count:
-                            filterProcessedOrder(
-                              transactions,
-                            ).length.toString(),
-                        icon: Icons.movie_edit,
-                        label: "Order Diproses",
+                      GestureDetector(
+                        onTap:
+                            () => GoRouter.of(
+                              context,
+                            ).push('/vendor/pesanan?filter=processing'),
+                        child: _StatCard(
+                          count:
+                              filterProcessedOrder(
+                                transactions,
+                              ).length.toString(),
+                          icon: Icons.movie_edit,
+                          label: "Order Diproses",
+                        ),
                       ),
-                      _StatCard(
-                        count:
-                            filterCompletedOrder(
-                              transactions,
-                            ).length.toString(),
-                        icon: Icons.check_box,
-                        label: "Order Selesai",
+                      GestureDetector(
+                        onTap:
+                            () => GoRouter.of(
+                              context,
+                            ).push('/vendor/pesanan?filter=complete'),
+                        child: _StatCard(
+                          count:
+                              filterCompletedOrder(
+                                transactions,
+                              ).length.toString(),
+                          icon: Icons.check_box,
+                          label: "Order Selesai",
+                        ),
                       ),
                     ]),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

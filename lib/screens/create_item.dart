@@ -74,6 +74,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
     return null;
   }
 
+  // FIXME: Change how the thumbnail file were store in database
   Future<void> _createItem() async {
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
