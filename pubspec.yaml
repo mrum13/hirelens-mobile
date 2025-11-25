@@ -5,11 +5,12 @@ version: 1.0.0+1
 
 environment:
   sdk: ^3.3.0
-  flutter: ^3.19.2
 
 dependencies:
   animated_svg: ^2.1.0
+  audioplayers: ^5.2.1
   cupertino_icons: ^1.0.8
+  d_method: ^0.2.6
   flutter:
     sdk: flutter
   flutter_dotenv: ^6.0.0
@@ -26,7 +27,10 @@ dependencies:
   webview_flutter: ^4.13.0
 
 dev_dependencies:
-  flutter_launcher_icons: "^0.14.4"
+  flutter_launcher_icons: ^0.14.4
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
@@ -34,6 +38,8 @@ flutter:
   assets:
     - assets/.env
     - assets/images/
+    - assets/sounds/ # ← TAMBAHAN BARU
+    - assets/midtrans_webview.html
 
 flutter_icons:
   android: true

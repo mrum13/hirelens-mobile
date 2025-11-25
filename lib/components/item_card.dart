@@ -3,10 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/helper.dart';
 
 class ItemCard extends StatefulWidget {
-  final int id;
+  final String id;
   final String name;
-  final int vendor;
-  final int price;
+  final String vendor;
+  final num price;
   final String description;
   final String? thumbnail;
   final bool? showFavorite;
@@ -35,13 +35,12 @@ class _ItemCardState extends State<ItemCard> {
   void checkIsFavorite() async {
     final client = Supabase.instance.client;
 
-    final response =
-        await client
-            .from('shopping_cart')
-            .select()
-            .eq('user_id', client.auth.currentUser!.id)
-            .eq('item_id', widget.id)
-            .maybeSingle();
+    final response = await client
+        .from('shopping_cart')
+        .select()
+        .eq('user_id', client.auth.currentUser!.id)
+        .eq('item_id', widget.id)
+        .maybeSingle();
 
     setState(() {
       isFavorite = response != null;
@@ -59,106 +58,106 @@ class _ItemCardState extends State<ItemCard> {
   Widget build(BuildContext context) {
     return !isLoading
         ? GestureDetector(
-          onTap: widget.onTapHandler,
-          child: Container(
-            // padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Stack(
-                  children: [
-                    widget.thumbnail == null
-                        ? Container(
-                          height: 120,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceBright,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(8),
-                              topRight: Radius.circular(8),
+            onTap: widget.onTapHandler,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    children: [
+                      widget.thumbnail == null
+                          ? Container(
+                              height: 120,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color:
+                                    Theme.of(context).colorScheme.surfaceBright,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                  topRight: Radius.circular(8),
+                                ),
+                              ),
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(8),
+                                topRight: Radius.circular(8),
+                              ),
+                              child: Image.network(
+                                widget.thumbnail!,
+                                fit: BoxFit.cover,
+                                height: 120,
+                                width: double.infinity,
+                              ),
                             ),
-                          ),
-                        )
-                        : ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(8),
-                            topRight: Radius.circular(8),
-                          ),
-                          child: Image.network(
-                            widget.thumbnail!,
-                            fit: BoxFit.cover,
-                            height: 120,
-                            width: double.infinity,
+                      if (widget.showFavorite == true)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Icon(
+                            isFavorite ? Icons.star : Icons.star_border,
+                            size: 24,
+                            color: isFavorite ? Colors.amber : Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black87,
+                                blurRadius: 8,
+                                offset: Offset(0, 0),
+                              ),
+                            ],
                           ),
                         ),
-                    if (widget.showFavorite == true)
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: Icon(
-                          isFavorite ? Icons.star : Icons.star_border,
-                          size: 24,
-                          color: isFavorite ? Colors.amber : Colors.white,
-                          shadows: [
-                            Shadow(
-                              color: Colors.black87,
-                              blurRadius: 8,
-                              offset: Offset(0, 0),
+                    ],
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.name,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
-                          ],
-                        ),
+                          ),
+                          const Spacer(),
+                          Text("Mulai dari", style: TextStyle(fontSize: 8)),
+                          Text(
+                            formatCurrency(widget.price), // Hilangkan .toInt()
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                  ],
-                ),
-                Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.name,
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.description,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text("Mulai dari", style: TextStyle(fontSize: 8)),
-                        Text(
-                          formatCurrency(widget.price),
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        )
+          )
         : Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceBright,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            widthFactor: double.infinity,
-            heightFactor: double.infinity,
-            child: CircularProgressIndicator(
-              color: Theme.of(context).colorScheme.primary,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceBright,
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-        );
+            child: Center(
+              widthFactor: double.infinity,
+              heightFactor: double.infinity,
+              child: CircularProgressIndicator(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          );
   }
 }

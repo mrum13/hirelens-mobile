@@ -22,31 +22,40 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
     fetchItems();
   }
 
-  Future<int> fetchVendorId() async {
+  Future<String> fetchVendorId() async {
     final client = Supabase.instance.client;
-    final response =
-        await client
-            .from('vendors')
-            .select('id')
-            .eq('user_id', client.auth.currentUser!.id)
-            .single();
+    final userId = client.auth.currentUser!.id;
 
-    return response['id'];
+    final response = await client
+        .from('vendors')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+    return response['id'] as String;
   }
 
   Future<void> fetchItems() async {
     setState(() => isLoading = true);
     final client = Supabase.instance.client;
-    final vendorId = await fetchVendorId();
-    final response = await client
-        .from('items')
-        .select()
-        .eq('vendor', vendorId)
-        .order('created_at', ascending: false);
-    setState(() {
-      items = response;
-      isLoading = false;
-    });
+
+    try {
+      final vendorId = await fetchVendorId();
+      final response = await client
+          .from('items')
+          .select()
+          .eq('vendor_id',
+              vendorId) // pastikan kolomnya vendor_id, bukan vendor
+          .order('created_at', ascending: false);
+
+      setState(() {
+        items = response;
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Error fetching items: $e');
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -112,37 +121,38 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child:
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : items.isEmpty
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : items.isEmpty
                       ? const Center(child: Text('Belum ada item.'))
                       : GridView.builder(
-                        itemCount: items.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 0.65,
-                            ),
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          return ItemCard(
-                            id: item['id'],
-                            name: item['name'],
-                            price: item['price'],
-                            vendor: item['vendor'],
-                            thumbnail: item['thumbnail'],
-                            description: item['description'] ?? '',
-                            showFavorite: false,
-                            onTapHandler:
-                                () => GoRouter.of(context).push(
-                                  "/vendor/kelola_item/edit/${item['id']}",
-                                ),
-                          );
-                        },
-                      ),
+                          itemCount: items.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.65,
+                          ),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return ItemCard(
+                              id: item['id'],
+                              name: item['name'],
+                              price: item['price'] is num
+                                  ? item['price']
+                                  : double.parse(item['price'].toString()),
+                              vendor: item[
+                                  'vendor_id'], // Ganti dari 'vendor' ke 'vendor_id'
+                              thumbnail: item['thumbnail'],
+                              description: item['description'] ?? '',
+                              showFavorite: false,
+                              onTapHandler: () => GoRouter.of(context).push(
+                                "/vendor/kelola_item/edit/${item['id']}",
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),

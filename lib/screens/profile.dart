@@ -35,6 +35,20 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
   // TODO: find a way to refresh customer and vendor menu section
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final metadata = userData.userMetadata ?? {};
+    final displayName = (metadata['displayName'] ?? 'User') as String;
+    final email = userData.email ?? 'Tidak ada email';
+    final profileImage = (metadata['profileImage'] ??
+            "https://ui-avatars.com/api/?background=6777cc&color=fff&name=${displayName.toUpperCase()}")
+        as String;
+    final role = (metadata['role'] ?? 'customer') as String;
+
     return Scaffold(
       bottomNavigationBar: MyBottomNavbar(curIndex: 2),
       body: SafeArea(
@@ -42,25 +56,16 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
           child: Column(
             children: [
               _ProfileHeader(
-                displayName:
-                    (userData.userMetadata!['displayName'] as String).length >
-                            18
-                        ? "${(userData.userMetadata!['displayName'] as String).substring(0, 18)}..."
-                        : userData.userMetadata!['displayName'],
-                email: userData.email!,
-                profileImage:
-                    (userData.userMetadata!['profileImage'] as String?) ??
-                    "https://ui-avatars.com/api/?background=6777cc&color=fff&name=${userData.userMetadata!['displayName'].toUpperCase()}",
-                role: userData.userMetadata!['role'],
+                displayName: displayName.length > 18
+                    ? "${displayName.substring(0, 18)}..."
+                    : displayName,
+                email: email,
+                profileImage: profileImage,
+                role: role,
               ),
-
-              userData.userMetadata!['role'] == 'vendor'
-                  ? _VendorMenuSection()
-                  : _CustomerMenuSection(),
-
-              SizedBox(height: 32),
-
-              _InformationSection(),
+              role == 'vendor' ? _VendorMenuSection() : _CustomerMenuSection(),
+              const SizedBox(height: 32),
+              const _InformationSection(),
             ],
           ),
         ),
@@ -110,28 +115,26 @@ class _ProfileHeader extends StatelessWidget {
                     width: 80,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color:
-                          role == 'vendor'
-                              ? themeFromContext(
-                                context,
-                              ).colorScheme.secondaryContainer
-                              : themeFromContext(
-                                context,
-                              ).colorScheme.primaryContainer,
+                      color: role == 'vendor'
+                          ? themeFromContext(
+                              context,
+                            ).colorScheme.secondaryContainer
+                          : themeFromContext(
+                              context,
+                            ).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
                       "${role[0].toUpperCase()}${role.substring(1)}",
                       style: TextStyle(
                         fontSize: 12,
-                        color:
-                            role == 'vendor'
-                                ? themeFromContext(
-                                  context,
-                                ).colorScheme.onSecondaryContainer
-                                : themeFromContext(
-                                  context,
-                                ).colorScheme.onPrimaryContainer,
+                        color: role == 'vendor'
+                            ? themeFromContext(
+                                context,
+                              ).colorScheme.onSecondaryContainer
+                            : themeFromContext(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -139,7 +142,6 @@ class _ProfileHeader extends StatelessWidget {
               ),
             ],
           ),
-
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,10 +223,9 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/customer/pesanan?filter=pending'),
+              onTap: () => GoRouter.of(
+                context,
+              ).push('/customer/pesanan?filter=pending'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -233,16 +234,14 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
                   spacing: 16,
                   children: [
                     Badge(
-                      isLabelVisible:
-                          badgeCountReady
-                              ? tagihanCount > 0
-                                  ? true
-                                  : false
-                              : false,
-                      label:
-                          badgeCountReady
-                              ? Text(tagihanCount.toString())
-                              : null,
+                      isLabelVisible: badgeCountReady
+                          ? tagihanCount > 0
+                              ? true
+                              : false
+                          : false,
+                      label: badgeCountReady
+                          ? Text(tagihanCount.toString())
+                          : null,
                       offset: Offset(16, -12),
                       child: Icon(Icons.receipt, size: 24),
                     ),
@@ -254,10 +253,9 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/customer/pesanan?filter=processing'),
+              onTap: () => GoRouter.of(
+                context,
+              ).push('/customer/pesanan?filter=processing'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -266,16 +264,14 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
                   spacing: 16,
                   children: [
                     Badge(
-                      isLabelVisible:
-                          badgeCountReady
-                              ? diprosesCount > 0
-                                  ? true
-                                  : false
-                              : false,
-                      label:
-                          badgeCountReady
-                              ? Text(diprosesCount.toString())
-                              : null,
+                      isLabelVisible: badgeCountReady
+                          ? diprosesCount > 0
+                              ? true
+                              : false
+                          : false,
+                      label: badgeCountReady
+                          ? Text(diprosesCount.toString())
+                          : null,
                       offset: Offset(16, -12),
                       child: Icon(Icons.movie_edit, size: 24),
                     ),
@@ -287,10 +283,9 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/customer/pesanan?filter=complete'),
+              onTap: () => GoRouter.of(
+                context,
+              ).push('/customer/pesanan?filter=complete'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -324,17 +319,16 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
   int payoutCount = 0;
   bool badgeCountReady = false;
 
-  Future<int> fetchVendorId() async {
+  Future<String> fetchVendorId() async {
     final client = Supabase.instance.client;
 
-    final response =
-        await client
-            .from('vendors')
-            .select('id')
-            .eq('user_id', client.auth.currentUser!.id)
-            .single();
+    final response = await client
+        .from('vendors')
+        .select('id')
+        .eq('user_id', client.auth.currentUser!.id)
+        .single();
 
-    return response['id'] as int;
+    return response['id'] as String;
   }
 
   Future<void> countPesanan() async {
@@ -425,16 +419,14 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
                   spacing: 16,
                   children: [
                     Badge(
-                      isLabelVisible:
-                          badgeCountReady
-                              ? pesananCount > 0
-                                  ? true
-                                  : false
-                              : false,
-                      label:
-                          badgeCountReady
-                              ? Text(pesananCount.toString())
-                              : null,
+                      isLabelVisible: badgeCountReady
+                          ? pesananCount > 0
+                              ? true
+                              : false
+                          : false,
+                      label: badgeCountReady
+                          ? Text(pesananCount.toString())
+                          : null,
                       offset: Offset(16, -12),
                       child: Icon(Icons.inbox_outlined, size: 24),
                     ),
@@ -446,10 +438,9 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/vendor/pesanan?filter=processing'),
+              onTap: () => GoRouter.of(
+                context,
+              ).push('/vendor/pesanan?filter=processing'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -458,16 +449,14 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
                   spacing: 16,
                   children: [
                     Badge(
-                      isLabelVisible:
-                          badgeCountReady
-                              ? diprosesCount > 0
-                                  ? true
-                                  : false
-                              : false,
-                      label:
-                          badgeCountReady
-                              ? Text(diprosesCount.toString())
-                              : null,
+                      isLabelVisible: badgeCountReady
+                          ? diprosesCount > 0
+                              ? true
+                              : false
+                          : false,
+                      label: badgeCountReady
+                          ? Text(diprosesCount.toString())
+                          : null,
                       offset: Offset(16, -12),
                       child: Icon(Icons.movie_edit, size: 24),
                     ),
@@ -479,10 +468,9 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/vendor/pesanan?filter=complete'),
+              onTap: () => GoRouter.of(
+                context,
+              ).push('/vendor/pesanan?filter=complete'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -491,12 +479,11 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
                   spacing: 16,
                   children: [
                     Badge(
-                      isLabelVisible:
-                          badgeCountReady
-                              ? payoutCount > 0
-                                  ? true
-                                  : false
-                              : false,
+                      isLabelVisible: badgeCountReady
+                          ? payoutCount > 0
+                              ? true
+                              : false
+                          : false,
                       label:
                           badgeCountReady ? Text(payoutCount.toString()) : null,
                       offset: Offset(16, -12),
@@ -551,52 +538,49 @@ class _InformationSection extends StatelessWidget {
               await showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder:
-                    (ctx) => AlertDialog(
-                      title: Text("Apakah anda yakin ingin keluar?"),
-                      actions: [
-                        Row(
-                          spacing: 8,
-                          children: [
-                            Expanded(
-                              child: MyFilledButton(
-                                variant: MyButtonVariant.neutral,
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text("Tidak"),
+                builder: (ctx) => AlertDialog(
+                  title: Text("Apakah anda yakin ingin keluar?"),
+                  actions: [
+                    Row(
+                      spacing: 8,
+                      children: [
+                        Expanded(
+                          child: MyFilledButton(
+                            variant: MyButtonVariant.neutral,
+                            onTap: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text("Tidak"),
+                          ),
+                        ),
+                        Expanded(
+                          child: MyFilledButton(
+                            variant: MyButtonVariant.primary,
+                            onTap: () async {
+                              final client = Supabase.instance.client;
+
+                              await client.auth.signOut();
+
+                              while (GoRouter.of(context).canPop() == true) {
+                                GoRouter.of(context).pop();
+                              }
+
+                              GoRouter.of(context).pushReplacement('/');
+                            },
+                            child: Text(
+                              "Ya",
+                              style: TextStyle(
+                                color: themeFromContext(
+                                  context,
+                                ).colorScheme.onPrimary,
                               ),
                             ),
-                            Expanded(
-                              child: MyFilledButton(
-                                variant: MyButtonVariant.primary,
-                                onTap: () async {
-                                  final client = Supabase.instance.client;
-
-                                  await client.auth.signOut();
-
-                                  while (GoRouter.of(context).canPop() ==
-                                      true) {
-                                    GoRouter.of(context).pop();
-                                  }
-
-                                  GoRouter.of(context).pushReplacement('/');
-                                },
-                                child: Text(
-                                  "Ya",
-                                  style: TextStyle(
-                                    color:
-                                        themeFromContext(
-                                          context,
-                                        ).colorScheme.onPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
+                  ],
+                ),
               );
             },
             child: ListTile(

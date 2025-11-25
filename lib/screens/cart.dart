@@ -16,17 +16,28 @@ class _CartPageState extends State<CartPage> {
   bool isLoading = true;
 
   Future<void> fetchDatas() async {
-    final client = Supabase.instance.client;
-    final results = await client
-        .from('shopping_cart')
-        .select(
-          'id, item_id(id,name,description,thumbnail,address,price,vendor(id,name))',
-        );
+    try {
+      final client = Supabase.instance.client;
+      final results = await client.from('shopping_cart').select(
+            'id, items!inner(id,name,description,thumbnail,address,price,vendors!inner(id,name))',
+          );
 
-    setState(() {
-      isLoading = false;
-      items = results;
-    });
+      setState(() {
+        isLoading = false;
+        items = results;
+      });
+    } catch (e) {
+      print('Error fetching cart: $e');
+      setState(() {
+        isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat keranjang: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -42,28 +53,32 @@ class _CartPageState extends State<CartPage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: fetchDatas,
-          child:
-              !isLoading
-                  ? items.isNotEmpty
-                      ? ListView(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        children:
-                            items
-                                .map(
-                                  ((item) => _CartItem(
-                                    itemAddress: item['item_id']['address'],
-                                    itemId: item['item_id']['id'],
-                                    itemName: item['item_id']['name'],
-                                    itemVendor:
-                                        item['item_id']['vendor']['name'],
-                                    itemPrice: item['item_id']['price'],
-                                    itemThumbnail: item['item_id']['thumbnail'],
-                                  )),
-                                )
-                                .toList(),
-                      )
-                      : Center(child: Text("Belum ada item"))
-                  : Center(child: CircularProgressIndicator()),
+          child: !isLoading
+              ? items.isNotEmpty
+                  ? ListView(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      children: items
+                          .map(
+                            ((item) => _CartItem(
+                                  itemAddress:
+                                      item['items']['address']?.toString() ??
+                                          '',
+                                  itemId: item['items']['id']?.toString() ?? '',
+                                  itemName:
+                                      item['items']['name']?.toString() ?? '',
+                                  itemVendor: item['items']['vendors']['name']
+                                          ?.toString() ??
+                                      '',
+                                  itemPrice: item['items']['price'] ?? 0,
+                                  itemThumbnail:
+                                      item['items']['thumbnail']?.toString() ??
+                                          '',
+                                )),
+                          )
+                          .toList(),
+                    )
+                  : Center(child: Text("Belum ada item"))
+              : Center(child: CircularProgressIndicator()),
         ),
       ),
     );
@@ -71,11 +86,11 @@ class _CartPageState extends State<CartPage> {
 }
 
 class _CartItem extends StatefulWidget {
-  final int itemId;
+  final String itemId;
   final String itemName;
   final String itemVendor;
   final String itemThumbnail;
-  final int itemPrice;
+  final dynamic itemPrice;
   final String itemAddress;
 
   const _CartItem({
@@ -108,6 +123,14 @@ class _CartItemState extends State<_CartItem> {
               fit: BoxFit.cover,
               width: 80,
               height: 80,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey[300],
+                  child: Icon(Icons.broken_image),
+                );
+              },
             ),
           ),
           Expanded(
@@ -118,52 +141,39 @@ class _CartItemState extends State<_CartItem> {
                 Text(
                   widget.itemName,
                   style: Theme.of(context).textTheme.displaySmall,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                Text(widget.itemVendor, style: TextStyle(fontSize: 12)),
+                Text(
+                  widget.itemVendor,
+                  style: TextStyle(fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
                 Expanded(child: SizedBox(height: double.infinity)),
                 Row(
                   spacing: 4,
                   children: [
                     Icon(Icons.location_on, size: 12),
-                    Text(
-                      widget.itemAddress.length > 16
-                          ? "${widget.itemAddress.substring(0, 16)}..."
-                          : widget.itemAddress,
-                      style: TextStyle(fontSize: 12),
+                    Expanded(
+                      child: Text(
+                        widget.itemAddress.length > 16
+                            ? "${widget.itemAddress.substring(0, 16)}..."
+                            : widget.itemAddress,
+                        style: TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          // GestureDetector(
-          //   onTap:
-          //       () =>
-          //           GoRouter.of(context).push("/item/detail/${widget.itemId}"),
-          //   child: Container(
-          //     width: 100,
-          //     height: 32,
-          //     alignment: Alignment.center,
-          //     decoration: BoxDecoration(
-          //       color: Theme.of(context).colorScheme.primary,
-          //       borderRadius: BorderRadius.circular(8),
-          //     ),
-          //     child: Text(
-          //       "Detail Item",
-          //       style: TextStyle(
-          //         color: Theme.of(context).colorScheme.onPrimary,
-          //       ),
-          //     ),
-          //   ),
-          // ),
           MyFilledButton(
             width: 100,
             height: 32,
             variant: MyButtonVariant.primary,
             padding: EdgeInsets.all(4),
-            onTap:
-                () =>
-                    GoRouter.of(context).push("/item/detail/${widget.itemId}"),
+            onTap: () =>
+                GoRouter.of(context).push("/item/detail/${widget.itemId}"),
             child: Row(
               spacing: 4,
               mainAxisAlignment: MainAxisAlignment.center,

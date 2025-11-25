@@ -1,3 +1,4 @@
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -9,7 +10,7 @@ import 'package:unsplash_clone/theme.dart';
 class PesananDetailCustomerPage extends StatefulWidget {
   const PesananDetailCustomerPage({super.key, required this.dataId});
 
-  final int dataId;
+  final String dataId;
 
   @override
   State<PesananDetailCustomerPage> createState() =>
@@ -19,19 +20,18 @@ class PesananDetailCustomerPage extends StatefulWidget {
 class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     with RouteAware {
   bool isLoading = true;
-  late Map<String, dynamic> data;
+  Map<String, dynamic> data = {};
 
   Future<void> fetchAndSetData() async {
     final client = Supabase.instance.client;
     try {
-      final response =
-          await client
-              .from('transactions')
-              .select(
-                "*, item_id(id, name, price, thumbnail, vendor(id, name))",
-              )
-              .eq('id', widget.dataId)
-              .single();
+      final response = await client
+          .from('transactions')
+          .select(
+            "*, item_id(id, name, price, thumbnail, vendors(id, name))",
+          )
+          .eq('id', widget.dataId)
+          .single();
 
       if (mounted) {
         setState(() {
@@ -40,6 +40,10 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
         });
       }
     } catch (e) {
+      DMethod.log("Gagal ki $e");
+      setState(() {
+          isLoading = false;
+        });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
@@ -55,16 +59,15 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
   Future<void> _paySisa() async {
     final client = Supabase.instance.client;
     try {
-      final selectedTransaction =
-          await client
-              .from('transactions')
-              .select("*, item_id(id, name, price)")
-              .eq('id', widget.dataId)
-              .single();
+      final selectedTransaction = await client
+          .from('transactions')
+          .select("*, item_id(id, name, price)")
+          .eq('id', widget.dataId)
+          .single();
       final selectedMidtransOrderId =
           (selectedTransaction['midtrans_order_id'] as String).split(
-            '-panjar',
-          )[0];
+        '-panjar',
+      )[0];
 
       final orderId =
           "$selectedMidtransOrderId-panjarpaid-${DateTime.now().millisecondsSinceEpoch}";
@@ -74,7 +77,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
           'orderId': orderId,
           'price': calculateSisa(
             selectedTransaction['item_id']['price'],
-            int.parse(selectedTransaction['durasi']),
+            selectedTransaction['durasi'],
           ),
           'itemName': selectedTransaction['item_id']['name'],
           'duration': selectedTransaction['durasi'],
@@ -97,6 +100,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
   void initState() {
     super.initState();
     fetchAndSetData();
+    DMethod.log("Pesanan Detail Customer");
   }
 
   // FIXME: Why it's not refreshing the page
@@ -106,12 +110,12 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     fetchAndSetData();
   }
 
-  int _calculateSisa(int price, int durasi, int payed, int transactionFee) {
+  num _calculateSisa(num price, num durasi, num payed, num transactionFee) {
     final subtotal = (price * durasi) + transactionFee;
     return subtotal - payed;
   }
 
-  int _calculateTransactionFee(int price, int durasi, bool? isPanjar) {
+  num _calculateTransactionFee(num price, num durasi, bool? isPanjar) {
     if (isPanjar == true) {
       return (((((price * durasi) * 0.3) + ((price * durasi) * 0.7)) * 0.025))
           .round();
@@ -121,6 +125,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
   }
 
   Widget buildPaymentBar(String paymentStatus) {
+    DMethod.log(paymentStatus);
     switch (paymentStatus) {
       case 'pending':
         return Row(
@@ -164,31 +169,30 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     return isLoading
         ? Center(child: CircularProgressIndicator())
         : Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            title: Text(
-              "Rincian Pesanan",
-              style: themeFromContext(context).textTheme.displayMedium,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              title: Text(
+                "Rincian Pesanan",
+                style: themeFromContext(context).textTheme.displayMedium,
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => GoRouter.of(context).pop(),
+              ),
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => GoRouter.of(context).pop(),
+            bottomNavigationBar: SizedBox(
+              height: 72,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: buildPaymentBar(data['status_work']),
+              ),
             ),
-          ),
-          bottomNavigationBar: SizedBox(
-            height: 72,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: buildPaymentBar(data['status_work']),
-            ),
-          ),
-          body: SafeArea(
-            child: RefreshIndicator(
-              onRefresh: () async {},
-              child:
-                  isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : SingleChildScrollView(
+            body: SafeArea(
+              child: RefreshIndicator(
+                onRefresh: () async {},
+                child: isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,17 +226,16 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                             Divider(height: 32),
                             _ItemDescription(
                               name: data['item_id']['name'],
-                              vendor: data['item_id']['vendor']['name'],
+                              vendor: data['item_id']['vendors']['name'],
                               price: data['item_id']['price'],
                               thumbnail: data['item_id']['thumbnail'],
                             ),
                             Divider(height: 32),
                             Text(
                               "Detail Pembayaran",
-                              style:
-                                  themeFromContext(
-                                    context,
-                                  ).textTheme.displayMedium,
+                              style: themeFromContext(
+                                context,
+                              ).textTheme.displayMedium,
                             ),
                             SizedBox(height: 32),
                             Column(
@@ -257,14 +260,13 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                                       formatCurrency(
                                         _calculateTransactionFee(
                                           data['item_id']['price'],
-                                          int.parse(data['durasi']),
+                                          data['durasi'],
                                           data['payment_type'] != 'full_paid',
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-
                                 if (data['status_payment'] != 'pending')
                                   Row(
                                     mainAxisAlignment:
@@ -273,14 +275,12 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                                       Text("Dibayar :"),
                                       Text(
                                         formatCurrency(
-                                          (data['amount'] as double).round(),
+                                          data['amount'],
                                         ),
                                       ),
                                     ],
                                   ),
-
                                 SizedBox(height: 12),
-
                                 if (data['status_payment'] != 'pending')
                                   Row(
                                     mainAxisAlignment:
@@ -291,11 +291,11 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                                         formatCurrency(
                                           _calculateSisa(
                                             data['item_id']['price'],
-                                            int.parse(data['durasi']),
-                                            (data['amount'] as double).round(),
+                                            data['durasi'],
+                                            data['amount'].round(),
                                             _calculateTransactionFee(
                                               data['item_id']['price'],
-                                              int.parse(data['durasi']),
+                                              data['durasi'],
                                               data['payment_type'] !=
                                                   'full_paid',
                                             ),
@@ -304,33 +304,30 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                                       ),
                                     ],
                                   ),
-
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       "Subtotal :",
-                                      style:
-                                          themeFromContext(
-                                            context,
-                                          ).textTheme.bodyLarge,
+                                      style: themeFromContext(
+                                        context,
+                                      ).textTheme.bodyLarge,
                                     ),
                                     Text(
                                       formatCurrency(
                                         (data['item_id']['price'] *
-                                                int.parse(data['durasi'])) +
+                                                data['durasi']) +
                                             _calculateTransactionFee(
                                               data['item_id']['price'],
-                                              int.parse(data['durasi']),
+                                              data['durasi'],
                                               data['payment_type'] !=
                                                   'full_paid',
                                             ),
                                       ),
-                                      style:
-                                          themeFromContext(
-                                            context,
-                                          ).textTheme.displayLarge,
+                                      style: themeFromContext(
+                                        context,
+                                      ).textTheme.displayLarge,
                                     ),
                                   ],
                                 ),
@@ -355,9 +352,9 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                           ],
                         ),
                       ),
+              ),
             ),
-          ),
-        );
+          );
   }
 }
 
@@ -371,7 +368,7 @@ class _ItemDescription extends StatelessWidget {
 
   final String name;
   final String vendor;
-  final int price;
+  final num price;
   final String thumbnail;
 
   @override

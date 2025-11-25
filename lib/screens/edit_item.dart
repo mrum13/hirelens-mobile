@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 class EditItemPage extends StatefulWidget {
   const EditItemPage({super.key, required this.dataId});
 
-  final int dataId;
+  final String dataId;
 
   @override
   State<EditItemPage> createState() => _EditItemPageState();
@@ -45,9 +45,7 @@ class _EditItemPageState extends State<EditItemPage> {
     final fileName =
         'item_thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
 
-    await Supabase.instance.client.storage
-        .from(bucket)
-        .uploadBinary(
+    await Supabase.instance.client.storage.from(bucket).uploadBinary(
           fileName,
           await imageFile.readAsBytes(),
           fileOptions: const FileOptions(upsert: false),
@@ -60,15 +58,14 @@ class _EditItemPageState extends State<EditItemPage> {
     return fileUrl;
   }
 
-  Future<int?> findVendorId() async {
+  Future<String?> findVendorId() async {
     final client = Supabase.instance.client;
     try {
-      final result =
-          await client
-              .from('vendors')
-              .select('id')
-              .eq('user_id', client.auth.currentUser!.id)
-              .single();
+      final result = await client
+          .from('vendors')
+          .select('id')
+          .eq('user_id', client.auth.currentUser!.id)
+          .single();
 
       return result['id'];
     } catch (e) {
@@ -82,15 +79,21 @@ class _EditItemPageState extends State<EditItemPage> {
 
   Future<File> _loadImageFromUrl(String url) async {
     final Directory tempDir = await getTemporaryDirectory();
-    final tempDirPath = tempDir.path;
     final curTime = DateTime.now();
 
+    // ✅ FIX: Buat folder 'img' jika belum ada
+    final imgDir = Directory('${tempDir.path}/img');
+    if (!await imgDir.exists()) {
+      await imgDir.create(recursive: true);
+    }
+
     final response = await http.get(Uri.parse(url));
+
     final file = File(
-      "$tempDirPath/img/${curTime.year}${curTime.month}${curTime.day}${curTime.hour}${curTime.minute}${curTime.second}${curTime.millisecond}.jpg",
+      "${imgDir.path}/${curTime.year}${curTime.month}${curTime.day}${curTime.hour}${curTime.minute}${curTime.second}${curTime.millisecond}.jpg",
     );
 
-    file.writeAsBytes(response.bodyBytes);
+    await file.writeAsBytes(response.bodyBytes);
 
     return file;
   }
@@ -103,14 +106,17 @@ class _EditItemPageState extends State<EditItemPage> {
     _nameController.text = response['name'];
     _addressController.text = response['address'];
     _descController.text = response['description'];
-    _priceController.text = response['price'];
+
+    // ✅ FIX: Convert price (num/double) ke String
+    _priceController.text = response['price'].toString();
+
     final thumbnailFile = await _loadImageFromUrl(response['thumbnail']);
 
     setState(() {
-      durationList =
-          (response['durations'] as List<String>)
-              .map((d) => int.parse(d))
-              .toList();
+      // ✅ FIX: Cast ke List<dynamic> dulu, baru map
+      durationList = (response['durations'] as List<dynamic>)
+          .map((d) => d is int ? d : int.parse(d.toString()))
+          .toList();
       _selectedImage = thumbnailFile;
       _isLoading = false;
     });
@@ -135,7 +141,7 @@ class _EditItemPageState extends State<EditItemPage> {
     data['price'] = _priceController.text.trim();
     data['address'] = _addressController.text.trim();
     data['description'] = _descController.text.trim();
-    data['vendor'] = vendorId;
+    data['vendor_id'] = vendorId;
     data['durations'] =
         durationList.map((duration) => duration.toString()).toList();
 
@@ -209,11 +215,9 @@ class _EditItemPageState extends State<EditItemPage> {
                       labelStyle: TextStyle(fontSize: 16),
                     ),
                     style: TextStyle(fontSize: 16),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Nama item wajib diisi'
-                                : null,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Nama item wajib diisi'
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -237,11 +241,9 @@ class _EditItemPageState extends State<EditItemPage> {
                     ),
                     keyboardType: TextInputType.number,
                     style: TextStyle(fontSize: 16),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Harga wajib diisi'
-                                : null,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Harga wajib diisi'
+                        : null,
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -253,21 +255,16 @@ class _EditItemPageState extends State<EditItemPage> {
                     ),
                     style: TextStyle(fontSize: 16),
                     maxLines: 2,
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Alamat wajib diisi'
-                                : null,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Alamat wajib diisi'
+                        : null,
                   ),
-
                   const Divider(height: 56),
-
                   Text(
                     "Durasi",
                     style: themeFromContext(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 16),
-
                   Row(
                     spacing: 16,
                     children: [
@@ -290,8 +287,7 @@ class _EditItemPageState extends State<EditItemPage> {
                         variant: MyButtonVariant.secondary,
                         onTap: () {
                           final value = _durasiController.text.trim();
-                          final List<int> tmp =
-                              durationList +
+                          final List<int> tmp = durationList +
                               value
                                   .split(',')
                                   .map((v) => int.parse(v))
@@ -307,10 +303,9 @@ class _EditItemPageState extends State<EditItemPage> {
                         child: Text(
                           "Tambah",
                           style: TextStyle(
-                            color:
-                                themeFromContext(
-                                  context,
-                                ).colorScheme.onSecondary,
+                            color: themeFromContext(
+                              context,
+                            ).colorScheme.onSecondary,
                           ),
                         ),
                       ),
@@ -332,7 +327,6 @@ class _EditItemPageState extends State<EditItemPage> {
                       child: Text("$duration Jam", textAlign: TextAlign.start),
                     ),
                   ),
-
                   const SizedBox(height: 32),
                   MyFilledButton(
                     isLoading: _isLoading,

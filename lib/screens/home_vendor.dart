@@ -1,3 +1,4 @@
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -48,58 +49,166 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     }
   }
 
-  Future<int> fetchVendorId() async {
-    final client = Supabase.instance.client;
-    final response =
-        await client
-            .from('vendors')
-            .select('id')
-            .eq('user_id', client.auth.currentUser!.id)
-            .single();
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
 
-    return response['id'] as int;
+  Future<String?> fetchVendorId() async {
+    final client = Supabase.instance.client;
+    final user = client.auth.currentUser;
+
+    if (user == null) {
+      debugPrint("❌ User not logged in");
+      return null;
+    }
+
+    try {
+      final response = await client
+          .from('vendors')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+      if (response == null) {
+        debugPrint("⚠️ Tidak ada vendor untuk user ini");
+        return null;
+      }
+
+      debugPrint("✅ Vendor ID found: ${response['id']}");
+      return response['id'] as String;
+    } catch (e) {
+      debugPrint("❌ Error fetching vendor ID: $e");
+      return null;
+    }
   }
 
   Future<void> fetchItemCount() async {
     final client = Supabase.instance.client;
-    final vendorId = await fetchVendorId();
-    final response = await client.from('items').count().eq('vendor', vendorId);
 
-    if (mounted) {
-      setState(() {
-        itemCount = response;
-      });
+    try {
+      final vendorId = await fetchVendorId();
+      debugPrint("🔍 Fetching item count for vendor ID: $vendorId");
+
+      if (vendorId == null) {
+        debugPrint("⚠️ VendorId null, set item count to 0");
+        if (mounted) {
+          setState(() {
+            itemCount = 0;
+          });
+        }
+        return;
+      }
+
+      // ✅ FIX: Gunakan 'vendor_id' sesuai database aktual
+      final response =
+          await client.from('items').select('id').eq('vendor_id', vendorId);
+
+      final int count = response.length;
+
+      debugPrint("✅ Item count fetched: $count");
+
+      if (mounted) {
+        setState(() {
+          itemCount = count;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching item count: $e");
+      if (mounted) {
+        setState(() {
+          itemCount = 0;
+        });
+      }
     }
   }
 
-  // NOTE: status_payment (pending, panjar_paid, pending_full, complete), status_work (pending, waiting, editing, post_processing, complete), status_administration (pending_work, panjar_paid, complete_paid)
   Future<void> fetchAllTransactions() async {
     final client = Supabase.instance.client;
-    final vendorId = await fetchVendorId();
 
-    final response = await client
-        .from('transactions')
-        .select("*, item_id(id, name)")
-        .eq('vendor_id', vendorId)
-        .order('created_at', ascending: false);
+    try {
+      final vendorId = await fetchVendorId();
+      debugPrint("🔍 Fetching transactions for vendor ID: $vendorId");
 
-    if (mounted) {
-      setState(() {
-        transactions = response;
-      });
+      if (vendorId == null) {
+        debugPrint("⚠️ VendorId null, skip fetch transactions");
+        if (mounted) {
+          setState(() {
+            transactions = [];
+          });
+        }
+        return;
+      }
+
+      // ✅ FIX: Query tanpa JOIN karena tidak ada FK antara transactions->items
+      // Kita ambil item_id sebagai UUID saja, lalu ambil nama item terpisah jika perlu
+      final response = await client
+          .from('transactions')
+          .select("*")
+          .eq('vendor_id', vendorId)
+          .order('created_at', ascending: false);
+
+      // Ambil item details secara terpisah jika diperlukan
+      List<Map<String, dynamic>> enrichedTransactions = [];
+
+      for (var transaction in response) {
+        final itemId = transaction['item_id'];
+
+        if (itemId != null) {
+          try {
+            final itemData = await client
+                .from('items')
+                .select('id, name, thumbnail')
+                .eq('id', itemId)
+                .maybeSingle();
+
+            transaction['item_data'] = itemData;
+          } catch (e) {
+            debugPrint("⚠️ Failed to fetch item $itemId: $e");
+            transaction['item_data'] = null;
+          }
+        }
+
+        enrichedTransactions.add(transaction);
+      }
+
+      debugPrint(
+          "✅ Transactions fetched: ${enrichedTransactions.length} items");
+
+      if (mounted) {
+        setState(() {
+          transactions = enrichedTransactions;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching transactions: $e");
+      if (mounted) {
+        setState(() {
+          transactions = [];
+        });
+      }
     }
   }
 
   List<Map<String, dynamic>> filterPendingOrder(
     List<Map<String, dynamic>> orders,
   ) {
-    final result =
-        orders
-            .where(
-              (order) =>
-                  ['panjar_paid', 'complete'].contains(order['status_payment']),
-            )
-            .toList();
+    // final result = orders
+    //     .where(
+    //       (order) =>
+    //           ['panjar_paid', 'complete'].contains(order['status_payment']),
+    //     )
+    //     .toList();
+
+    final result = orders
+        .where(
+          (order) =>
+            ['panjar_paid', 'complete'].contains(order['status_payment']) 
+            &&
+            ['pending', 'waiting'].contains(order['status_work']),
+        )
+        .toList();
 
     return result;
   }
@@ -107,8 +216,10 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
   List<Map<String, dynamic>> filterProcessedOrder(
     List<Map<String, dynamic>> orders,
   ) {
-    final result =
-        orders.where((order) => order['status'] == 'in_progress').toList();
+    final result = orders
+        .where((order) => ['waiting', 'editing', 'post_processing']
+            .contains(order['status_work']))
+        .toList();
 
     return result;
   }
@@ -117,7 +228,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     List<Map<String, dynamic>> orders,
   ) {
     final result =
-        orders.where((order) => order['status'] == 'completed').toList();
+        orders.where((order) => order['status_work'] == 'complete').toList();
 
     return result;
   }
@@ -125,13 +236,12 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
   List<Map<String, dynamic>> filterLatestOrder(
     List<Map<String, dynamic>> orders,
   ) {
-    final tmp =
-        orders
-            .where(
-              (order) =>
-                  ['panjar_paid', 'complete'].contains(order['status_payment']),
-            )
-            .toList();
+    final tmp = orders
+        .where(
+          (order) =>
+              ['panjar_paid', 'complete'].contains(order['status_payment']),
+        )
+        .toList();
     final result = tmp.getRange(0, tmp.length < 6 ? tmp.length : 5).toList();
 
     return result;
@@ -139,32 +249,100 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
 
   Future<void> fetchUpcomingTransaction() async {
     final client = Supabase.instance.client;
-    final vendorId = await fetchVendorId();
 
-    final response = await client
-        .from('transactions')
-        .select("*, item_id(id, name)")
-        .eq('vendor_id', vendorId)
-        .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
-        .order('created_at')
-        .order('tgl_foto')
-        .limit(10);
+    try {
+      final vendorId = await fetchVendorId();
+      debugPrint("🔍 Fetching upcoming shoots for vendor ID: $vendorId");
 
-    if (mounted) {
-      setState(() {
-        upcomingShoots = response;
-      });
+      if (vendorId == null) {
+        debugPrint("⚠️ VendorId null, skip fetch upcoming shoots");
+        if (mounted) {
+          setState(() {
+            upcomingShoots = [];
+          });
+        }
+        return;
+      }
+
+      // ✅ FIX: Query tanpa JOIN
+      final response = await client
+          .from('transactions')
+          .select("*")
+          .eq('vendor_id', vendorId)
+          .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
+          .not('tgl_foto', 'is', null)
+          .gte('tgl_foto', DateTime.now().toIso8601String())
+          .order('tgl_foto', ascending: true)
+          .limit(10);
+
+      // Enrich dengan item data
+      List<Map<String, dynamic>> enrichedShoots = [];
+
+      for (var shoot in response) {
+        final itemId = shoot['item_id'];
+
+        if (itemId != null) {
+          try {
+            final itemData = await client
+                .from('items')
+                .select('id, name, thumbnail')
+                .eq('id', itemId)
+                .maybeSingle();
+
+            shoot['item_data'] = itemData;
+          } catch (e) {
+            debugPrint("⚠️ Failed to fetch item $itemId: $e");
+            shoot['item_data'] = null;
+          }
+        }
+
+        enrichedShoots.add(shoot);
+      }
+
+      debugPrint("✅ Upcoming shoots fetched: ${enrichedShoots.length} items");
+
+      if (mounted) {
+        setState(() {
+          upcomingShoots = enrichedShoots;
+        });
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching upcoming shoots: $e");
+      if (mounted) {
+        setState(() {
+          upcomingShoots = [];
+        });
+      }
     }
   }
 
   @override
   void initState() {
     super.initState();
-    if (mounted) {
-      fetchItemCount();
-      fetchAllTransactions();
-      fetchUpcomingTransaction();
+    _loadData();
+  }
 
+  Future<void> _loadData() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+    }
+
+    final vendorId = await fetchVendorId();
+
+    if (vendorId == null && mounted) {
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    await fetchItemCount();
+    await fetchAllTransactions();
+    await fetchUpcomingTransaction();
+
+    if (mounted) {
       setState(() {
         isLoading = false;
       });
@@ -174,36 +352,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
   @override
   void didPopNext() {
     super.didPopNext();
-    if (mounted) {
-      fetchItemCount();
-      fetchAllTransactions();
-      fetchUpcomingTransaction();
-
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void activate() {
-    super.activate();
-    if (mounted) {
-      fetchItemCount();
-      fetchAllTransactions();
-      fetchUpcomingTransaction();
-
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void deactivate() {
-    super.deactivate();
-
-    isLoading = true;
+    _loadData();
   }
 
   @override
@@ -212,19 +361,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
       bottomNavigationBar: MyBottomNavbar(curIndex: 0),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async {
-            setState(() {
-              isLoading = true;
-            });
-
-            await fetchItemCount();
-            await fetchAllTransactions();
-            await fetchUpcomingTransaction();
-
-            setState(() {
-              isLoading = false;
-            });
-          },
+          onRefresh: _loadData,
           child: CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -245,8 +382,9 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                           style: themeFromContext(context).textTheme.bodyMedium,
                         ),
                         Text(
-                          (fetchUserData().userMetadata!['displayName']!
-                                  as String)
+                          (fetchUserData().userMetadata?['displayName'] ??
+                                  'User')
+                              .toString()
                               .split(" ")[0],
                           style:
                               themeFromContext(context).textTheme.displayLarge,
@@ -256,9 +394,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                   ),
                 ),
               ),
-
               SliverToBoxAdapter(child: SizedBox(height: 16)),
-
               if (isLoading)
                 const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
@@ -269,10 +405,9 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                   sliver: SliverGrid(
                     delegate: SliverChildListDelegate([
                       GestureDetector(
-                        onTap:
-                            () => GoRouter.of(
-                              context,
-                            ).push('/vendor/kelola_item'),
+                        onTap: () => GoRouter.of(
+                          context,
+                        ).push('/vendor/kelola_item'),
                         child: _StatCard(
                           count: itemCount?.toString() ?? '-',
                           icon: Icons.view_module,
@@ -280,41 +415,36 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                         ),
                       ),
                       GestureDetector(
-                        onTap:
-                            () => GoRouter.of(context).push('/vendor/pesanan'),
+                        onTap: () =>
+                            GoRouter.of(context).push('/vendor/pesanan'),
                         child: _StatCard(
-                          count:
-                              filterPendingOrder(
-                                transactions,
-                              ).length.toString(),
+                          count: filterPendingOrder(
+                            transactions,
+                          ).length.toString(),
                           icon: Icons.receipt,
                           label: "Order Pending",
                         ),
                       ),
                       GestureDetector(
-                        onTap:
-                            () => GoRouter.of(
-                              context,
-                            ).push('/vendor/pesanan?filter=processing'),
+                        onTap: () => GoRouter.of(
+                          context,
+                        ).push('/vendor/pesanan?filter=processing'),
                         child: _StatCard(
-                          count:
-                              filterProcessedOrder(
-                                transactions,
-                              ).length.toString(),
+                          count: filterProcessedOrder(
+                            transactions,
+                          ).length.toString(),
                           icon: Icons.movie_edit,
                           label: "Order Diproses",
                         ),
                       ),
                       GestureDetector(
-                        onTap:
-                            () => GoRouter.of(
-                              context,
-                            ).push('/vendor/pesanan?filter=complete'),
+                        onTap: () => GoRouter.of(
+                          context,
+                        ).push('/vendor/pesanan?filter=complete'),
                         child: _StatCard(
-                          count:
-                              filterCompletedOrder(
-                                transactions,
-                              ).length.toString(),
+                          count: filterCompletedOrder(
+                            transactions,
+                          ).length.toString(),
                           icon: Icons.check_box,
                           label: "Order Selesai",
                         ),
@@ -328,9 +458,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                     ),
                   ),
                 ),
-
                 SliverToBoxAdapter(child: SizedBox(height: 32)),
-
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(
@@ -342,40 +470,56 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                         ).textTheme.displayMedium!.copyWith(fontSize: 20),
                       ),
                       SizedBox(height: 16),
-
                       transactions.isNotEmpty
                           ? Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 8,
-                            children:
-                                filterLatestOrder(transactions)
-                                    .map(
-                                      (transaction) => _RecentOrderItem(
-                                        customerName:
-                                            transaction['user_displayName'],
-                                        itemName:
-                                            transaction['item_id']['name'],
-                                        duration: int.parse(
-                                          transaction['durasi'],
-                                        ),
-                                        paymentType:
-                                            transaction['payment_type'],
-                                        amount: transaction['amount'],
-                                      ),
-                                    )
-                                    .toList(),
-                          )
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 8,
+                              children: filterLatestOrder(transactions)
+                                  .map(
+                                    (transaction) => _RecentOrderItem(
+                                      customerName:
+                                          transaction['user_displayName'] ??
+                                              'Customer',
+                                      itemName: transaction['item_data']
+                                              ?['name'] ??
+                                          'Item',
+                                      duration: transaction['durasi'] != null
+                                          ? int.tryParse(transaction['durasi']
+                                                  .toString()) ??
+                                              0
+                                          : 0,
+                                      paymentType:
+                                          transaction['payment_type'] ??
+                                              'panjar',
+                                      amount: transaction['amount'] != null
+                                          ? double.tryParse(
+                                                  transaction['amount']
+                                                      .toString()) ??
+                                              0.0
+                                          : 0.0,
+                                    ),
+                                  )
+                                  .toList(),
+                            )
                           : SizedBox(
-                            height: 200,
-                            child: Center(child: Text("Belum ada transaksi")),
-                          ),
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.receipt_long,
+                                        size: 48, color: Colors.grey),
+                                    SizedBox(height: 8),
+                                    Text("Belum ada transaksi"),
+                                  ],
+                                ),
+                              ),
+                            ),
                     ]),
                   ),
                 ),
-
                 SliverToBoxAdapter(child: SizedBox(height: 32)),
-
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList(
@@ -387,43 +531,58 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                         ).textTheme.displayMedium!.copyWith(fontSize: 20),
                       ),
                       SizedBox(height: 16),
-
                       upcomingShoots.isNotEmpty
                           ? Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 8,
-                            children:
-                                upcomingShoots
-                                    .map(
-                                      (
-                                        upcomingShot,
-                                      ) => _UpcomingTransactionItem(
-                                        customerName:
-                                            upcomingShot['user_displayName'],
-                                        itemName:
-                                            upcomingShot['item_id']['name'],
-                                        duration: int.parse(
-                                          upcomingShot['durasi'],
-                                        ),
-                                        tglFoto: DateTime.parse(
-                                          upcomingShot['tgl_foto'],
-                                        ),
-                                        waktuFoto: DateTime.parse(
-                                          "${upcomingShot['tgl_foto']} ${upcomingShot['waktu_foto']}",
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                          )
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 8,
+                              children: upcomingShoots
+                                  .map(
+                                    (upcomingShot) => _UpcomingTransactionItem(
+                                      customerName:
+                                          upcomingShot['user_displayName'] ??
+                                              'Customer',
+                                      itemName: upcomingShot['item_data']
+                                              ?['name'] ??
+                                          'Item',
+                                      duration: upcomingShot['durasi'] != null
+                                          ? int.tryParse(upcomingShot['durasi']
+                                                  .toString()) ??
+                                              0
+                                          : 0,
+                                      tglFoto: upcomingShot['tgl_foto'] != null
+                                          ? DateTime.tryParse(
+                                                  upcomingShot['tgl_foto']) ??
+                                              DateTime.now()
+                                          : DateTime.now(),
+                                      waktuFoto: upcomingShot['tgl_foto'] !=
+                                                  null &&
+                                              upcomingShot['waktu_foto'] != null
+                                          ? DateTime.tryParse(
+                                                  "${upcomingShot['tgl_foto']} ${upcomingShot['waktu_foto']}") ??
+                                              DateTime.now()
+                                          : DateTime.now(),
+                                    ),
+                                  )
+                                  .toList(),
+                            )
                           : SizedBox(
-                            height: 200,
-                            child: Center(child: Text("Belum ada transaksi")),
-                          ),
+                              height: 200,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.calendar_today,
+                                        size: 48, color: Colors.grey),
+                                    SizedBox(height: 8),
+                                    Text("Belum ada jadwal"),
+                                  ],
+                                ),
+                              ),
+                            ),
                     ]),
                   ),
                 ),
-
                 SliverToBoxAdapter(child: SizedBox(height: 32)),
               ],
             ],
@@ -466,28 +625,28 @@ class _RecentOrderItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    customerName.length > 24
-                        ? "${customerName.substring(0, 24)}..."
-                        : customerName,
-                    style: themeFromContext(context).textTheme.bodyMedium,
-                  ),
-                  Spacer(),
-                  Opacity(
-                    opacity: 0.65,
-                    child: Text(
-                      "${itemName.length > 20 ? "${itemName.substring(0, 20)}..." : itemName} | $duration jam",
-                      style: themeFromContext(context).textTheme.bodySmall,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      customerName.length > 24
+                          ? "${customerName.substring(0, 24)}..."
+                          : customerName,
+                      style: themeFromContext(context).textTheme.bodyMedium,
                     ),
-                  ),
-                ],
+                    Spacer(),
+                    Opacity(
+                      opacity: 0.65,
+                      child: Text(
+                        "${itemName.length > 20 ? "${itemName.substring(0, 20)}..." : itemName} | $duration jam",
+                        style: themeFromContext(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              // Column(
-
-              // ),
+              SizedBox(width: 8),
               Text(
                 formatCurrency(amount.round()),
                 style: themeFromContext(context).textTheme.displayMedium,
@@ -495,7 +654,6 @@ class _RecentOrderItem extends StatelessWidget {
             ],
           ),
         ),
-
         Positioned(
           top: 6,
           right: -4,
@@ -547,29 +705,32 @@ class _UpcomingTransactionItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    customerName.length > 24
-                        ? "${customerName.substring(0, 24)}..."
-                        : customerName,
-                    style: themeFromContext(context).textTheme.bodyMedium,
-                  ),
-                  Spacer(),
-                  Opacity(
-                    opacity: 0.65,
-                    child: Text(
-                      "${itemName.length > 14 ? "${itemName.substring(0, 14)}..." : itemName} | $duration jam",
-                      style: themeFromContext(context).textTheme.bodySmall,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      customerName.length > 24
+                          ? "${customerName.substring(0, 24)}..."
+                          : customerName,
+                      style: themeFromContext(context).textTheme.bodyMedium,
                     ),
-                  ),
-                ],
+                    Spacer(),
+                    Opacity(
+                      opacity: 0.65,
+                      child: Text(
+                        "${itemName.length > 14 ? "${itemName.substring(0, 14)}..." : itemName} | $duration jam",
+                        style: themeFromContext(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              SizedBox(width: 8),
               Text(
                 DateFormat(
                   'EEEE, dd MMM',
-                  Locale('in', 'ID').scriptCode,
+                  Locale('id', 'ID').scriptCode,
                 ).format(tglFoto),
                 style: themeFromContext(context).textTheme.displayMedium,
                 textAlign: TextAlign.end,
@@ -577,7 +738,6 @@ class _UpcomingTransactionItem extends StatelessWidget {
             ],
           ),
         ),
-
         Positioned(
           top: 6,
           right: -4,
@@ -601,10 +761,9 @@ class _UpcomingTransactionItem extends StatelessWidget {
                   DateFormat('HH:mm').format(waktuFoto),
                   style: TextStyle(
                     fontSize: 14,
-                    color:
-                        themeFromContext(
-                          context,
-                        ).colorScheme.onPrimaryContainer,
+                    color: themeFromContext(
+                      context,
+                    ).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ],
@@ -653,7 +812,6 @@ class _StatCard extends StatelessWidget {
               ),
             ],
           ),
-
           Positioned(
             right: -8,
             top: -20,

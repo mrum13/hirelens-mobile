@@ -1,4 +1,5 @@
 {
-    "cmake.sourceDirectory": "D:/CHANDRA/TUGAS/unsplash_clone/windows",
-    "todo-tree.tree.showCountsInTree": true
+  "cmake.sourceDirectory": "D:/CHANDRA/TUGAS/unsplash_clone/windows",
+  "todo-tree.tree.showCountsInTree": true,
+  "dart.flutterSdkPath": ".fvm/versions/3.35.3"
 }

@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-String formatCurrency(int price) {
+String formatCurrency(num price) {
   final formatter = NumberFormat.simpleCurrency(
     locale: 'id_ID',
     decimalDigits: 0,

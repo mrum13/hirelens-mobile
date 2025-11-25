@@ -27,55 +27,72 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
   @override
   void dispose() {
-    super.dispose();
     _nameController.dispose();
     _descController.dispose();
     _priceController.dispose();
     _addressController.dispose();
+    _durasiController.dispose();
+    super.dispose();
   }
 
   Future<String> uploadImage(File imageFile) async {
-    final bucket = 'item-thumbnails';
+    final bucket = 'items';
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+
+    // ✅ Gunakan user ID di path untuk RLS policy
     final fileName =
-        'item_thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
+        '$userId/thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
 
-    await Supabase.instance.client.storage
-        .from(bucket)
-        .uploadBinary(
-          fileName,
-          await imageFile.readAsBytes(),
-          fileOptions: const FileOptions(upsert: false),
-        );
+    print('📁 Uploading to: $fileName');
 
-    final fileUrl = await Supabase.instance.client.storage
-        .from(bucket)
-        .createSignedUrl(fileName, 60 * 24 * 365 * 3);
+    try {
+      await Supabase.instance.client.storage.from(bucket).uploadBinary(
+            fileName,
+            await imageFile.readAsBytes(),
+            fileOptions: const FileOptions(upsert: false),
+          );
 
-    return fileUrl;
+      // ✅ Gunakan public URL (lebih baik dari signed URL)
+      final fileUrl =
+          Supabase.instance.client.storage.from(bucket).getPublicUrl(fileName);
+
+      print('✅ File uploaded: $fileUrl');
+      return fileUrl;
+    } catch (e) {
+      print('❌ Upload error: $e');
+      rethrow;
+    }
   }
 
-  Future<int?> findVendorId() async {
+  Future<String?> findVendorId() async {
     final client = Supabase.instance.client;
     try {
-      final result =
-          await client
-              .from('vendors')
-              .select('id')
-              .eq('user_id', client.auth.currentUser!.id)
-              .single();
+      final result = await client
+          .from('vendors')
+          .select('id')
+          .eq('user_id', client.auth.currentUser!.id)
+          .single();
 
-      return result['id'];
+      print('✅ Vendor ID found: ${result['id']}');
+      return result['id'] as String;
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar((SnackBar(content: Text("Failed to find vendor ID!"))));
+      print('❌ Error finding vendor ID: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Gagal menemukan vendor ID: $e")),
+        );
+      }
     }
 
     return null;
   }
 
-  // FIXME: Change how the thumbnail file were store in database
   Future<void> _createItem() async {
+    // Validasi form
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih gambar terlebih dahulu')),
@@ -83,38 +100,133 @@ class _CreateItemPageState extends State<CreateItemPage> {
       return;
     }
 
+    if (durationList.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tambahkan minimal 1 durasi')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
+      // Upload image
+      print('📤 Uploading image...');
       final url = await uploadImage(_selectedImage!);
+      print('✅ Image uploaded: $url');
+
+      // Find vendor ID
+      print('🔍 Finding vendor ID...');
       final vendorId = await findVendorId();
 
+      if (vendorId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Vendor ID tidak ditemukan')),
+          );
+        }
+        return;
+      }
+
+      // Parse price
+      final price = double.tryParse(_priceController.text.trim());
+      if (price == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Harga harus berupa angka valid')),
+          );
+        }
+        return;
+      }
+
+      // Insert to database
+      print('💾 Inserting item to database...');
       await Supabase.instance.client.from('items').insert({
         'name': _nameController.text.trim(),
         'thumbnail': url,
-        'price': _priceController.text.trim(),
+        'price': price,
         'address': _addressController.text.trim(),
         'description': _descController.text.trim(),
-        'vendor': vendorId,
+        'vendor_id': vendorId, // ✅ Database aktual menggunakan 'vendor_id'
         'durations':
             durationList.map((duration) => duration.toString()).toList(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Item berhasil disimpan! Menunggu verifikasi dari Admin Hirelens',
+      print('✅ Item created successfully!');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Item berhasil disimpan! Menunggu verifikasi dari Admin Hirelens',
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
           ),
-        ),
-      );
-      GoRouter.of(context).pop();
+        );
+        GoRouter.of(context).pop();
+      }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan item: $e')));
+      print('❌ Error creating item: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menyimpan item: $e'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  void _addDuration() {
+    final value = _durasiController.text.trim();
+
+    if (value.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Masukkan durasi terlebih dahulu')),
+      );
+      return;
+    }
+
+    try {
+      final List<int> newDurations = value
+          .split(',')
+          .map((v) => int.parse(v.trim()))
+          .where((v) => v > 0) // Filter nilai > 0
+          .toList();
+
+      if (newDurations.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Durasi harus berupa angka positif')),
+        );
+        return;
+      }
+
+      final List<int> tmp = [...durationList, ...newDurations];
+      tmp.sort();
+
+      setState(() {
+        durationList = tmp.toSet().toList(); // Hapus duplikat
+      });
+
+      _durasiController.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Format durasi tidak valid')),
+      );
+    }
+  }
+
+  void _removeDuration(int duration) {
+    setState(() {
+      durationList.remove(duration);
+    });
   }
 
   @override
@@ -132,171 +244,175 @@ class _CreateItemPageState extends State<CreateItemPage> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ImagePickerWidget(
-                    initialImage: _selectedImage,
-                    enabled: !_isLoading,
-                    height: 240,
-                    onImageSelected: (file) {
-                      setState(() {
-                        _selectedImage = file;
-                      });
-                    },
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(
+              top: 8,
+              left: 16,
+              right: 16,
+              bottom: 24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ImagePickerWidget(
+                  initialImage: _selectedImage,
+                  enabled: !_isLoading,
+                  height: 240,
+                  onImageSelected: (file) {
+                    setState(() {
+                      _selectedImage = file;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _nameController,
+                  enabled: !_isLoading,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Item',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Item',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    style: TextStyle(fontSize: 16),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Nama item wajib diisi'
-                                : null,
+                  style: const TextStyle(fontSize: 16),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Nama item wajib diisi'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _descController,
+                  enabled: !_isLoading,
+                  decoration: const InputDecoration(
+                    labelText: 'Deskripsi',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Deskripsi',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    minLines: 3,
-                    maxLines: 5,
-                    style: TextStyle(fontSize: 16),
+                  minLines: 3,
+                  maxLines: 5,
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _priceController,
+                  enabled: !_isLoading,
+                  decoration: const InputDecoration(
+                    labelText: 'Harga',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
+                    prefixText: 'Rp ',
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Harga',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(fontSize: 16),
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Harga wajib diisi'
-                                : null,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 16),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Harga wajib diisi';
+                    }
+                    if (double.tryParse(value.trim()) == null) {
+                      return 'Harga harus berupa angka';
+                    }
+                    if (double.parse(value.trim()) <= 0) {
+                      return 'Harga harus lebih dari 0';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _addressController,
+                  enabled: !_isLoading,
+                  decoration: const InputDecoration(
+                    labelText: 'Alamat',
+                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Alamat',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    style: TextStyle(fontSize: 16),
-                    maxLines: 2,
-                    validator:
-                        (value) =>
-                            value == null || value.isEmpty
-                                ? 'Alamat wajib diisi'
-                                : null,
-                  ),
-
-                  const Divider(height: 56),
-
-                  Text(
-                    "Durasi",
-                    style: themeFromContext(context).textTheme.displayLarge,
-                  ),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    spacing: 16,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _durasiController,
-                          decoration: InputDecoration(
-                            label: Text("Durasi (Jam)"),
-                            hintText:
-                                "Gunakan ',' untuk memasukkan lebih dari 1 durasi",
-                            hintStyle:
-                                themeFromContext(context).textTheme.bodySmall,
-                            hintMaxLines: 2,
-                          ),
-                          keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 16),
+                  maxLines: 2,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'Alamat wajib diisi'
+                      : null,
+                ),
+                const Divider(height: 56),
+                Text(
+                  "Durasi",
+                  style: themeFromContext(context).textTheme.displayLarge,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  spacing: 16,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _durasiController,
+                        enabled: !_isLoading,
+                        decoration: InputDecoration(
+                          label: const Text("Durasi (Jam)"),
+                          hintText:
+                              "Gunakan ',' untuk memasukkan lebih dari 1 durasi",
+                          hintStyle:
+                              themeFromContext(context).textTheme.bodySmall,
+                          hintMaxLines: 2,
                         ),
+                        keyboardType: TextInputType.number,
                       ),
-                      MyFilledButton(
-                        width: 96,
-                        variant: MyButtonVariant.secondary,
-                        onTap: () {
-                          final value = _durasiController.text.trim();
-                          final List<int> tmp =
-                              durationList +
-                              value
-                                  .split(',')
-                                  .map((v) => int.parse(v))
-                                  .toList();
-                          tmp.sort();
-
-                          setState(() {
-                            durationList = tmp;
-                          });
-
-                          _durasiController.clear();
-                        },
-                        child: Text(
-                          "Tambah",
-                          style: TextStyle(
-                            color:
-                                themeFromContext(
-                                  context,
-                                ).colorScheme.onSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ...durationList.map(
-                    (duration) => MyLinkButton(
+                    ),
+                    MyFilledButton(
+                      width: 96,
                       variant: MyButtonVariant.secondary,
-                      alignment: Alignment.centerLeft,
-                      onTap: () {
-                        final tmp = durationList;
-                        tmp.remove(duration);
-
-                        setState(() {
-                          durationList = tmp;
-                        });
-                      },
-                      child: Text("$duration Jam", textAlign: TextAlign.start),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-                  MyFilledButton(
-                    isLoading: _isLoading,
-                    variant: MyButtonVariant.primary,
-                    onTap: _createItem,
-                    child: Text(
-                      "Simpan",
-                      style: TextStyle(
-                        color: themeFromContext(context).colorScheme.onPrimary,
+                      onTap: _isLoading ? null : _addDuration,
+                      child: Text(
+                        "Tambah",
+                        style: TextStyle(
+                          color:
+                              themeFromContext(context).colorScheme.onSecondary,
+                        ),
                       ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (durationList.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'Belum ada durasi ditambahkan',
+                      style: themeFromContext(context).textTheme.bodySmall,
+                    ),
                   ),
-                ],
-              ),
+                ...durationList.map(
+                  (duration) => MyLinkButton(
+                    variant: MyButtonVariant.secondary,
+                    alignment: Alignment.centerLeft,
+                    onTap: _isLoading ? null : () => _removeDuration(duration),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          "$duration Jam",
+                          textAlign: TextAlign.start,
+                        ),
+                        const Spacer(),
+                        if (!_isLoading)
+                          const Icon(Icons.close, size: 16, color: Colors.red),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                MyFilledButton(
+                  isLoading: _isLoading,
+                  variant: MyButtonVariant.primary,
+                  onTap: _isLoading ? null : _createItem,
+                  child: Text(
+                    _isLoading ? "Menyimpan..." : "Simpan",
+                    style: TextStyle(
+                      color: themeFromContext(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

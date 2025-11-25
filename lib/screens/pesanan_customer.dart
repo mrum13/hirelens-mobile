@@ -30,7 +30,8 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
           case 'processing':
             responseData = await client
                 .from('transactions')
-                .select("*, item_id(id, name)")
+                .select(
+                    "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
                 .or('status_work.eq.editing,status_work.eq.post_processing')
                 .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
@@ -38,14 +39,16 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
           case 'complete':
             responseData = await client
                 .from('transactions')
-                .select("*, item_id(id, name)")
+                .select(
+                    "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
                 .eq('status_work', 'complete');
             break;
           default:
             responseData = await client
                 .from('transactions')
-                .select("*, item_id(id, name)")
+                .select(
+                    "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
                 .eq('status_payment', 'pending');
             break;
@@ -54,11 +57,17 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
 
       setState(() {
         transactions = responseData;
+        isLoading = false;
       });
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
+      }
     }
   }
 
@@ -79,31 +88,36 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
       ),
       body: RefreshIndicator(
         onRefresh: fetchDatas,
-        child: ListView.builder(
-          itemCount: transactions.length,
+        child: isLoading
+            ? Center(child: CircularProgressIndicator())
+            : transactions.isEmpty
+                ? Center(child: Text("Tidak ada pesanan"))
+                : ListView.builder(
+                    itemCount: transactions.length,
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    itemBuilder: (context, index) {
+                      final transaction = transactions[index];
 
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          itemBuilder: (context, index) {
-            final transaction = transactions[index];
-
-            return GestureDetector(
-              onTap:
-                  () => GoRouter.of(
-                    context,
-                  ).push('/customer/pesanan/${transaction['id']}'),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _RecentOrderItem(
-                  customerName: transaction['user_displayName'],
-                  itemName: transaction['item_id']['name'],
-                  duration: int.parse(transaction['durasi']),
-                  paymentType: transaction['payment_type'],
-                  amount: transaction['amount'],
-                ),
-              ),
-            );
-          },
-        ),
+                      return GestureDetector(
+                        onTap: () => GoRouter.of(
+                          context,
+                        ).push('/customer/pesanan/${transaction['id']}'),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _RecentOrderItem(
+                            customerName: transaction['user_displayName'] ?? '',
+                            itemName: transaction['items']['name'] ??
+                                '', // ✅ DIPERBAIKI: item_id -> items
+                            duration: int.tryParse(
+                                    transaction['durasi']?.toString() ?? '0') ??
+                                0,
+                            paymentType: transaction['payment_type'] ?? '',
+                            amount: (transaction['amount'] ?? 0).toDouble(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
       ),
     );
   }
@@ -160,9 +174,6 @@ class _RecentOrderItem extends StatelessWidget {
                   ),
                 ],
               ),
-              // Column(
-
-              // ),
               Text(
                 formatCurrency(amount.round()),
                 style: themeFromContext(context).textTheme.displayMedium,
@@ -170,7 +181,6 @@ class _RecentOrderItem extends StatelessWidget {
             ],
           ),
         ),
-
         Positioned(
           top: 6,
           right: -4,

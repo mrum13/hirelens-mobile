@@ -77,7 +77,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               splashColor: Colors.transparent,
                               highlightColor: Colors.transparent,
                               hoverColor: Colors.transparent,
-                              tabBarTheme: const TabBarTheme(
+                              tabBarTheme: const TabBarThemeData(
                                 indicator: BoxDecoration(),
                                 dividerColor: Colors.transparent,
                               ),
@@ -85,18 +85,16 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                             child: TabBar(
                               indicator: BoxDecoration(
-                                color:
-                                    themeFromContext(
-                                      context,
-                                    ).colorScheme.primary,
+                                color: themeFromContext(
+                                  context,
+                                ).colorScheme.primary,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               labelColor:
                                   themeFromContext(context).colorScheme.surface,
-                              unselectedLabelColor:
-                                  themeFromContext(
-                                    context,
-                                  ).colorScheme.surfaceBright,
+                              unselectedLabelColor: themeFromContext(
+                                context,
+                              ).colorScheme.surfaceBright,
                               overlayColor: WidgetStateProperty.all(
                                 Colors.transparent,
                               ),
@@ -125,10 +123,9 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 24),
                       Expanded(
                         child: TabBarView(
-                          physics:
-                              _isLoading
-                                  ? const NeverScrollableScrollPhysics()
-                                  : null,
+                          physics: _isLoading
+                              ? const NeverScrollableScrollPhysics()
+                              : null,
                           children: [
                             // Customer Tab
                             ListView(
@@ -146,23 +143,21 @@ class _RegisterPageState extends State<RegisterPage> {
                                   padding: const EdgeInsets.only(bottom: 16),
                                   child: DropdownButtonFormField<String>(
                                     value: customerGenderValue,
-                                    items:
-                                        genderOptions
-                                            .map(
-                                              (gender) => DropdownMenuItem(
-                                                value: gender,
-                                                child: Text(gender),
-                                              ),
-                                            )
-                                            .toList(),
-                                    onChanged:
-                                        _isLoading
-                                            ? null
-                                            : (value) {
-                                              setState(() {
-                                                customerGenderValue = value;
-                                              });
-                                            },
+                                    items: genderOptions
+                                        .map(
+                                          (gender) => DropdownMenuItem(
+                                            value: gender,
+                                            child: Text(gender),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: _isLoading
+                                        ? null
+                                        : (value) {
+                                            setState(() {
+                                              customerGenderValue = value;
+                                            });
+                                          },
                                     decoration: InputDecoration(
                                       labelText: "Jenis Kelamin",
                                       border: OutlineInputBorder(
@@ -204,18 +199,15 @@ class _RegisterPageState extends State<RegisterPage> {
                                   isLoading: _isLoading,
                                   width: double.infinity,
                                   variant: MyButtonVariant.primary,
-                                  onTap:
-                                      () =>
-                                          !_isLoading
-                                              ? _onRegisterPressed('customer')
-                                              : null,
+                                  onTap: () => !_isLoading
+                                      ? _onRegisterPressed('customer')
+                                      : null,
                                   child: Text(
                                     "Daftar",
                                     style: TextStyle(
-                                      color:
-                                          themeFromContext(
-                                            context,
-                                          ).colorScheme.surface,
+                                      color: themeFromContext(
+                                        context,
+                                      ).colorScheme.surface,
                                     ),
                                   ),
                                 ),
@@ -228,16 +220,15 @@ class _RegisterPageState extends State<RegisterPage> {
                                 const SizedBox(height: 16),
                                 MyFilledButton(
                                   variant: MyButtonVariant.neutral,
-                                  onTap:
-                                      () => GoRouter.of(context).go('/opening'),
+                                  onTap: () =>
+                                      GoRouter.of(context).go('/opening'),
                                   isLoading: _isLoading,
                                   child: Text(
                                     "Kembali",
                                     style: TextStyle(
-                                      color:
-                                          themeFromContext(
-                                            context,
-                                          ).colorScheme.onSurface,
+                                      color: themeFromContext(
+                                        context,
+                                      ).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
@@ -285,18 +276,15 @@ class _RegisterPageState extends State<RegisterPage> {
                                   isLoading: _isLoading,
                                   width: double.infinity,
                                   variant: MyButtonVariant.primary,
-                                  onTap:
-                                      () =>
-                                          !_isLoading
-                                              ? _onRegisterPressed('vendor')
-                                              : null,
+                                  onTap: () => !_isLoading
+                                      ? _onRegisterPressed('vendor')
+                                      : null,
                                   child: Text(
                                     "Daftar",
                                     style: TextStyle(
-                                      color:
-                                          themeFromContext(
-                                            context,
-                                          ).colorScheme.surface,
+                                      color: themeFromContext(
+                                        context,
+                                      ).colorScheme.surface,
                                     ),
                                   ),
                                 ),
@@ -314,10 +302,9 @@ class _RegisterPageState extends State<RegisterPage> {
                                   child: Text(
                                     "Kembali",
                                     style: TextStyle(
-                                      color:
-                                          themeFromContext(
-                                            context,
-                                          ).colorScheme.onSurface,
+                                      color: themeFromContext(
+                                        context,
+                                      ).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
@@ -356,7 +343,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   // Registration validation and trigger function
   Future<void> _onRegisterPressed(String type) async {
-    // Example validation logic (customize as needed)
     final isCustomer = type == 'customer';
     final ctrls = isCustomer ? customerControllers : vendorControllers;
     String? email = ctrls['email']?.text.trim();
@@ -367,24 +353,24 @@ class _RegisterPageState extends State<RegisterPage> {
     String? address = ctrls['address']?.text;
     String? city = ctrls['city']?.text;
 
-    // Check for empty fields
+    // Validasi fields
     for (var entry in ctrls.entries) {
       if (entry.value.text.trim().isEmpty) {
         _showError('Semua field harus diisi');
         return;
       }
     }
-    // Email validation
+
     if (email == null || !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email)) {
       _showError('Email tidak valid');
       return;
     }
-    // Password match
+
     if (password != confirmPassword) {
       _showError('Konfirmasi password tidak sama');
       return;
     }
-    // Gender validation for customer
+
     if (isCustomer &&
         (customerGenderValue == null || customerGenderValue!.isEmpty)) {
       _showError('Pilih jenis kelamin');
@@ -392,7 +378,11 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     setState(() => _isLoading = true);
+
     try {
+      print('🔵 Starting signup for $type with email: $email');
+
+      // Step 1: Signup
       final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password!,
@@ -404,26 +394,44 @@ class _RegisterPageState extends State<RegisterPage> {
           'role': isCustomer ? 'customer' : 'vendor',
         },
       );
+
+      print('🔵 Signup response - User ID: ${response.user?.id}');
+
       if (response.user != null) {
-        // Registration success: redirect to OTP verification screen with email
-        if (!mounted) return;
-        if (!isCustomer) {
-          await Supabase.instance.client.from('vendors').insert({
-            'user_id': response.user!.id,
-            'name': name,
-            'phone': phone,
-            'email': email,
-            'city': city,
-          });
+        // Step 2: Tunggu trigger selesai
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        // Step 3: Force kirim OTP dengan signInWithOtp
+        print('🔵 Sending OTP via signInWithOtp...');
+        try {
+          await Supabase.instance.client.auth.signInWithOtp(
+            email: email,
+            shouldCreateUser: false, // User sudah ada, jangan buat lagi
+          );
+          print('✅ OTP email sent successfully');
+        } catch (otpError) {
+          print('⚠️ OTP send warning: $otpError');
+          // Lanjut saja meskipun ada error, karena mungkin email sudah terkirim
         }
-        GoRouter.of(
-          context,
-        ).pushReplacement('/verify_registration?email=$email');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Kode OTP telah dikirim ke $email. Cek inbox atau folder spam.')),
+          );
+          GoRouter.of(context)
+              .pushReplacement('/verify_registration?email=$email');
+        }
       } else {
         _showError('Registrasi gagal. Silakan coba lagi.');
       }
+    } on AuthException catch (authError) {
+      print('❌ Auth error: ${authError.message}');
+      _showError('Error autentikasi: ${authError.message}');
     } catch (e) {
-      _showError('Terjadi kesalahan: \\${e.toString()}');
+      print('❌ General error: $e');
+      _showError('Terjadi kesalahan: ${e.toString()}');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -11,7 +12,7 @@ import 'package:unsplash_clone/theme.dart';
 class PesananDetailVendorPage extends StatefulWidget {
   const PesananDetailVendorPage({super.key, required this.dataId});
 
-  final int dataId;
+  final String dataId;
 
   @override
   State<PesananDetailVendorPage> createState() =>
@@ -25,15 +26,15 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
 
   Future<void> fetchAndSetData() async {
     final client = Supabase.instance.client;
+    DMethod.log("Fetch and Set Data");
     try {
-      final response =
-          await client
-              .from('transactions')
-              .select(
-                "*, item_id(id, name, price, thumbnail, vendor(id, name))",
-              )
-              .eq('id', widget.dataId)
-              .single();
+      final response = await client
+          .from('transactions')
+          .select(
+            "*, item_id(id, name, price, thumbnail, vendor_id(id, name))",
+          )
+          .eq('id', widget.dataId)
+          .single();
 
       if (mounted) {
         setState(() {
@@ -57,8 +58,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       try {
         await client
             .from('transactions')
-            .update({'status_work': 'waiting'})
-            .eq('id', widget.dataId);
+            .update({'status_work': 'waiting'}).eq('id', widget.dataId);
 
         await fetchAndSetData();
       } catch (e) {
@@ -76,12 +76,33 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
         isLoading = true;
       });
       final client = Supabase.instance.client;
-      await client
+
+      final response = await client
           .from('transactions')
           .update({'status_work': 'editing'})
-          .eq('id', widget.dataId);
+          .eq('id', widget.dataId)
+          .select();
 
-      fetchAndSetData();
+      if (response.isEmpty) {
+        // Tidak ada row yang terupdate
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Update gagal: data tidak ditemukan.")),
+          );
+          setState(() {
+            isLoading = false;
+          });
+        }
+      } else {
+        // Berhasil
+        setState(() {
+          isLoading = false;
+        });
+        DMethod.log("Update berhasil: $response");
+        await fetchAndSetData(); // Refresh data
+      }
+
+      // fetchAndSetData();
     }
   }
 
@@ -93,8 +114,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       final client = Supabase.instance.client;
       await client
           .from('transactions')
-          .update({'status_work': 'post_processing'})
-          .eq('id', widget.dataId);
+          .update({'status_work': 'post_processing'}).eq('id', widget.dataId);
 
       fetchAndSetData();
     }
@@ -108,8 +128,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       final client = Supabase.instance.client;
       await client
           .from('transactions')
-          .update({'status_work': 'complete'})
-          .eq('id', widget.dataId);
+          .update({'status_work': 'complete'}).eq('id', widget.dataId);
 
       fetchAndSetData();
     }
@@ -128,12 +147,12 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
     fetchAndSetData();
   }
 
-  int _calculateSisa(int price, int durasi, int payed, int transactionFee) {
+  num _calculateSisa(num price, int durasi, int payed, int transactionFee) {
     final subtotal = (price * durasi) + transactionFee;
     return subtotal - payed;
   }
 
-  int _calculateTransactionFee(int price, int durasi, bool? isPanjar) {
+  int _calculateTransactionFee(num price, int durasi, bool? isPanjar) {
     if (isPanjar == true) {
       return (((((price * durasi) * 0.3) + ((price * durasi) * 0.7)) * 0.025))
           .round();
@@ -153,7 +172,14 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
           submittedIcon: Icon(Icons.check),
           innerColor: themeFromContext(context).colorScheme.primary,
           outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: finishTaking,
+          onSubmit: () async {
+            if (!mounted) return;
+            Future.delayed(const Duration(seconds: 3)).then(
+              (value) async {
+                await acceptOrder();
+              },
+            );
+          },
         );
       case 'waiting':
         return SlideAction(
@@ -164,7 +190,14 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
           submittedIcon: Icon(Icons.check),
           innerColor: themeFromContext(context).colorScheme.primary,
           outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: finishTaking,
+          onSubmit: () async {
+            if (!mounted) return;
+            Future.delayed(const Duration(seconds: 3)).then(
+              (value) async {
+                await finishTaking();
+              },
+            );
+          },
         );
       case 'editing':
         return SlideAction(
@@ -175,7 +208,14 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
           submittedIcon: Icon(Icons.check),
           innerColor: themeFromContext(context).colorScheme.primary,
           outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: finishEditing,
+          onSubmit: () async {
+            if (!mounted) return;
+            Future.delayed(const Duration(seconds: 3)).then(
+              (value) async {
+                await finishEditing();
+              },
+            );
+          },
         );
       case 'post_processing':
         return SlideAction(
@@ -186,7 +226,14 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
           submittedIcon: Icon(Icons.check),
           innerColor: themeFromContext(context).colorScheme.primary,
           outerColor: themeFromContext(context).colorScheme.onPrimary,
-          onSubmit: completeOrder,
+          onSubmit: () async {
+            if (!mounted) return;
+            Future.delayed(const Duration(seconds: 3)).then(
+              (value) async {
+                await completeOrder();
+              },
+            );
+          },
         );
       default:
         return Center(child: Text("Dalam proses verifikasi payout"));
@@ -195,34 +242,34 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
 
   @override
   Widget build(BuildContext context) {
+    DMethod.log("Pesanan Vendor Detail");
     return isLoading
         ? Center(child: CircularProgressIndicator())
         : Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            title: Text(
-              "Rincian Pesanan",
-              style: themeFromContext(context).textTheme.displayMedium,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              title: Text(
+                "Rincian Pesanan",
+                style: themeFromContext(context).textTheme.displayMedium,
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => GoRouter.of(context).pop(),
+              ),
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => GoRouter.of(context).pop(),
+            bottomNavigationBar: SizedBox(
+              height: 100,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: buildConfirmationBar(data['status_work']),
+              ),
             ),
-          ),
-          bottomNavigationBar: SizedBox(
-            height: 72,
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: buildConfirmationBar(data['status_work']),
-            ),
-          ),
-          body: SafeArea(
-            child: RefreshIndicator(
-              onRefresh: () async {},
-              child:
-                  isLoading
-                      ? Center(child: CircularProgressIndicator())
-                      : SingleChildScrollView(
+            body: SafeArea(
+              child: RefreshIndicator(
+                onRefresh: () async {},
+                child: isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,17 +303,16 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                             Divider(height: 32),
                             _ItemDescription(
                               name: data['item_id']['name'],
-                              vendor: data['item_id']['vendor']['name'],
+                              vendor: data['item_id']['vendor_id']['name'],
                               price: data['item_id']['price'],
                               thumbnail: data['item_id']['thumbnail'],
                             ),
                             Divider(height: 32),
                             Text(
                               "Detail Pembayaran",
-                              style:
-                                  themeFromContext(
-                                    context,
-                                  ).textTheme.displayMedium,
+                              style: themeFromContext(
+                                context,
+                              ).textTheme.displayMedium,
                             ),
                             SizedBox(height: 32),
                             Column(
@@ -291,7 +337,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                       formatCurrency(
                                         _calculateTransactionFee(
                                           data['item_id']['price'],
-                                          int.parse(data['durasi']),
+                                          data['durasi'],
                                           data['payment_type'] != 'full_paid',
                                         ),
                                       ),
@@ -305,7 +351,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                     Text("Dibayar :"),
                                     Text(
                                       formatCurrency(
-                                        (data['amount'] as double).round(),
+                                        data['amount'].round(),
                                       ),
                                     ),
                                   ],
@@ -320,11 +366,11 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                       formatCurrency(
                                         _calculateSisa(
                                           data['item_id']['price'],
-                                          int.parse(data['durasi']),
-                                          (data['amount'] as double).round(),
+                                          data['durasi'],
+                                          data['amount'].round(),
                                           _calculateTransactionFee(
                                             data['item_id']['price'],
-                                            int.parse(data['durasi']),
+                                            data['durasi'],
                                             data['payment_type'] != 'full_paid',
                                           ),
                                         ),
@@ -338,26 +384,24 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                   children: [
                                     Text(
                                       "Subtotal :",
-                                      style:
-                                          themeFromContext(
-                                            context,
-                                          ).textTheme.bodyLarge,
+                                      style: themeFromContext(
+                                        context,
+                                      ).textTheme.bodyLarge,
                                     ),
                                     Text(
                                       formatCurrency(
                                         (data['item_id']['price'] *
-                                                int.parse(data['durasi'])) +
+                                                data['durasi']) +
                                             _calculateTransactionFee(
                                               data['item_id']['price'],
-                                              int.parse(data['durasi']),
+                                              data['durasi'],
                                               data['payment_type'] !=
                                                   'full_paid',
                                             ),
                                       ),
-                                      style:
-                                          themeFromContext(
-                                            context,
-                                          ).textTheme.displayLarge,
+                                      style: themeFromContext(
+                                        context,
+                                      ).textTheme.displayLarge,
                                     ),
                                   ],
                                 ),
@@ -366,9 +410,9 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                           ],
                         ),
                       ),
+              ),
             ),
-          ),
-        );
+          );
   }
 }
 
@@ -382,7 +426,7 @@ class _ItemDescription extends StatelessWidget {
 
   final String name;
   final String vendor;
-  final int price;
+  final num price;
   final String thumbnail;
 
   @override

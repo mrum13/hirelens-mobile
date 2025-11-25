@@ -53,6 +53,7 @@ class _LensLoadingWidgetState extends State<LensLoadingWidget>
     if (widget.isOpening) {
       _ctrl.forward();
     } else {
+      if (!mounted) return;
       _ctrl.reverse();
     }
   }

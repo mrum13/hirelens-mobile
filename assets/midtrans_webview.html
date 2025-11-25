@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Midtrans Payment</title>
+    <script
+      type="text/javascript"
+      src="https://app.sandbox.midtrans.com/snap/snap.js"
+      data-client-key="Mid-client-nQmjkZMRRH8AaOlj">
+    </script>
+  </head>
+  <body>
+    <script type="text/javascript">
+      function pay(snapToken) {
+        snap.pay(snapToken, {
+          onSuccess: function(result) {
+            HirelensPayment.postMessage(JSON.stringify(result));
+          },
+          onPending: function(result) {
+            HirelensPayment.postMessage(JSON.stringify(result));
+          },
+          onError: function(result) {
+            HirelensPayment.postMessage(JSON.stringify(result));
+          },
+          onClose: function() {
+            HirelensPayment.postMessage(JSON.stringify({status: 'closed'}));
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,13 +1,10 @@
 import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/helper.dart';
-import 'package:unsplash_clone/main.dart';
 import 'package:unsplash_clone/theme.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -21,7 +18,6 @@ class CheckoutPage extends StatefulWidget {
 }
 
 class _CheckoutPageState extends State<CheckoutPage> {
-  MidtransSDK? _midtrans;
   String name = '';
   String thumbnail = '';
   String address = '';
@@ -37,7 +33,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   // ✅ GANTI DENGAN KEY MIDTRANS ANDA
   final String midtransServerKey = 'Mid-server-Ga-wVn7Vz_lRqww4iItAym8N';
-  final String midtransClientKey = 'Mid-client-nQmjkZMRRH8AaOlj';
+  final String midtransClientKey = 'Mid-server-Ga-wVn7Vz_lRqww4iItAym8N';
   final bool isProduction = false; // Set true untuk production
 
   Future<void> fetchData() async {
@@ -111,10 +107,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 'Customer',
             'email': Supabase.instance.client.auth.currentUser?.email ?? '',
           },
+          // ✅ Tambahkan callbacks agar tidak redirect ke example.com
+          'callbacks': {'finish': 'http://project-hirelens/finish'},
         }),
       );
 
       if (response.statusCode == 201) {
+        DMethod.log("Success Create Snap Token");
         final data = json.decode(response.body);
         return data['token'];
       } else {
@@ -145,10 +144,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
         throw Exception("Gagal membuat token pembayaran");
       }
 
-      await sendTransactionData(orderId, 'panjar', amount, 'pending');
+      await sendTransactionData(orderId, 'panjar', amount);
 
       if (mounted) {
-        GoRouter.of(context).push('/payment/$token/$orderId');
+        GoRouter.of(context).push('/payment/$token');
       }
     } catch (e) {
       if (mounted) {
@@ -163,6 +162,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void payFull() async {
+    DMethod.log("Pay Full Customer");
     try {
       if (selectedDate == null || selectedTime == null) {
         throw Exception("Harap pilih tanggal dan waktu foto!");
@@ -177,45 +177,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final token = await createSnapToken(orderId, amount, name);
 
       if (token == null) {
-        DMethod.log("Gagal buat token");
         throw Exception("Gagal membuat token pembayaran");
       }
 
-      if (mounted) {
-        DMethod.log(token, prefix: "Snap Token");
-        _midtrans
-            ?.startPaymentUiFlow(
-          token: token,
-        )
-            .then(
-          (value) {
-            _midtrans!.setTransactionFinishedCallback((result) async {
-              setState(() {
-                isLoading = false;
-              });
-              DMethod.log(result.transactionId.toString(),
-                  prefix: "Result Midtrans Transaction ID");
-              DMethod.log(result.status.toString(),
-                  prefix: "Result Midtrans Status");
-              DMethod.log(result.message.toString(),
-                  prefix: "Result Midtrans Message");
-              DMethod.log(result.paymentType.toString(),
-                  prefix: "Result Midtrans Payment Type");
-              
-              if (result.status=='success') {
-                await sendTransactionData(orderId, 'full', amount, 'complete').then(
-                  (value) {
-                    if (!mounted) return;
-                    GoRouter.of(context).go('/checkout_success?order_id=$orderId');
-                  },
-                );
-                
-              }
+      await sendTransactionData(orderId, 'full_paid', amount);
 
-              
-            });
-          },
-        );
+      if (mounted) {
+        GoRouter.of(context).push('/payment/$token');
       }
     } catch (e) {
       if (mounted) {
@@ -244,7 +212,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     String orderId,
     String paymentType,
     int amount,
-    String statusPayment,
   ) async {
     final client = Supabase.instance.client;
     final vendorId = await fetchVendorIdByItemId(widget.dataId);
@@ -256,19 +223,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'payment_type': paymentType,
         'durasi': selectedDuration.toString(),
         'tgl_foto': selectedDate!.toLocal().toString(),
-        // 'waktu_foto': DateTime(
-        //   selectedDate!.year,
-        //   selectedDate!.month,
-        //   selectedDate!.day,
-        //   selectedTime!.hour,
-        //   selectedTime!.minute,
-        // ).toLocal().toString(),
+        'waktu_foto': DateTime(
+          selectedDate!.year,
+          selectedDate!.month,
+          selectedDate!.day,
+          selectedTime!.hour,
+          selectedTime!.minute,
+        ).toLocal().toString(),
         'midtrans_order_id': orderId,
         'amount': amount,
         'user_displayname':
             client.auth.currentUser!.userMetadata?['displayName'] ?? 'Customer',
         "vendor_id": vendorId,
-        "status_payment": statusPayment,
+        "status_payment": 'pending',
         "status_work": 'pending',
         "status_payout": 'pending',
       });
@@ -292,32 +259,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     });
   }
 
-  Future initSDK() async {
-    _midtrans = await MidtransSDK.init(
-      config: MidtransConfig(
-        clientKey: dotenv.env['MIDTRANS_CLIENT_KEY'] ?? "",
-        merchantBaseUrl: dotenv.env['MIDTRANS_MERCHANT_BASE_URL'] ?? "",
-        enableLog: true,
-      ),
-    );
-  }
-
   @override
   void initState() {
     super.initState();
-    initSDK();
     fetchData();
   }
 
   @override
-  void dispose() {
-    _midtrans?.removeTransactionFinishedCallback();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    DMethod.log("Checkout Page -");
+    DMethod.log("Checkout Page Customer");
     return Scaffold(
       appBar: AppBar(),
       bottomNavigationBar: !isLoading

@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/screens/cart.dart';
-import 'package:unsplash_clone/screens/checkout.dart';
+import 'package:unsplash_clone/screens/checkout.dart' as checkout;
 import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
@@ -21,7 +21,7 @@ import 'package:unsplash_clone/screens/register.dart';
 import 'package:unsplash_clone/screens/reset_password.dart';
 import 'package:unsplash_clone/screens/search_result.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
-import 'package:unsplash_clone/screens/product_detail.dart';
+import 'package:unsplash_clone/screens/customer/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
 import 'package:unsplash_clone/screens/feed.dart';
 
@@ -35,7 +35,6 @@ final router = GoRouter(
           key: state.pageKey,
           child: OpeningPage(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            // Fade to black then fade from black
             return AnimatedBuilder(
               animation: animation,
               builder: (context, _) {
@@ -55,10 +54,9 @@ final router = GoRouter(
     GoRoute(path: "/register", builder: (context, state) => RegisterPage()),
     GoRoute(
       path: "/verify_registration",
-      builder:
-          (context, state) => VerifyRegistrationPage(
-            email: (state.uri.queryParameters['email'] as String),
-          ),
+      builder: (context, state) => VerifyRegistrationPage(
+        email: (state.uri.queryParameters['email'] as String),
+      ),
     ),
 
     GoRoute(
@@ -71,27 +69,22 @@ final router = GoRouter(
       pageBuilder: (context, state) => NoTransitionPage(child: ProfilePage()),
     ),
 
-    // TODO: Create VendorDetailPage
-    // GoRoute(path: "/vendor/detail/:dataId", builder: (context, state) => VendorDetailPage(dataId: int.parse(state.pathParameters['dataId']!))),
-
-    // URGENT: Create feed table on Supabase
     GoRoute(path: "/feed", builder: (context, state) => FeedPage()),
     GoRoute(
       path: '/search',
-      builder:
-          (context, state) =>
-              SearchResultPage(keyword: state.uri.queryParameters['keyword']!),
+      builder: (context, state) =>
+          SearchResultPage(keyword: state.uri.queryParameters['keyword']!),
     ),
 
     GoRoute(
       path: "/vendor/kelola_item",
       builder: (context, state) => KelolaItemPage(),
     ),
+    // ✅ UBAH INI - Hapus int.parse()
     GoRoute(
       path: "/vendor/kelola_item/edit/:dataId",
-      builder:
-          (context, state) =>
-              EditItemPage(dataId: int.parse(state.pathParameters['dataId']!)),
+      builder: (context, state) =>
+          EditItemPage(dataId: state.pathParameters['dataId']!),
     ),
     GoRoute(
       path: "/vendor/kelola_item/create",
@@ -100,53 +93,54 @@ final router = GoRouter(
 
     GoRoute(
       path: "/vendor/pesanan",
-      builder:
-          (context, state) =>
-              PesananVendorPage(filter: state.uri.queryParameters['filter']),
+      builder: (context, state) =>
+          PesananVendorPage(filter: state.uri.queryParameters['filter']),
     ),
 
+    // ✅ UBAH INI - Tergantung apakah pesanan juga pakai UUID atau int
     GoRoute(
       path: "/vendor/pesanan/:dataId",
-      builder:
-          (context, state) => PesananDetailVendorPage(
-            dataId: int.parse(state.pathParameters['dataId']!),
-          ),
+      builder: (context, state) => PesananDetailVendorPage(
+        dataId: state.pathParameters['dataId']!, // Ubah ke String dulu
+      ),
     ),
 
     GoRoute(
       path: "/customer/pesanan",
-      builder:
-          (context, state) =>
-              PesananCustomerPage(filter: state.uri.queryParameters['filter']),
+      builder: (context, state) =>
+          PesananCustomerPage(filter: state.uri.queryParameters['filter']),
+    ),
+
+    // ✅ UBAH INI
+    GoRoute(
+      path: "/customer/pesanan/:dataId",
+      builder: (context, state) => PesananDetailCustomerPage(
+        dataId: state.pathParameters['dataId']!, // Ubah ke String dulu
+      ),
+    ),
+
+    // ✅ UBAH INI
+    GoRoute(
+      path: "/item/detail/:dataId",
+      builder: (context, state) => ProductDetailPage(
+        dataId: state.pathParameters['dataId']!, // Ubah ke String dulu
+      ),
+    ),
+
+    // ✅ UBAH INI
+    GoRoute(
+      path: "/checkout/:dataId",
+      builder: (context, state) =>
+          checkout.CheckoutPage(dataId: state.pathParameters['dataId']!),
     ),
 
     GoRoute(
-      path: "/customer/pesanan/:dataId",
-      builder:
-          (context, state) => PesananDetailCustomerPage(
-            dataId: int.parse(state.pathParameters['dataId']!),
-          ),
-    ),
-    GoRoute(
-      path: "/item/detail/:dataId",
-      builder:
-          (context, state) => ProductDetailPage(
-            dataId: int.parse(state.pathParameters['dataId']!),
-          ),
-    ),
-    GoRoute(
-      path: "/checkout/:dataId",
-      builder:
-          (context, state) =>
-              CheckoutPage(dataId: int.parse(state.pathParameters['dataId']!)),
-    ),
-    GoRoute(
-      path: "/payment/:snapToken",
-      builder:
-          (context, state) => PaymentPage(
-            snapToken: state.pathParameters['snapToken']!,
-            paySisa: (state.uri.queryParameters['pay_sisa'] as bool?),
-          ),
+      path: "/payment/:snapToken/:orderId",
+      builder: (context, state) => PaymentPage(
+        snapToken: state.pathParameters['snapToken']!,
+        orderId: state.pathParameters['orderId']!,
+        paySisa: (state.uri.queryParameters['pay_sisa'] as bool?),
+      ),
     ),
 
     GoRoute(
@@ -166,28 +160,27 @@ final router = GoRouter(
   ],
   initialLocation: '/',
   redirect: (ctx, state) {
-    final logged = Supabase.instance.client.auth.currentSession != null;
+    final user = Supabase.instance.client.auth.currentUser;
     final loc = state.matchedLocation;
 
     final onLogin = loc == '/login';
     final onRegister = loc == '/register';
-    final onVerifyRegistration = loc == '/verify_registration';
+    final onVerify = loc == '/verify_registration';
     final onOpening = loc == '/opening';
     final onPreload = loc == '/';
     final onResetPassword = loc.startsWith('/reset_password');
 
-    if (!logged &&
+    if (user == null &&
         !(onLogin ||
             onRegister ||
+            onVerify ||
             onOpening ||
-            onVerifyRegistration ||
             onPreload ||
             onResetPassword)) {
-      return '/';
+      return '/login';
     }
-
-    if (logged &&
-        (onLogin || onRegister || onOpening || onVerifyRegistration)) {
+    if (user != null &&
+        (onLogin || onRegister || onVerify || onOpening || onPreload)) {
       return '/home';
     }
 

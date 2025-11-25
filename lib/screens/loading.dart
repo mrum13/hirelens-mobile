@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:unsplash_clone/components/lens_loading.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -11,8 +12,17 @@ class LoadingScreen extends StatefulWidget {
 
 class _LoadingScreenState extends State<LoadingScreen> {
   bool isOpening = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   void simulateLoading() async {
+    // Play sound saat loading dimulai
+    try {
+      await _audioPlayer
+          .play(AssetSource('sounds/Sound_Camera _Flash 1 - Copy.wav'));
+    } catch (e) {
+      print('Error playing sound: $e');
+    }
+
     await Future.delayed(Duration(milliseconds: 1100));
     setState(() {
       isOpening = true;
@@ -24,6 +34,12 @@ class _LoadingScreenState extends State<LoadingScreen> {
   void initState() {
     super.initState();
     simulateLoading();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   @override

@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.example.unsplash_clone"
     compileSdk = flutter.compileSdkVersion
-    //ndkVersion = flutter.ndkVersion
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.unsplash_clone"
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

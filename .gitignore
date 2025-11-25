@@ -57,3 +57,6 @@ assets/.env
 
 *.mp4
 start_scrcpy.bat
+
+# FVM Version Cache
+.fvm/
