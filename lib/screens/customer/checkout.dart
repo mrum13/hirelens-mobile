@@ -32,8 +32,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
   DateTime? selectedTime;
 
   // ✅ GANTI DENGAN KEY MIDTRANS ANDA
-  final String midtransServerKey = 'Mid-server-Ga-wVn7Vz_lRqww4iItAym8N';
-  final String midtransClientKey = 'Mid-server-Ga-wVn7Vz_lRqww4iItAym8N';
+  final String midtransServerKey = dotenv.env['MIDTRANS_SERVER_KEY'];
+  final String midtransClientKey = dotenv.env['MIDTRANS_CLIENT_KEY'];
   final bool isProduction = false; // Set true untuk production
 
   Future<void> fetchData() async {
