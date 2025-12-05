@@ -1,6 +1,7 @@
 import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
@@ -32,8 +33,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
   DateTime? selectedTime;
 
   // ✅ GANTI DENGAN KEY MIDTRANS ANDA
-  final String midtransServerKey = dotenv.env['MIDTRANS_SERVER_KEY'];
-  final String midtransClientKey = dotenv.env['MIDTRANS_CLIENT_KEY'];
+  var midtransServerKey = dotenv.env['MIDTRANS_SERVER_KEY'];
+  var midtransClientKey = dotenv.env['MIDTRANS_CLIENT_KEY'];
   final bool isProduction = false; // Set true untuk production
 
   Future<void> fetchData() async {

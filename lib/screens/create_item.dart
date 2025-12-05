@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -6,6 +8,19 @@ import 'dart:io';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
+
+List<String> listDuration = <String>[
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9'
+];
+typedef MenuEntry = DropdownMenuEntry<String>;
 
 class CreateItemPage extends StatefulWidget {
   const CreateItemPage({super.key});
@@ -24,6 +39,11 @@ class _CreateItemPageState extends State<CreateItemPage> {
   List<int> durationList = [];
   bool _isLoading = false;
   File? _selectedImage;
+
+  static final List<MenuEntry> menuEntries = UnmodifiableListView<MenuEntry>(
+    listDuration.map<MenuEntry>((String name) => MenuEntry(value: name, label: name)),
+  );
+  String dropdownValue = listDuration.first;
 
   @override
   void dispose() {
@@ -185,7 +205,8 @@ class _CreateItemPageState extends State<CreateItemPage> {
   }
 
   void _addDuration() {
-    final value = _durasiController.text.trim();
+    // final value = _durasiController.text.trim();
+    final value = dropdownValue.trim();
 
     if (value.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -343,20 +364,31 @@ class _CreateItemPageState extends State<CreateItemPage> {
                   spacing: 16,
                   children: [
                     Expanded(
-                      child: TextFormField(
-                        controller: _durasiController,
-                        enabled: !_isLoading,
-                        decoration: InputDecoration(
-                          label: const Text("Durasi (Jam)"),
-                          hintText:
-                              "Gunakan ',' untuk memasukkan lebih dari 1 durasi",
-                          hintStyle:
-                              themeFromContext(context).textTheme.bodySmall,
-                          hintMaxLines: 2,
+                        child: DropdownMenu<String>(
+                      initialSelection: listDuration.first,
+                      onSelected: (String? value) {
+                        // This is called when the user selects an item.
+                        setState(() {
+                          dropdownValue = value!;
+                        });
+                      },
+                      dropdownMenuEntries: menuEntries,
+                    )
+
+                        // TextFormField(
+                        //   controller: _durasiController,
+                        //   enabled: !_isLoading,
+                        //   decoration: InputDecoration(
+                        //     label: const Text("Durasi (Jam)"),
+                        //     hintText:
+                        //         "Gunakan ',' untuk memasukkan lebih dari 1 durasi",
+                        //     hintStyle:
+                        //         themeFromContext(context).textTheme.bodySmall,
+                        //     hintMaxLines: 2,
+                        //   ),
+                        //   keyboardType: TextInputType.number,
+                        // ),
                         ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
                     MyFilledButton(
                       width: 96,
                       variant: MyButtonVariant.secondary,

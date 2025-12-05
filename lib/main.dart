@@ -10,7 +10,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Coba load file .env
-  await dotenv.load(fileName: 'assets/.env');
+  await dotenv.load(fileName: '.env');
 
   // Ambil nilai dari .env
   final supabaseUrl = dotenv.env['SUPABASE_URL'];

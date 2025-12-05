@@ -36,7 +36,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/.env
+    - .env
     - assets/images/
     - assets/sounds/ # ← TAMBAHAN BARU
     - assets/midtrans_webview.html

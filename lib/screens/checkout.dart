@@ -27,8 +27,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String address = '';
   String description = '';
   String vendorName = '';
-  int price = 0;
-  int currentPrice = 0;
+  num price = 0;
+  num currentPrice = 0;
   List<dynamic> durations = [];
   bool isLoading = true;
   late dynamic selectedDuration;
@@ -36,8 +36,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
   DateTime? selectedTime;
 
   // ✅ GANTI DENGAN KEY MIDTRANS ANDA
-  final String midtransServerKey = dotenv.env['MIDTRANS_SERVER_KEY'];
-  final String midtransClientKey = dotenv.env['MIDTRANS_CLIENT_KEY'];
+  var midtransServerKey = dotenv.env['MIDTRANS_SERVER_KEY'];
+  var midtransClientKey = dotenv.env['MIDTRANS_CLIENT_KEY'];
   final bool isProduction = false; // Set true untuk production
 
   Future<void> fetchData() async {
@@ -75,7 +75,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<String?> createSnapToken(
-      String orderId, int amount, String itemName) async {
+      String orderId, num amount, String itemName) async {
     try {
       final url = Uri.parse(
         isProduction
@@ -145,10 +145,41 @@ class _CheckoutPageState extends State<CheckoutPage> {
         throw Exception("Gagal membuat token pembayaran");
       }
 
-      await sendTransactionData(orderId, 'panjar', amount, 'pending');
+            if (mounted) {
+        DMethod.log(token, prefix: "Snap Token");
+        _midtrans
+            ?.startPaymentUiFlow(
+          token: token,
+        )
+            .then(
+          (value) {
+            _midtrans!.setTransactionFinishedCallback((result) async {
+              setState(() {
+                isLoading = false;
+              });
+              DMethod.log(result.transactionId.toString(),
+                  prefix: "Result Midtrans Transaction ID");
+              DMethod.log(result.status.toString(),
+                  prefix: "Result Midtrans Status");
+              DMethod.log(result.message.toString(),
+                  prefix: "Result Midtrans Message");
+              DMethod.log(result.paymentType.toString(),
+                  prefix: "Result Midtrans Payment Type");
+              
+              if (result.status=='success') {
+                await sendTransactionData(orderId, 'panjar', amount, 'panjar_paid').then(
+                  (value) {
+                    if (!mounted) return;
+                    GoRouter.of(context).go('/checkout_success?order_id=$orderId');
+                  },
+                );
+                
+              }
 
-      if (mounted) {
-        GoRouter.of(context).push('/payment/$token/$orderId');
+              
+            });
+          },
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -243,7 +274,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> sendTransactionData(
     String orderId,
     String paymentType,
-    int amount,
+    num amount,
     String statusPayment,
   ) async {
     final client = Supabase.instance.client;
@@ -281,13 +312,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  double calculatePanjar(int input) {
+  double calculatePanjar(num input) {
     return (input * 30) / 100;
   }
 
   void changeSelectedDuration(dynamic duration) {
     setState(() {
-      currentPrice = price * (duration as int);
+      currentPrice = price * num.parse(duration);
       selectedDuration = duration;
     });
   }

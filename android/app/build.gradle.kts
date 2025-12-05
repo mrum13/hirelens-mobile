@@ -40,3 +40,7 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("com.midtrans:uikit:2.3.0-SANDBOX")
+}
