@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
+import 'package:unsplash_clone/screens/vendor_detail_page.dart';
 import 'package:unsplash_clone/theme.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailPage extends StatefulWidget {
   const ProductDetailPage({super.key, required this.dataId});
@@ -21,7 +23,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   String description = '';
   String address = '';
   String vendorName = '';
-  String vendorId = ''; // ✅ UBAH: dari late int ke String
+  String vendorId = '';
+  String vendorNumber = '';
   double price = 0;
   bool isLoading = true;
   bool isOnCart = false;
@@ -50,7 +53,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       final data = await client
           .from('items')
           .select(
-            'id, name, thumbnail, description, price, address, vendor_id(id, name)', // ✅ UBAH: vendor -> vendor_id
+            'id, name, thumbnail, description, price, address, vendor_id(id, name, phone)', // ✅ UBAH: vendor -> vendor_id
           )
           .eq('id', dataId)
           .single();
@@ -64,6 +67,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         thumbnail = data['thumbnail'] ?? '';
         description = data['description'] ?? '';
         address = data['address'] ?? '';
+        vendorNumber = data['vendor_id']['phone'];
         vendorName =
             data['vendor_id']['name'] ?? ''; // ✅ UBAH: vendor -> vendor_id
         vendorId = data['vendor_id']['id'] ?? ''; // ✅ UBAH: vendor -> vendor_id
@@ -149,6 +153,22 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     });
   }
 
+  void openWhatsApp({required String phoneNumber}) async {
+    String convertTo62Number() {
+      if (phoneNumber.startsWith('0')) {
+        return phoneNumber.replaceFirst('0', '+62');
+      }
+      return phoneNumber; // jika tidak mulai 0, biarkan saja
+    }
+
+    final url = 'https://wa.me/${convertTo62Number()}';
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -166,6 +186,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => GoRouter.of(context).pop(),
               ),
+              actions: [
+                IconButton(
+                    onPressed: () {},
+                    icon: Icon(
+                      Icons.chat_outlined,
+                      color: Colors.white,
+                      size: 24,
+                    ))
+              ],
             ),
             body: Center(child: CircularProgressIndicator()),
           )
@@ -228,6 +257,17 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         icon: const Icon(Icons.arrow_back),
                         onPressed: () => GoRouter.of(context).pop(),
                       ),
+                      actions: [
+                        IconButton(
+                            onPressed: () {
+                              openWhatsApp(phoneNumber: vendorNumber);
+                            },
+                            icon: Icon(
+                              Icons.chat_outlined,
+                              color: Colors.white,
+                              size: 24,
+                            ))
+                      ],
                     ),
                     SliverPersistentHeader(
                       pinned: true,
@@ -236,6 +276,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                         minExtentHeight: 150,
                         imageUrl: thumbnail,
                         title: name,
+                        idVendor: vendorId,
                         subtitle: "Dari $vendorName",
                       ),
                     ),
@@ -325,6 +366,7 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String imageUrl;
   final String title;
   final String subtitle;
+  final String idVendor;
 
   CollapsibleHeaderDelegate({
     required this.maxExtentHeight,
@@ -332,6 +374,7 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
     required this.imageUrl,
     required this.title,
     required this.subtitle,
+    required this.idVendor
   });
 
   @override
@@ -416,13 +459,18 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                InkWell(
+                  onTap: () => GoRouter.of(
+                    context,
+                  ).push('/vendor-detail-page/$idVendor'),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    ),
                   ),
                 ),
               ],

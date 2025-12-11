@@ -1,5 +1,6 @@
 // ignore_for_file: must_be_immutable
 
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -33,7 +34,7 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
                 .select(
                     "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
-                .or('status_work.eq.editing,status_work.eq.post_processing')
+                .or('status_work.eq.pending,status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.cancel')
                 .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
             break;
           case 'complete':
@@ -50,7 +51,7 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
                 .select(
                     "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
-                .eq('status_payment', 'pending');
+                .eq('status_payment', 'panjar_paid');
             break;
         }
       }
@@ -105,7 +106,7 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
                         child: Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: _RecentOrderItem(
-                            customerName: transaction['user_displayName'] ?? '',
+                            statusWork: transaction['status_work'] == 'waiting'?"Pesanan diterima":transaction['status_work'],
                             itemName: transaction['items']['name'] ??
                                 '', // ✅ DIPERBAIKI: item_id -> items
                             duration: int.tryParse(
@@ -125,14 +126,14 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
 
 class _RecentOrderItem extends StatelessWidget {
   const _RecentOrderItem({
-    required this.customerName,
+    required this.statusWork,
     required this.itemName,
     required this.duration,
     required this.paymentType,
     required this.amount,
   });
 
-  final String customerName;
+  final String statusWork;
   final String itemName;
   final int duration;
   final String paymentType;
@@ -140,6 +141,7 @@ class _RecentOrderItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -159,16 +161,16 @@ class _RecentOrderItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    customerName.length > 24
-                        ? "${customerName.substring(0, 24)}..."
-                        : customerName,
+                    itemName.length > 24
+                        ? "${itemName.substring(0, 24)}..."
+                        : "$itemName | $duration jam" ,
                     style: themeFromContext(context).textTheme.bodyMedium,
                   ),
                   Spacer(),
                   Opacity(
                     opacity: 0.65,
                     child: Text(
-                      "${itemName.length > 20 ? "${itemName.substring(0, 20)}..." : itemName} | $duration jam",
+                      "Status Pesanan : $statusWork",
                       style: themeFromContext(context).textTheme.bodySmall,
                     ),
                   ),

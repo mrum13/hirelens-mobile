@@ -3,14 +3,15 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/screens/cart.dart';
-import 'package:unsplash_clone/screens/checkout.dart' as checkout;
+import 'package:unsplash_clone/screens/customer/checkout.dart' as checkout;
 import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
 import 'package:unsplash_clone/screens/loading.dart';
+import 'package:unsplash_clone/screens/midtrans_api_page.dart';
 import 'package:unsplash_clone/screens/payment.dart';
-import 'package:unsplash_clone/screens/pesanan_detail_customer.dart';
+import 'package:unsplash_clone/screens/customer/pesanan_detail_customer.dart';
 import 'package:unsplash_clone/screens/pesanan_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_detail_vendor.dart';
 import 'package:unsplash_clone/screens/pesanan_customer.dart';
@@ -20,6 +21,7 @@ import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/screens/register.dart';
 import 'package:unsplash_clone/screens/reset_password.dart';
 import 'package:unsplash_clone/screens/search_result.dart';
+import 'package:unsplash_clone/screens/vendor_detail_page.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/customer/product_detail.dart';
 import 'package:unsplash_clone/screens/profile.dart';
@@ -155,6 +157,20 @@ final router = GoRouter(
       path: '/reset_password',
       builder: (context, state) {
         return ResetPasswordPage(email: state.uri.queryParameters['email']);
+      },
+    ),
+    GoRoute(
+      path: '/midtrans-page',
+      builder: (context, state) {
+        return MidtransApiPage();
+      },
+    ),
+    GoRoute(
+      path: '/vendor-detail-page/:dataId',
+      builder: (context, state) {
+        return VendorDetailPage(
+          idVendor: state.pathParameters['dataId']!,
+        );
       },
     ),
   ],

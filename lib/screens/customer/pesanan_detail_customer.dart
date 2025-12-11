@@ -1,11 +1,16 @@
+import 'dart:convert';
+
 import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/theme.dart';
+import 'package:http/http.dart' as http;
 
 class PesananDetailCustomerPage extends StatefulWidget {
   const PesananDetailCustomerPage({super.key, required this.dataId});
@@ -21,6 +26,10 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     with RouteAware {
   bool isLoading = true;
   Map<String, dynamic> data = {};
+  MidtransSDK? _midtrans;
+  var midtransServerKey = dotenv.env['MIDTRANS_SERVER_KEY'];
+  var midtransClientKey = dotenv.env['MIDTRANS_CLIENT_KEY'];
+  var orderIdSupabase = "-";
 
   Future<void> fetchAndSetData() async {
     final client = Supabase.instance.client;
@@ -42,18 +51,67 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     } catch (e) {
       DMethod.log("Gagal ki $e");
       setState(() {
-          isLoading = false;
-        });
+        isLoading = false;
+      });
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
     }
   }
 
-  int calculateSisa(int itemPrice, int duration) {
-    final sisa = (itemPrice * duration) * 0.03;
+  // num calculateSisa(num itemPrice, num duration) {
+  //   final sisa = (itemPrice * duration) * 0.03;
 
-    return sisa.round();
+  //   return sisa.round();
+  // }
+
+  Future<String?> createSnapToken(
+      String orderId, num amount, String itemName) async {
+    try {
+      final url = Uri.parse(
+        'https://app.sandbox.midtrans.com/snap/v1/transactions',
+      );
+
+      final credentials = base64Encode(utf8.encode('$midtransServerKey:'));
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic $credentials',
+        },
+        body: json.encode({
+          'transaction_details': {
+            'order_id': orderId,
+            'gross_amount': amount,
+          },
+          'item_details': [
+            {
+              'id': widget.dataId,
+              'price': amount,
+              'quantity': 1,
+              'name': itemName,
+            }
+          ],
+          'customer_details': {
+            'first_name': Supabase.instance.client.auth.currentUser
+                    ?.userMetadata?['displayName'] ??
+                'Customer',
+            'email': Supabase.instance.client.auth.currentUser?.email ?? '',
+          },
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final data = json.decode(response.body);
+        return data['token'];
+      } else {
+        throw Exception('Failed to create snap token: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error creating snap token: $e');
+    }
   }
 
   Future<void> _paySisa() async {
@@ -64,41 +122,143 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
           .select("*, item_id(id, name, price)")
           .eq('id', widget.dataId)
           .single();
+
       final selectedMidtransOrderId =
           (selectedTransaction['midtrans_order_id'] as String).split(
         '-panjar',
       )[0];
 
-      final orderId =
-          "$selectedMidtransOrderId-panjarpaid-${DateTime.now().millisecondsSinceEpoch}";
-      final res = await client.functions.invoke(
-        'midtrans-merchant-backend',
-        body: {
-          'orderId': orderId,
-          'price': calculateSisa(
-            selectedTransaction['item_id']['price'],
-            selectedTransaction['durasi'],
-          ),
-          'itemName': selectedTransaction['item_id']['name'],
-          'duration': selectedTransaction['durasi'],
-        },
-      );
+      final orderIdMidtrans ="$selectedMidtransOrderId-fullpaid";
+      orderIdSupabase = "${selectedTransaction['midtrans_order_id']}";
 
-      final token = res.data['snapToken'];
-      GoRouter.of(context).go('/payment/$token?pay_sisa=true');
+      // final res = await client.functions.invoke(
+      //   'midtrans-merchant-backend',
+      //   body: {
+      //     'orderId': orderId,
+      //     'price': _calculateSisa(
+      //       data['item_id']['price'],
+      //       data['durasi'],
+      //       data['amount'].round(),
+      //       _calculateTransactionFee(
+      //         data['item_id']['price'],
+      //         data['durasi'],
+      //         data['payment_type'] != 'full_paid',
+      //       ),
+      //     ),
+      //     'itemName': selectedTransaction['item_id']['name'],
+      //     'duration': selectedTransaction['durasi'],
+      //   },
+      // );
+
+      // DMethod.log(res.data.toString(), prefix: "response Invoke");
+
+      // final token = res.data['snapToken'];
+      final token = await createSnapToken(
+          orderIdMidtrans,
+          _calculateSisa(
+            data['item_id']['price'],
+            data['durasi'],
+            data['amount'].round(),
+            _calculateTransactionFee(
+              data['item_id']['price'],
+              data['durasi'],
+              data['payment_type'] != 'full_paid',
+            ),
+          ),
+          data['item_id']['name']);
+
+      if (mounted) {
+        _midtrans
+            ?.startPaymentUiFlow(
+          token: token,
+        )
+            .then(
+          (value) {
+            _midtrans!.setTransactionFinishedCallback((result) async {
+              setState(() {
+                isLoading = false;
+              });
+              DMethod.log(result.transactionId.toString(),
+                  prefix: "Result Midtrans Transaction ID");
+              DMethod.log(result.status.toString(),
+                  prefix: "Result Midtrans Status");
+              DMethod.log(result.message.toString(),
+                  prefix: "Result Midtrans Message");
+              DMethod.log(result.paymentType.toString(),
+                  prefix: "Result Midtrans Payment Type");
+
+              if (result.status == 'success') {
+                await sendTransactionData(
+                        orderId: orderIdSupabase,
+                        paymentType: 'panjar',
+                        amount: (data['item_id']['price'] * data['durasi']) +
+                            _calculateTransactionFee(
+                              data['item_id']['price'],
+                              data['durasi'],
+                              data['payment_type'] != 'full_paid',
+                            ),
+                        statusPayment: 'complete')
+                    .then(
+                  (value) {
+                    if (!mounted) return;
+                    GoRouter.of(context)
+                        .go('/checkout_success?order_id=$orderIdSupabase');
+                  },
+                );
+              }
+            });
+          },
+        );
+      }
     } catch (e) {
+      
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
     }
   }
 
-  Future<void> _cancelPesanan() async {}
-  Future<void> _payPesanan() async {}
+  Future<void> sendTransactionData({
+    required String orderId,
+    required String paymentType,
+    required num amount,
+    required String statusPayment,
+  }) async {
+    final client = Supabase.instance.client;
+    DMethod.log("$orderId,$paymentType,$amount,$statusPayment",prefix: "Send Transaction Data");
+
+    try {
+      var res = await client.from('transactions').update({
+        'payment_type': paymentType,
+        'amount': amount,
+        'status_payment': statusPayment,
+      }).eq('midtrans_order_id', orderId);
+
+      DMethod.log(res.toString(), prefix: "Update Response");
+    } catch (e) {
+      DMethod.log(e.toString(),prefix: "Error update data");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Terjadi Kesalahan! $e")),
+        );
+      }
+    }
+  }
+
+  Future initSDK() async {
+    _midtrans = await MidtransSDK.init(
+      config: MidtransConfig(
+        clientKey: dotenv.env['MIDTRANS_CLIENT_KEY'] ?? "",
+        merchantBaseUrl: dotenv.env['MIDTRANS_MERCHANT_BASE_URL'] ?? "",
+        enableLog: true,
+      ),
+    );
+  }
 
   @override
   void initState() {
     super.initState();
+    initSDK();
     fetchAndSetData();
     DMethod.log("Pesanan Detail Customer");
   }
@@ -125,28 +285,34 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
   }
 
   Widget buildPaymentBar(String paymentStatus) {
-    DMethod.log(paymentStatus);
+    DMethod.log(paymentStatus, prefix: "Payment Status");
     switch (paymentStatus) {
-      case 'pending':
-        return Row(
-          spacing: 8,
-          children: [
-            Expanded(
-              child: MyOutlinedButton(
-                variant: MyButtonVariant.secondary,
-                onTap: _cancelPesanan,
-                child: Text("Cancel"),
-              ),
-            ),
-            Expanded(
-              child: MyFilledButton(
-                variant: MyButtonVariant.primary,
-                onTap: _payPesanan,
-                child: Text("Bayar"),
-              ),
-            ),
-          ],
+      case 'panjar_paid':
+        return MyFilledButton(
+          variant: MyButtonVariant.primary,
+          onTap: _paySisa,
+          child: Text("Bayar Sisa Biaya"),
         );
+
+      // Row(
+      //   spacing: 8,
+      //   children: [
+      //     Expanded(
+      //       child: MyOutlinedButton(
+      //         variant: MyButtonVariant.secondary,
+      //         onTap: _cancelPesanan,
+      //         child: Text("Cancel"),
+      //       ),
+      //     ),
+      //     Expanded(
+      //       child: MyFilledButton(
+      //         variant: MyButtonVariant.primary,
+      //         onTap: _payPesanan,
+      //         child: Text("Bayar Sisa Biaya"),
+      //       ),
+      //     ),
+      //   ],
+      // );
       case 'pending_full':
         return Expanded(
           child: MyFilledButton(
@@ -158,8 +324,10 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
       default:
         return Center(
           child: Text(
-            "Dalam proses : ${(data['status_work'] as String).split("_").map((e) => e[0].toUpperCase() + e.substring(1, e.length)).join(" ")}",
-          ),
+              "Status Order : ${(data['status_work'] as String).split("_").map((e) => e[0].toUpperCase() + e.substring(1, e.length)).join(" ")}",
+              style: themeFromContext(
+                context,
+              ).textTheme.displayMedium),
         );
     }
   }
@@ -180,11 +348,13 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                 onPressed: () => GoRouter.of(context).pop(),
               ),
             ),
-            bottomNavigationBar: SizedBox(
-              height: 72,
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: buildPaymentBar(data['status_work']),
+            bottomNavigationBar: SafeArea(
+              child: SizedBox(
+                height: 80,
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: buildPaymentBar(data['status_payment']),
+                ),
               ),
             ),
             body: SafeArea(
@@ -281,56 +451,59 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                                     ],
                                   ),
                                 SizedBox(height: 12),
-                                if (data['status_payment'] != 'pending')
+                                if (data['status_payment'] != 'complete')
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text("Sisa :"),
                                       Text(
-                                        formatCurrency(
-                                          _calculateSisa(
-                                            data['item_id']['price'],
-                                            data['durasi'],
-                                            data['amount'].round(),
-                                            _calculateTransactionFee(
+                                          formatCurrency(
+                                            _calculateSisa(
                                               data['item_id']['price'],
                                               data['durasi'],
-                                              data['payment_type'] !=
-                                                  'full_paid',
+                                              data['amount'].round(),
+                                              _calculateTransactionFee(
+                                                data['item_id']['price'],
+                                                data['durasi'],
+                                                data['payment_type'] !=
+                                                    'full_paid',
+                                              ),
                                             ),
                                           ),
+                                          style: themeFromContext(
+                                            context,
+                                          ).textTheme.displayLarge),
+                                    ],
+                                  ),
+                                if (data['status_payment'] == 'complete')
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        "Subtotal :",
+                                        style: themeFromContext(
+                                          context,
+                                        ).textTheme.bodyLarge,
+                                      ),
+                                      Text(
+                                        formatCurrency(
+                                          (data['item_id']['price'] *
+                                                  data['durasi']) +
+                                              _calculateTransactionFee(
+                                                data['item_id']['price'],
+                                                data['durasi'],
+                                                data['payment_type'] !=
+                                                    'full_paid',
+                                              ),
                                         ),
+                                        style: themeFromContext(
+                                          context,
+                                        ).textTheme.displayLarge,
                                       ),
                                     ],
                                   ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      "Subtotal :",
-                                      style: themeFromContext(
-                                        context,
-                                      ).textTheme.bodyLarge,
-                                    ),
-                                    Text(
-                                      formatCurrency(
-                                        (data['item_id']['price'] *
-                                                data['durasi']) +
-                                            _calculateTransactionFee(
-                                              data['item_id']['price'],
-                                              data['durasi'],
-                                              data['payment_type'] !=
-                                                  'full_paid',
-                                            ),
-                                      ),
-                                      style: themeFromContext(
-                                        context,
-                                      ).textTheme.displayLarge,
-                                    ),
-                                  ],
-                                ),
                               ],
                             ),
                             SizedBox(height: 16),

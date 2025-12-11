@@ -187,29 +187,33 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
         .from('transactions')
         .count()
         .eq('user_id', client.auth.currentUser!.id)
-        .eq('status_payment', 'pending');
+        .eq('status_payment', 'panjar_paid');
 
-    tagihanCount = response;
+    setState(() {
+      tagihanCount = response;
+    });
   }
 
-  Future<void> countDiproses() async {
+  Future<void> countPesanan() async {
     final client = Supabase.instance.client;
 
     final response = await client
         .from('transactions')
         .count()
         .eq('user_id', client.auth.currentUser!.id)
-        .or('status_work.eq.editing,status_work.eq.post_processing')
-        .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+        .or('status_work.eq.pending,status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.cancel')
+        .or('status_payment.eq.complete,status_payment.eq.panjar_paid');
 
-    diprosesCount = response;
+    setState(() {
+      diprosesCount = response;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     countTagihan();
-    countDiproses();
+    countPesanan();
     setState(() {
       badgeCountReady = true;
     });
@@ -275,7 +279,7 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
                       offset: Offset(16, -12),
                       child: Icon(Icons.movie_edit, size: 24),
                     ),
-                    Text("Diproses", textAlign: TextAlign.center),
+                    Text("Pesanan", textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -531,6 +535,19 @@ class _InformationSection extends StatelessWidget {
                 style: themeFromContext(context).textTheme.displayMedium,
               ),
               subtitle: Text("Versi : ${dotenv.env['APP_VERSION'] ?? 'dev'}"),
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              GoRouter.of(context).push("/midtrans-page");
+            },
+            child: ListTile(
+              leading: Icon(Icons.info, size: 24),
+              title: Text(
+                "Midtrans API",
+                style: themeFromContext(context).textTheme.displayMedium,
+              ),
+              subtitle: Text("Midtrans API List"),
             ),
           ),
           GestureDetector(

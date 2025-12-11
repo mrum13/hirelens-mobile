@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:slide_to_act/slide_to_act.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/api/midtrans_api.dart';
 import 'package:unsplash_clone/helper.dart';
+import 'package:unsplash_clone/model/midtrans_model.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class PesananDetailVendorPage extends StatefulWidget {
@@ -46,6 +48,42 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan! $e")));
+    }
+  }
+
+  Future<void> rejectOrder() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+      final client = Supabase.instance.client;
+
+      MidtransModel refundStatus =
+          await MidtransApi().refund(idOrder: widget.dataId);
+
+      if (refundStatus.statusCode == 200) {
+        try {
+          await client
+              .from('transactions')
+              .update({'status_work': 'cancel'}).eq('id', widget.dataId);
+
+          await fetchAndSetData();
+        } catch (e) {
+          setState(() {
+            isLoading = false;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan!")));
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(refundStatus.message)));
+      }
     }
   }
 
@@ -258,10 +296,40 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
               ),
             ),
             bottomNavigationBar: SizedBox(
-              height: 100,
+              // height: 100,
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: buildConfirmationBar(data['status_work']),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    buildConfirmationBar(data['status_work']),
+                    ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("Yakin mau menolak pesanan ?"),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        rejectOrder();
+                                      },
+                                      child: Text("Ya")),
+                                  TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text("Tidak"))
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Text("Tolak pesanan"))
+                  ],
+                ),
               ),
             ),
             body: SafeArea(

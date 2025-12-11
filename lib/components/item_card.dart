@@ -1,3 +1,4 @@
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/helper.dart';
@@ -29,7 +30,7 @@ class ItemCard extends StatefulWidget {
 }
 
 class _ItemCardState extends State<ItemCard> {
-  bool isLoading = true;
+  bool isLoading = false;
   late bool isFavorite;
 
   void checkIsFavorite() async {
@@ -51,7 +52,9 @@ class _ItemCardState extends State<ItemCard> {
   @override
   void initState() {
     super.initState();
-    checkIsFavorite();
+    isFavorite = false;
+
+    // checkIsFavorite();
   }
 
   @override
