@@ -14,7 +14,9 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   String? customerGenderValue;
+  String? customerBankName;
   final List<String> genderOptions = ['Laki-laki', 'Perempuan'];
+  final List<String> paymentAccountOptions = ['BRI', 'BNI', 'BCA', 'Gopay', 'Shopee Pay', 'Dana'];
 
   // Customer Controllers
   final Map<String, TextEditingController> customerControllers = {
@@ -22,6 +24,7 @@ class _RegisterPageState extends State<RegisterPage> {
     'phone': TextEditingController(),
     'address': TextEditingController(),
     'city': TextEditingController(),
+    'bank_account': TextEditingController(),
     'email': TextEditingController(),
     'password': TextEditingController(),
     'confirmPassword': TextEditingController(),
@@ -178,6 +181,37 @@ class _RegisterPageState extends State<RegisterPage> {
                                 inputField(
                                   "Kota",
                                   customerControllers['city']!,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: DropdownButtonFormField<String>(
+                                    value: customerBankName,
+                                    items: paymentAccountOptions
+                                        .map(
+                                          (payment) => DropdownMenuItem(
+                                            value: payment,
+                                            child: Text(payment),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: _isLoading
+                                        ? null
+                                        : (value) {
+                                            setState(() {
+                                              customerBankName = value;
+                                            });
+                                          },
+                                    decoration: InputDecoration(
+                                      labelText: "Rekening / E-Wallet",
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                inputField(
+                                  "No. Rek / No. E-Wallet",
+                                  customerControllers['bank_account']!,
                                 ),
                                 inputField(
                                   "Email",
@@ -352,6 +386,9 @@ class _RegisterPageState extends State<RegisterPage> {
     String? name = ctrls['name']?.text;
     String? address = ctrls['address']?.text;
     String? city = ctrls['city']?.text;
+    String? bankName = customerBankName;
+    String? bankAccount = ctrls['bank_account']?.text;
+
 
     // Validasi fields
     for (var entry in ctrls.entries) {
@@ -377,6 +414,12 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    if (isCustomer &&
+        (customerBankName == null || customerBankName!.isEmpty)) {
+      _showError('Pilih jenis rekening');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -392,6 +435,8 @@ class _RegisterPageState extends State<RegisterPage> {
           'address': address!,
           'city': city!,
           'role': isCustomer ? 'customer' : 'vendor',
+          'bankName': isCustomer ? customerBankName : '',
+          'bankAccount': isCustomer ? bankAccount : ''
         },
       );
 

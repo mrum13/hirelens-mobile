@@ -34,16 +34,16 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
                 .select(
                     "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
-                .or('status_work.eq.pending,status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.cancel')
+                .or('status_work.eq.pending,status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.complete')
                 .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
             break;
-          case 'complete':
+          case 'finish':
             responseData = await client
                 .from('transactions')
                 .select(
                     "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
-                .eq('status_work', 'complete');
+                .or('status_work.eq.finish,status_work.eq.cancel');
             break;
           default:
             responseData = await client
@@ -51,7 +51,8 @@ class _PesananCustomerPageState extends State<PesananCustomerPage> {
                 .select(
                     "*, items!inner(id, name)") // ✅ DIPERBAIKI: item_id -> items
                 .eq('user_id', client.auth.currentUser!.id)
-                .eq('status_payment', 'panjar_paid');
+                .eq('status_payment', 'panjar_paid')
+                .neq('status_work', 'cancel');
             break;
         }
       }

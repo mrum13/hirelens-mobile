@@ -25,6 +25,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
     with RouteAware {
   bool isLoading = true;
   late Map<String, dynamic> data;
+  TextEditingController linkPhotoController = TextEditingController();
 
   Future<void> fetchAndSetData() async {
     final client = Supabase.instance.client;
@@ -58,32 +59,47 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       });
       final client = Supabase.instance.client;
 
-      MidtransModel refundStatus =
-          await MidtransApi().refund(idOrder: widget.dataId);
+      try {
+        await client
+            .from('transactions')
+            .update({'status_work': 'cancel'}).eq('id', widget.dataId);
 
-      if (refundStatus.statusCode == 200) {
-        try {
-          await client
-              .from('transactions')
-              .update({'status_work': 'cancel'}).eq('id', widget.dataId);
-
-          await fetchAndSetData();
-        } catch (e) {
-          setState(() {
-            isLoading = false;
-          });
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan!")));
-        }
-      } else {
+        await fetchAndSetData();
+      } catch (e) {
         setState(() {
           isLoading = false;
         });
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(refundStatus.message)));
+        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan!")));
       }
+
+      // MidtransModel refundStatus =
+      //     await MidtransApi().refund(idOrder: widget.dataId);
+
+      // if (refundStatus.statusCode == 200) {
+      //   try {
+      //     await client
+      //         .from('transactions')
+      //         .update({'status_work': 'cancel'}).eq('id', widget.dataId);
+
+      //     await fetchAndSetData();
+      //   } catch (e) {
+      //     setState(() {
+      //       isLoading = false;
+      //     });
+      //     ScaffoldMessenger.of(
+      //       context,
+      //     ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan!")));
+      //   }
+      // } else {
+      //   setState(() {
+      //     isLoading = false;
+      //   });
+      //   ScaffoldMessenger.of(
+      //     context,
+      //   ).showSnackBar(SnackBar(content: Text(refundStatus.message)));
+      // }
     }
   }
 
@@ -164,9 +180,11 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
         isLoading = true;
       });
       final client = Supabase.instance.client;
-      await client
-          .from('transactions')
-          .update({'status_work': 'complete'}).eq('id', widget.dataId);
+      await client.from('transactions').update({
+        'status_work': 'complete',
+        'url_photos': linkPhotoController.text.trim(),
+        'photos_uploaded_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', widget.dataId);
 
       fetchAndSetData();
     }
@@ -176,6 +194,9 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
   void initState() {
     super.initState();
     fetchAndSetData();
+    linkPhotoController.addListener(() {
+      setState(() {}); // <-- trigger rebuild
+    });
   }
 
   // FIXME: Why it's not refreshing the page
@@ -273,6 +294,10 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
             );
           },
         );
+      case 'complete':
+        return Center(child: Text("Dalam proses penyelesaian orderan"));
+      case 'cancel':
+        return Center(child: Text("Orderan dicancel"));
       default:
         return Center(child: Text("Dalam proses verifikasi payout"));
     }
@@ -280,7 +305,6 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
 
   @override
   Widget build(BuildContext context) {
-    DMethod.log("Pesanan Vendor Detail");
     return isLoading
         ? Center(child: CircularProgressIndicator())
         : Scaffold(
@@ -302,32 +326,69 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    buildConfirmationBar(data['status_work']),
-                    ElevatedButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text("Yakin mau menolak pesanan ?"),
-                                actions: [
-                                  TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                        rejectOrder();
-                                      },
-                                      child: Text("Ya")),
-                                  TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: Text("Tidak"))
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        child: Text("Tolak pesanan"))
+                    Visibility(
+                      visible: (data['status_work'] == "post_processing" &&
+                              data['status_payment'] == "panjar_paid")
+                          ? true
+                          : false,
+                      child: Center(child: Text("Orderan belum dibayar lunas oleh customer"))
+                    ),
+                    Visibility(
+                        visible: (data['status_work'] == 'post_processing' &&
+                                data['status_payment'] == 'complete')
+                            ? true
+                            : false,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: linkPhotoController,
+                              style: TextStyle(fontSize: 14),
+                              decoration: InputDecoration(
+                                  label: Text("Link Foto"),
+                                  border: OutlineInputBorder()),
+                            ),
+                            const SizedBox(
+                              height: 16,
+                            )
+                          ],
+                        )),
+                    Visibility(
+                        visible: (data['status_work'] == "post_processing" &&
+                                linkPhotoController.text.isEmpty)
+                            ? false
+                            : true,
+                        child: buildConfirmationBar(data['status_work'])),
+                    const SizedBox(
+                      height: 8,
+                    ),
+                    Visibility(
+                      visible: data['status_work'] == 'pending' ? true : false,
+                      child: FilledButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: Text("Yakin mau menolak pesanan ?"),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          rejectOrder();
+                                        },
+                                        child: Text("Ya")),
+                                    TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: Text("Tidak"))
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Text("Tolak pesanan")),
+                    )
                   ],
                 ),
               ),

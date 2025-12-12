@@ -93,76 +93,81 @@ class _ProfileHeader extends StatelessWidget {
       width: double.infinity,
       height: 200,
       padding: EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        spacing: 16,
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              CircleAvatar(
-                radius: 36,
-                backgroundImage: NetworkImage(profileImage),
-              ),
-              Positioned(
-                bottom: -8,
-                left: -4,
-                child: GestureDetector(
-                  // onTap: _onChangeProfilePicture,
-                  child: Container(
-                    height: 24,
-                    width: 80,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: role == 'vendor'
-                          ? themeFromContext(
-                              context,
-                            ).colorScheme.secondaryContainer
-                          : themeFromContext(
-                              context,
-                            ).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    child: Text(
-                      "${role[0].toUpperCase()}${role.substring(1)}",
-                      style: TextStyle(
-                        fontSize: 12,
+      child: InkWell(
+        onTap: () => GoRouter.of(
+          context,
+        ).push('/edit-profile'),
+        child: Row(
+          spacing: 16,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 36,
+                  backgroundImage: NetworkImage(profileImage),
+                ),
+                Positioned(
+                  bottom: -8,
+                  left: -4,
+                  child: GestureDetector(
+                    // onTap: _onChangeProfilePicture,
+                    child: Container(
+                      height: 24,
+                      width: 80,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
                         color: role == 'vendor'
                             ? themeFromContext(
                                 context,
-                              ).colorScheme.onSecondaryContainer
+                              ).colorScheme.secondaryContainer
                             : themeFromContext(
                                 context,
-                              ).colorScheme.onPrimaryContainer,
+                              ).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        "${role[0].toUpperCase()}${role.substring(1)}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: role == 'vendor'
+                              ? themeFromContext(
+                                  context,
+                                ).colorScheme.onSecondaryContainer
+                              : themeFromContext(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              Text(
-                displayName.length > 24
-                    ? "${displayName.substring(0, 24)}..."
-                    : displayName,
-                style: themeFromContext(context).textTheme.displayMedium,
-              ),
-              Opacity(
-                opacity: 0.5,
-                child: Text(
-                  email,
-                  style: themeFromContext(context).textTheme.bodySmall,
+              ],
+            ),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 8,
+              children: [
+                Text(
+                  displayName.length > 24
+                      ? "${displayName.substring(0, 24)}..."
+                      : displayName,
+                  style: themeFromContext(context).textTheme.displayMedium,
                 ),
-              ),
-            ],
-          ),
-        ],
+                Opacity(
+                  opacity: 0.5,
+                  child: Text(
+                    email,
+                    style: themeFromContext(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -187,7 +192,8 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
         .from('transactions')
         .count()
         .eq('user_id', client.auth.currentUser!.id)
-        .eq('status_payment', 'panjar_paid');
+        .eq('status_payment', 'panjar_paid')
+        .neq('status_work', 'cancel');
 
     setState(() {
       tagihanCount = response;
@@ -201,8 +207,9 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
         .from('transactions')
         .count()
         .eq('user_id', client.auth.currentUser!.id)
-        .or('status_work.eq.pending,status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.cancel')
-        .or('status_payment.eq.complete,status_payment.eq.panjar_paid');
+        .or('status_work.eq.pending,status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.complete,status_work.eq.cancel')
+        .or('status_payment.eq.complete,status_payment.eq.panjar_paid')
+        .neq('status_work', 'cancel');
 
     setState(() {
       diprosesCount = response;
@@ -289,7 +296,7 @@ class _CustomerMenuSectionState extends State<_CustomerMenuSection> {
             child: GestureDetector(
               onTap: () => GoRouter.of(
                 context,
-              ).push('/customer/pesanan?filter=complete'),
+              ).push('/customer/pesanan?filter=finish'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -343,10 +350,13 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
         .from('transactions')
         .count()
         .eq('vendor_id', vendorId)
-        .or('status_work.eq.editing,status_work.eq.post_processing')
-        .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+        .or('status_work.eq.pending');
+        // .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
 
-    pesananCount = response;
+    setState(() {
+      pesananCount = response;  
+    });
+    
   }
 
   Future<void> countDiproses() async {
@@ -357,10 +367,13 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
         .from('transactions')
         .count()
         .eq('vendor_id', vendorId)
-        .or('status_work.eq.editing,status_work.eq.post_processing')
+        .or('status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.complete')
         .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
 
-    diprosesCount = response;
+    setState(() {
+      diprosesCount = response;
+    });
+    
   }
 
   Future<void> countPayout() async {
@@ -371,9 +384,11 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
         .from('transactions')
         .count()
         .eq('vendor_id', vendorId)
-        .eq('status_work', 'complete');
+        .eq('status_work', 'finish');
 
-    payoutCount = response;
+    setState(() {
+      payoutCount = response;
+    });
   }
 
   @override
@@ -414,7 +429,7 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
           ),
           Expanded(
             child: GestureDetector(
-              onTap: () => GoRouter.of(context).push('/vendor/pesanan'),
+              onTap: () => GoRouter.of(context).push('/vendor/pesanan?filter=pending'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -474,7 +489,7 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
             child: GestureDetector(
               onTap: () => GoRouter.of(
                 context,
-              ).push('/vendor/pesanan?filter=complete'),
+              ).push('/vendor/pesanan?filter=finish'),
               child: SizedBox(
                 height: 80,
                 child: Column(
@@ -539,15 +554,15 @@ class _InformationSection extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              GoRouter.of(context).push("/midtrans-page");
+              GoRouter.of(context).push("/change-password-page");
             },
             child: ListTile(
-              leading: Icon(Icons.info, size: 24),
+              leading: Icon(Icons.key, size: 24),
               title: Text(
-                "Midtrans API",
+                "Ubah Password",
                 style: themeFromContext(context).textTheme.displayMedium,
               ),
-              subtitle: Text("Midtrans API List"),
+              subtitle: Text("Ubah password akun anda"),
             ),
           ),
           GestureDetector(
@@ -578,9 +593,9 @@ class _InformationSection extends StatelessWidget {
 
                               await client.auth.signOut();
 
-                              while (GoRouter.of(context).canPop() == true) {
-                                GoRouter.of(context).pop();
-                              }
+                              // while (GoRouter.of(context).canPop() == true) {
+                              //   GoRouter.of(context).pop();
+                              // }
 
                               GoRouter.of(context).pushReplacement('/');
                             },

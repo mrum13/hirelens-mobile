@@ -6,15 +6,16 @@ import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/customer/checkout.dart' as checkout;
 import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
+import 'package:unsplash_clone/screens/customer/edit_profile_page.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
 import 'package:unsplash_clone/screens/home.dart';
 import 'package:unsplash_clone/screens/loading.dart';
-import 'package:unsplash_clone/screens/midtrans_api_page.dart';
+import 'package:unsplash_clone/screens/change_password_page.dart';
 import 'package:unsplash_clone/screens/payment.dart';
 import 'package:unsplash_clone/screens/customer/pesanan_detail_customer.dart';
-import 'package:unsplash_clone/screens/pesanan_vendor.dart';
-import 'package:unsplash_clone/screens/pesanan_detail_vendor.dart';
-import 'package:unsplash_clone/screens/pesanan_customer.dart';
+import 'package:unsplash_clone/screens/vendor/pesanan_vendor.dart';
+import 'package:unsplash_clone/screens/vendor/pesanan_detail_vendor.dart';
+import 'package:unsplash_clone/screens/customer/pesanan_customer.dart';
 import 'package:unsplash_clone/screens/kelola_item.dart';
 import 'package:unsplash_clone/screens/opening.dart';
 import 'package:unsplash_clone/screens/login.dart';
@@ -101,7 +102,7 @@ final router = GoRouter(
 
     // ✅ UBAH INI - Tergantung apakah pesanan juga pakai UUID atau int
     GoRoute(
-      path: "/vendor/pesanan/:dataId",
+      path: "/vendor/pesanan-detail/:dataId",
       builder: (context, state) => PesananDetailVendorPage(
         dataId: state.pathParameters['dataId']!, // Ubah ke String dulu
       ),
@@ -160,9 +161,9 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/midtrans-page',
+      path: '/change-password-page',
       builder: (context, state) {
-        return MidtransApiPage();
+        return ChangePasswordPage();
       },
     ),
     GoRoute(
@@ -171,6 +172,12 @@ final router = GoRouter(
         return VendorDetailPage(
           idVendor: state.pathParameters['dataId']!,
         );
+      },
+    ),
+     GoRoute(
+      path: '/edit-profile',
+      builder: (context, state) {
+        return EditProfilePage();
       },
     ),
   ],

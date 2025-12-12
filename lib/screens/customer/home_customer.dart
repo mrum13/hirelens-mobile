@@ -33,11 +33,11 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
   Future<void> fetchItems() async {
     setState(() => isLoading = true);
 
-    final response = (await Supabase.instance.client
+    final response = await Supabase.instance.client
         .from('items')
         .select()
         .filter('is_verified', 'neq', false)
-        .order('created_at', ascending: false));
+        .order('created_at', ascending: false);
 
     setState(() {
       isLoading = false;
@@ -159,11 +159,14 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                       vertical: 8,
                     ),
                     child: SearchBar(
-                      leading: Icon(Icons.search),
+                      leading: Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Icon(Icons.search),
+                      ),
                       hintText: "Search...",
                       onSubmitted: (value) => GoRouter.of(
                         context,
-                      ).go("/search?keyword=${value.trim()}"),
+                      ).push("/search?keyword=${value.trim()}"),
                     ),
                   ),
                 ),

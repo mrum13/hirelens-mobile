@@ -11,6 +11,7 @@ import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/helper.dart';
 import 'package:unsplash_clone/theme.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class PesananDetailCustomerPage extends StatefulWidget {
   const PesananDetailCustomerPage({super.key, required this.dataId});
@@ -128,7 +129,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
         '-panjar',
       )[0];
 
-      final orderIdMidtrans ="$selectedMidtransOrderId-fullpaid";
+      final orderIdMidtrans = "$selectedMidtransOrderId-fullpaid";
       orderIdSupabase = "${selectedTransaction['midtrans_order_id']}";
 
       // final res = await client.functions.invoke(
@@ -211,7 +212,6 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
         );
       }
     } catch (e) {
-      
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("Terjadi Kesalahan! $e")));
@@ -225,7 +225,8 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     required String statusPayment,
   }) async {
     final client = Supabase.instance.client;
-    DMethod.log("$orderId,$paymentType,$amount,$statusPayment",prefix: "Send Transaction Data");
+    DMethod.log("$orderId,$paymentType,$amount,$statusPayment",
+        prefix: "Send Transaction Data");
 
     try {
       var res = await client.from('transactions').update({
@@ -236,7 +237,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
 
       DMethod.log(res.toString(), prefix: "Update Response");
     } catch (e) {
-      DMethod.log(e.toString(),prefix: "Error update data");
+      DMethod.log(e.toString(), prefix: "Error update data");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Terjadi Kesalahan! $e")),
@@ -253,6 +254,20 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
         enableLog: true,
       ),
     );
+  }
+
+  Future<void> finishOrder() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+      final client = Supabase.instance.client;
+      await client.from('transactions').update({
+        'status_work': 'finish',
+      }).eq('id', widget.dataId);
+
+      fetchAndSetData();
+    }
   }
 
   @override
@@ -288,39 +303,89 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     DMethod.log(paymentStatus, prefix: "Payment Status");
     switch (paymentStatus) {
       case 'panjar_paid':
-        return MyFilledButton(
-          variant: MyButtonVariant.primary,
-          onTap: _paySisa,
-          child: Text("Bayar Sisa Biaya"),
-        );
-
-      // Row(
-      //   spacing: 8,
-      //   children: [
-      //     Expanded(
-      //       child: MyOutlinedButton(
-      //         variant: MyButtonVariant.secondary,
-      //         onTap: _cancelPesanan,
-      //         child: Text("Cancel"),
-      //       ),
-      //     ),
-      //     Expanded(
-      //       child: MyFilledButton(
-      //         variant: MyButtonVariant.primary,
-      //         onTap: _payPesanan,
-      //         child: Text("Bayar Sisa Biaya"),
-      //       ),
-      //     ),
-      //   ],
-      // );
-      case 'pending_full':
-        return Expanded(
-          child: MyFilledButton(
-            variant: MyButtonVariant.primary,
-            onTap: _paySisa,
-            child: Text("Bayar Sisa Biaya"),
-          ),
-        );
+        if (data['status_work'] == 'cancel') {
+          return SizedBox(
+            height: 56,
+            child: Center(
+              child: Text(
+                  "Status Order : ${data['status_work'] == 'waiting' ? "Pesanan diterima" : data['status_work']}",
+                  style: themeFromContext(
+                    context,
+                  ).textTheme.displayMedium),
+            ),
+          );
+        } else {
+          return SizedBox(
+            height: 83,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: Text(
+                      "Status Order : ${data['status_work'] == 'waiting' ? "Pesanan diterima" : data['status_work']}",
+                      style: themeFromContext(
+                        context,
+                      ).textTheme.displayMedium),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                MyFilledButton(
+                  variant: MyButtonVariant.primary,
+                  onTap: _paySisa,
+                  child: Text("Bayar Sisa Biaya"),
+                ),
+              ],
+            ),
+          );
+        }
+      case 'complete':
+        if (data['status_work'] == 'complete') {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 56,
+                child: MyFilledButton(
+                  variant: MyButtonVariant.primary,
+                  onTap: _getResultPhotos,
+                  child: Text("Lihat Hasil Foto"),
+                ),
+              ),
+              const SizedBox(
+                height: 16,
+              ),
+              SizedBox(
+                height: 56,
+                child: ElevatedButton(
+                    onPressed: () {
+                      finishOrder();
+                    },
+                    child: Text("Selesaikan Pesanan")),
+              )
+            ],
+          );
+        } else if (data['status_work'] == 'finish') {
+          return SizedBox(
+            height: 56,
+            child: MyFilledButton(
+              variant: MyButtonVariant.primary,
+              onTap: _getResultPhotos,
+              child: Text("Lihat Hasil Foto"),
+            ),
+          );
+        } else {
+          return SizedBox(
+            height: 56,
+            child: Center(
+              child: Text(
+                  "Status Order : ${data['status_work'] == 'waiting' ? "Pesanan diterima" : data['status_work']}",
+                  style: themeFromContext(
+                    context,
+                  ).textTheme.displayMedium),
+            ),
+          );
+        }
       default:
         return Center(
           child: Text(
@@ -329,6 +394,23 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                 context,
               ).textTheme.displayMedium),
         );
+    }
+  }
+
+  Future<void> _getResultPhotos() async {
+    final url = data['url_photos'];
+
+    final uri = Uri.parse(url);
+
+    try {
+      if (!await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication, // penting!
+      )) {
+        throw 'Could not launch $uri';
+      }
+    } catch (e) {
+      DMethod.log(e.toString());
     }
   }
 
@@ -349,12 +431,9 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
               ),
             ),
             bottomNavigationBar: SafeArea(
-              child: SizedBox(
-                height: 80,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: buildPaymentBar(data['status_payment']),
-                ),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: buildPaymentBar(data['status_payment']),
               ),
             ),
             body: SafeArea(

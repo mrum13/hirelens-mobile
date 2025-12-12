@@ -1,12 +1,15 @@
 import 'dart:collection';
 
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as p;
 import 'dart:io';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
+import 'package:unsplash_clone/services/image_upload_service.dart';
 import 'package:unsplash_clone/theme.dart';
 
 List<String> listDuration = <String>[
@@ -40,8 +43,12 @@ class _CreateItemPageState extends State<CreateItemPage> {
   bool _isLoading = false;
   File? _selectedImage;
 
+  List<File> selectedImageGalleries = [];
+  List<String> uploadedImageGalleryUrls = [];
+
   static final List<MenuEntry> menuEntries = UnmodifiableListView<MenuEntry>(
-    listDuration.map<MenuEntry>((String name) => MenuEntry(value: name, label: name)),
+    listDuration
+        .map<MenuEntry>((String name) => MenuEntry(value: name, label: name)),
   );
   String dropdownValue = listDuration.first;
 
@@ -55,7 +62,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
     super.dispose();
   }
 
-  Future<String> uploadImage(File imageFile) async {
+  Future<String> uploadProductImage(File imageFile) async {
     final bucket = 'items';
     final userId = Supabase.instance.client.auth.currentUser!.id;
 
@@ -132,7 +139,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
     try {
       // Upload image
       print('📤 Uploading image...');
-      final url = await uploadImage(_selectedImage!);
+      final url = await uploadProductImage(_selectedImage!);
       print('✅ Image uploaded: $url');
 
       // Find vendor ID
@@ -161,18 +168,26 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
       // Insert to database
       print('💾 Inserting item to database...');
-      await Supabase.instance.client.from('items').insert({
-        'name': _nameController.text.trim(),
-        'thumbnail': url,
-        'price': price,
-        'address': _addressController.text.trim(),
-        'description': _descController.text.trim(),
-        'vendor_id': vendorId, // ✅ Database aktual menggunakan 'vendor_id'
-        'durations':
-            durationList.map((duration) => duration.toString()).toList(),
-      });
+      var responseInsertItem = await Supabase.instance.client.from('items')
+        .insert({
+          'name': _nameController.text.trim(),
+          'thumbnail': url,
+          'price': price,
+          'address': _addressController.text.trim(),
+          'description': _descController.text.trim(),
+          'vendor_id': vendorId, // ✅ Database aktual menggunakan 'vendor_id'
+          'durations':
+              durationList.map((duration) => duration.toString()).toList(),
+        })
+        .select()
+        .single();
 
-      print('✅ Item created successfully!');
+      final String itemId = responseInsertItem['id'];
+
+      if (selectedImageGalleries.isNotEmpty) {
+        await uploadAll(itemId: itemId);
+      }
+      
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -248,6 +263,29 @@ class _CreateItemPageState extends State<CreateItemPage> {
     setState(() {
       durationList.remove(duration);
     });
+  }
+
+  Future<List<File>> pickMultipleImages() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickMultiImage(imageQuality: 80);
+
+    return picked.map((e) => File(e.path)).toList();
+  }
+
+  Future pickImages() async {
+    selectedImageGalleries = await pickMultipleImages();
+    DMethod.log(selectedImageGalleries.toString() ,prefix: "Selected Image");
+    setState(() {});
+  }
+
+  Future uploadAll({required String itemId}) async {
+    ImageUploadService imageUploadService = ImageUploadService();
+    uploadedImageGalleryUrls = await imageUploadService.uploadMultipleImages(selectedImageGalleries, itemId: itemId);
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Upload selesai!")),
+    );
   }
 
   @override
@@ -353,6 +391,30 @@ class _CreateItemPageState extends State<CreateItemPage> {
                   validator: (value) => value == null || value.trim().isEmpty
                       ? 'Alamat wajib diisi'
                       : null,
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                InkWell(
+                  onTap: () {
+                    pickImages();
+                  },
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Text("Upload image gallery"),
+                      ],
+                    ),
+                  ),
                 ),
                 const Divider(height: 56),
                 Text(

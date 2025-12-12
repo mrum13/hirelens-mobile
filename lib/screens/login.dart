@@ -44,7 +44,13 @@ class _LoginPageState extends State<LoginPage> {
         }
         GoRouter.of(context).pushReplacement('/home');
       } else {
-        _showError('Login gagal. Silakan coba lagi.');
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            "Gagal Login",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ));
       }
     } catch (e) {
       if (mounted) {
@@ -60,7 +66,13 @@ class _LoginPageState extends State<LoginPage> {
             );
           }
         } else {
-          _showError('Terjadi kesalahan: ${e.toString()}');
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+          e.toString(),
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.red,
+      ));
         }
       }
     } finally {
@@ -140,10 +152,9 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     MyLinkButton(
                       variant: MyButtonVariant.secondary,
-                      onTap:
-                          () => GoRouter.of(context).go(
-                            '/reset_password?email=${_emailController.text}',
-                          ),
+                      onTap: () => GoRouter.of(context).go(
+                        '/reset_password?email=${_emailController.text}',
+                      ),
                       child: Text("Forgot Password"),
                     ),
                   ],

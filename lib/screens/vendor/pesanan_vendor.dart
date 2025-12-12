@@ -117,32 +117,29 @@ class _PesananVendorPageState extends State<PesananVendorPage> with RouteAware {
 
       List<Map<String, dynamic>> responseData = [];
 
-      // ✅ FIX: Query tanpa JOIN, ambil semua field dari transactions dulu
-      if (widget.filter != null && widget.filter!.isNotEmpty) {
-        switch (widget.filter) {
-          case 'processing':
-            responseData = await client
-                .from('transactions')
-                .select("*")
-                .eq('vendor_id', vendorId)
-                .or('status_work.eq.editing,status_work.eq.post_processing')
-                .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
-            break;
-          case 'complete':
-            responseData = await client
-                .from('transactions')
-                .select("*")
-                .eq('vendor_id', vendorId)
-                .eq('status_work', 'complete');
-            break;
-        }
-      } else {
-        responseData = await client
-            .from('transactions')
-            .select("*")
-            .eq('vendor_id', vendorId)
-            .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
-            .or('status_work.eq.pending,status_work.eq.waiting');
+      switch (widget.filter) {
+        case 'pending':
+          responseData = await client
+              .from('transactions')
+              .select("*")
+              .eq('vendor_id', vendorId)
+              .or('status_payment.eq.panjar_paid,status_payment.eq.complete')
+              .or('status_work.eq.pending');
+        case 'processing':
+          responseData = await client
+              .from('transactions')
+              .select("*")
+              .eq('vendor_id', vendorId)
+              .or('status_work.eq.waiting,status_work.eq.editing,status_work.eq.post_processing,status_work.eq.complete')
+              .or('status_payment.eq.panjar_paid,status_payment.eq.complete');
+          break;
+        case 'finish':
+          responseData = await client
+              .from('transactions')
+              .select("*")
+              .eq('vendor_id', vendorId)
+              .or('status_work.eq.cancel,status_work.eq.finish');
+          break;
       }
 
       debugPrint("📦 Transactions fetched: ${responseData.length}");
@@ -275,7 +272,7 @@ class _PesananVendorPageState extends State<PesananVendorPage> with RouteAware {
                                   "ID Transactions = ${transaction['id']}");
                               GoRouter.of(
                                 context,
-                              ).push('/vendor/pesanan/${transaction['id']}');
+                              ).push('/vendor/pesanan-detail/${transaction['id']}');
                             },
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 8),

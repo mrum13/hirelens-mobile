@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:unsplash_clone/screens/home_vendor.dart';
+import 'package:unsplash_clone/screens/vendor/home_vendor.dart';
 import 'package:unsplash_clone/screens/customer/home_customer.dart';
 import 'package:unsplash_clone/screens/login.dart';
 

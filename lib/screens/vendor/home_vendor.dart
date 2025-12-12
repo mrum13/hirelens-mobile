@@ -206,7 +206,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
           (order) =>
             ['panjar_paid', 'complete'].contains(order['status_payment']) 
             &&
-            ['pending', 'waiting'].contains(order['status_work']),
+            ['pending'].contains(order['status_work']),
         )
         .toList();
 
@@ -217,7 +217,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     List<Map<String, dynamic>> orders,
   ) {
     final result = orders
-        .where((order) => ['waiting', 'editing', 'post_processing']
+        .where((order) => ['waiting', 'editing', 'post_processing', 'complete']
             .contains(order['status_work']))
         .toList();
 
@@ -228,7 +228,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
     List<Map<String, dynamic>> orders,
   ) {
     final result =
-        orders.where((order) => order['status_work'] == 'complete').toList();
+        orders.where((order) => ['finish','cancel'].contains(order['status_work']) ).toList();
 
     return result;
   }
@@ -416,7 +416,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                       ),
                       GestureDetector(
                         onTap: () =>
-                            GoRouter.of(context).push('/vendor/pesanan'),
+                            GoRouter.of(context).push('/vendor/pesanan?filter=pending'),
                         child: _StatCard(
                           count: filterPendingOrder(
                             transactions,
@@ -440,7 +440,7 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                       GestureDetector(
                         onTap: () => GoRouter.of(
                           context,
-                        ).push('/vendor/pesanan?filter=complete'),
+                        ).push('/vendor/pesanan?filter=finish'),
                         child: _StatCard(
                           count: filterCompletedOrder(
                             transactions,
