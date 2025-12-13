@@ -1,3 +1,4 @@
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -89,6 +90,7 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    DMethod.log(role,prefix: "ROLE");
     return Container(
       width: double.infinity,
       height: 200,
@@ -96,7 +98,7 @@ class _ProfileHeader extends StatelessWidget {
       child: InkWell(
         onTap: () => GoRouter.of(
           context,
-        ).push('/edit-profile'),
+        ).push('/edit-profile/$role'),
         child: Row(
           spacing: 16,
           mainAxisAlignment: MainAxisAlignment.start,

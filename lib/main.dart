@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/core/auth/auth_flags.dart';
 import 'package:unsplash_clone/router.dart';
 import 'package:unsplash_clone/theme.dart';
 
@@ -30,6 +31,13 @@ Future<void> main() async {
     url: supabaseUrl,
     anonKey: supabaseAnonKey,
   );
+
+    // 🔑 LISTEN AUTH STATE (SEKALI SAJA)
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    if (data.event == AuthChangeEvent.passwordRecovery) {
+      isPasswordRecovery.value = true;
+    }
+  });
 
   runApp(const MyApp());
 }

@@ -67,12 +67,12 @@ class _LoginPageState extends State<LoginPage> {
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          e.toString(),
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red,
-      ));
+            content: Text(
+              e.toString(),
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+          ));
         }
       }
     } finally {
@@ -152,9 +152,9 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     MyLinkButton(
                       variant: MyButtonVariant.secondary,
-                      onTap: () => GoRouter.of(context).go(
-                        '/reset_password?email=${_emailController.text}',
-                      ),
+                      onTap: () {
+                        GoRouter.of(context).push('/forgot-password');
+                      },
                       child: Text("Forgot Password"),
                     ),
                   ],

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  final String role;
+
+  const EditProfilePage({required this.role, super.key});
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();
@@ -14,6 +16,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController phoneController = TextEditingController();
   TextEditingController accountController = TextEditingController();
+  TextEditingController cityController = TextEditingController();
   String? bankNameValue;
   final List<String> paymentAccountOptions = [
     'BRI',
@@ -36,69 +39,132 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
     final client = Supabase.instance.client;
 
-    final response = await client
-        .from('profiles')
-        .select()
-        .eq('id', client.auth.currentUser!.id)
-        .single();
+    if (widget.role == 'vendor') {
+      final response = await client
+          .from('vendors')
+          .select()
+          .eq('user_id', client.auth.currentUser!.id)
+          .single();
 
-    DMethod.log(response.toString(), prefix: "Profile Data");
+      DMethod.log(response.toString(), prefix: "Profile Data Vendor");
 
-    setState(() {
-      // tagihanCount = response;
-      _isLoading = false;
-      nameController.text = response['full_name'];
-      phoneController.text = response['phone'];
-      bankNameValue = response['bank_name'];
-      accountController.text = response['bank_account'];
-    });
+      setState(() {
+        // tagihanCount = response;
+        _isLoading = false;
+        nameController.text = response['name'];
+        phoneController.text = response['phone'];
+        cityController.text = response['city'];
+      });
+    } else {
+      final response = await client
+          .from('profiles')
+          .select()
+          .eq('id', client.auth.currentUser!.id)
+          .single();
+
+      DMethod.log(response.toString(), prefix: "Profile Data Customer");
+
+      setState(() {
+        // tagihanCount = response;
+        _isLoading = false;
+        nameController.text = response['full_name'];
+        phoneController.text = response['phone'];
+        bankNameValue = response['bank_name'];
+        accountController.text = response['bank_account'];
+      });
+    }
   }
 
   void editUserData() async {
-    if (nameController.text == "" ||
-        nameController.text.isEmpty ||
-        phoneController.text == "" ||
-        phoneController.text.isEmpty ||
-        accountController.text == "" ||
-        accountController.text.isEmpty ||
-        bankNameValue == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          "Lengkapi form terlebih dahulu !",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.red,
-      ));
-    } else {
-      try {
-        setState(() {
-          _isLoading = true;
-        });
-        final client = Supabase.instance.client;
-        var res = await client.from('profiles').update({
-          'full_name': nameController.text,
-          'phone': phoneController.text,
-          'bank_name': bankNameValue,
-          'bank_account': accountController.text,
-        }).eq('id', client.auth.currentUser!.id);
-
-        setState(() {
-          _isLoading = false;
-        });
-
+    if (widget.role == 'vendor') {
+      if (nameController.text == "" ||
+          nameController.text.isEmpty ||
+          phoneController.text == "" ||
+          phoneController.text.isEmpty ||
+          cityController.text == "" ||
+          cityController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-            "Profile berhasil diupdate",
+            "Lengkapi form terlebih dahulu !",
             style: TextStyle(color: Colors.white),
           ),
-          backgroundColor: Colors.green,
-        )
-        );
-      } catch (e) {
-        setState(() {
-          _isLoading = false;
-        });
-        DMethod.log(e.toString(), prefix: "Update Data Message");
+          backgroundColor: Colors.red,
+        ));
+      } else {
+        try {
+          setState(() {
+            _isLoading = true;
+          });
+          final client = Supabase.instance.client;
+          var res = await client.from('vendors').update({
+            'name': nameController.text,
+            'phone': phoneController.text,
+            'city': cityController.text,
+          }).eq('user_id', client.auth.currentUser!.id);
+
+          setState(() {
+            _isLoading = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+              "Profile berhasil diupdate",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+          ));
+        } catch (e) {
+          setState(() {
+            _isLoading = false;
+          });
+          DMethod.log(e.toString(), prefix: "Update Data Message");
+        }
+      }
+    } else {
+      if (nameController.text == "" ||
+          nameController.text.isEmpty ||
+          phoneController.text == "" ||
+          phoneController.text.isEmpty ||
+          accountController.text == "" ||
+          accountController.text.isEmpty ||
+          bankNameValue == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            "Lengkapi form terlebih dahulu !",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.red,
+        ));
+      } else {
+        try {
+          setState(() {
+            _isLoading = true;
+          });
+          final client = Supabase.instance.client;
+          var res = await client.from('profiles').update({
+            'full_name': nameController.text,
+            'phone': phoneController.text,
+            'bank_name': bankNameValue,
+            'bank_account': accountController.text,
+          }).eq('id', client.auth.currentUser!.id);
+
+          setState(() {
+            _isLoading = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+              "Profile berhasil diupdate",
+              style: TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+          ));
+        } catch (e) {
+          setState(() {
+            _isLoading = false;
+          });
+          DMethod.log(e.toString(), prefix: "Update Data Message");
+        }
       }
     }
   }
@@ -136,7 +202,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             TextFormField(
               controller: nameController,
               decoration: InputDecoration(
-                  label: Text("Nama"),
+                  label: Text(widget.role=='vendor'?"Nama Vendor":"Nama"),
                   isDense: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
@@ -159,44 +225,67 @@ class _EditProfilePageState extends State<EditProfilePage> {
             const SizedBox(
               height: 8,
             ),
-            DropdownButtonFormField<String>(
-              value: bankNameValue,
-              items: paymentAccountOptions
-                  .map(
-                    (payment) => DropdownMenuItem(
-                      value: payment,
-                      child: Text(payment),
-                    ),
+            widget.role == 'vendor'
+                ? Column(
+                    children: [
+                      const SizedBox(
+                        height: 8,
+                      ),
+                      TextFormField(
+                        controller: cityController,
+                        decoration: InputDecoration(
+                            hint: Text("Kota"),
+                            label: Text("Kota"),
+                            isDense: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Colors.grey))),
+                      ),
+                    ],
                   )
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  bankNameValue = value;
-                });
-              },
-              decoration: InputDecoration(
-                labelText: "Rekening / E-Wallet",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
-            TextFormField(
-              controller: accountController,
-              decoration: InputDecoration(
-                  hint: Text("No. Rekening"),
-                  isDense: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(color: Colors.grey))),
-            ),
-            const SizedBox(
-              height: 8,
-            ),
+                : Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: bankNameValue,
+                        items: paymentAccountOptions
+                            .map(
+                              (payment) => DropdownMenuItem(
+                                value: payment,
+                                child: Text(payment),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            bankNameValue = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Rekening / E-Wallet",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 8,
+                      ),
+                      TextFormField(
+                        controller: accountController,
+                        decoration: InputDecoration(
+                            hint: Text("No. Rekening"),
+                            isDense: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(color: Colors.grey))),
+                      ),
+                      const SizedBox(
+                        height: 8,
+                      ),
+                    ],
+                  )
           ],
         ),
       ),

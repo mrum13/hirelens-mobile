@@ -1,6 +1,8 @@
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:unsplash_clone/core/auth/auth_flags.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 import 'package:unsplash_clone/screens/cart.dart';
 import 'package:unsplash_clone/screens/customer/checkout.dart' as checkout;
@@ -8,6 +10,7 @@ import 'package:unsplash_clone/screens/checkout_success.dart';
 import 'package:unsplash_clone/screens/create_item.dart';
 import 'package:unsplash_clone/screens/customer/edit_profile_page.dart';
 import 'package:unsplash_clone/screens/edit_item.dart';
+import 'package:unsplash_clone/screens/forgot_password_page.dart';
 import 'package:unsplash_clone/screens/home.dart';
 import 'package:unsplash_clone/screens/loading.dart';
 import 'package:unsplash_clone/screens/change_password_page.dart';
@@ -54,6 +57,14 @@ final router = GoRouter(
       },
     ),
     GoRoute(path: "/login", builder: (context, state) => LoginPage()),
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => ForgotPasswordPage()
+    ),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) => ResetPasswordPage(),
+    ),
     GoRoute(path: "/register", builder: (context, state) => RegisterPage()),
     GoRoute(
       path: "/verify_registration",
@@ -155,12 +166,6 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/reset_password',
-      builder: (context, state) {
-        return ResetPasswordPage(email: state.uri.queryParameters['email']);
-      },
-    ),
-    GoRoute(
       path: '/change-password-page',
       builder: (context, state) {
         return ChangePasswordPage();
@@ -174,10 +179,10 @@ final router = GoRouter(
         );
       },
     ),
-     GoRoute(
-      path: '/edit-profile',
+    GoRoute(
+      path: '/edit-profile/:role',
       builder: (context, state) {
-        return EditProfilePage();
+        return EditProfilePage(role: state.pathParameters['role']!,);
       },
     ),
   ],
@@ -191,7 +196,13 @@ final router = GoRouter(
     final onVerify = loc == '/verify_registration';
     final onOpening = loc == '/opening';
     final onPreload = loc == '/';
-    final onResetPassword = loc.startsWith('/reset_password');
+    final onResetPassword = loc.startsWith('/reset-password');
+    final onForgotPassword = loc == '/forgot-password';
+
+      // 🔑 PENTING: SAAT PASSWORD RECOVERY
+  if (isPasswordRecovery.value && !onResetPassword) {
+    return '/reset-password';
+  }
 
     if (user == null &&
         !(onLogin ||
@@ -199,7 +210,8 @@ final router = GoRouter(
             onVerify ||
             onOpening ||
             onPreload ||
-            onResetPassword)) {
+            onResetPassword ||
+            onForgotPassword)) {
       return '/login';
     }
     if (user != null &&
