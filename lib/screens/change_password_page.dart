@@ -5,7 +5,9 @@ import 'package:unsplash_clone/components/new_buttons.dart';
 import 'package:unsplash_clone/theme.dart';
 
 class ChangePasswordPage extends StatefulWidget {
-  const ChangePasswordPage({super.key});
+  final String role;
+
+  const ChangePasswordPage({super.key, required this.role});
 
   @override
   State<ChangePasswordPage> createState() => _ChangePasswordPageState();
@@ -20,19 +22,34 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     setState(() {
       _isLoading = true;
     });
+
     final client = Supabase.instance.client;
 
-    final response = await client
-        .from('profiles')
-        .select()
-        .eq('id', client.auth.currentUser!.id)
-        .single();
+    if (widget.role == "vendor") {
+      final response = await client
+          .from('vendors')
+          .select()
+          .eq('user_id', client.auth.currentUser!.id)
+          .single();
 
-    setState(() {
-      // tagihanCount = response;
-      _isLoading = false;
-      emailController.text = response['email'];
-    });
+      setState(() {
+        // tagihanCount = response;
+        _isLoading = false;
+        emailController.text = response['email'];
+      });
+    } else {
+      final response = await client
+          .from('profiles')
+          .select()
+          .eq('id', client.auth.currentUser!.id)
+          .single();
+
+      setState(() {
+        // tagihanCount = response;
+        _isLoading = false;
+        emailController.text = response['email'];
+      });
+    }
   }
 
   Future<void> changePassword({required String newPassword}) async {
@@ -46,6 +63,16 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ));
     }
     try {
+      // if (widget.role == 'vendor') {
+      //   await Supabase.instance.client.auth.updateUser(
+      //   UserAttributes(password: newPassword),
+      // );
+      // } else {
+      //   await Supabase.instance.client.auth.updateUser(
+      //     UserAttributes(password: newPassword),
+      //   );
+      // }
+
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: newPassword),
       );

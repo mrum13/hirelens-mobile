@@ -46,6 +46,9 @@ class _CreateItemPageState extends State<CreateItemPage> {
   List<File> selectedImageGalleries = [];
   List<String> uploadedImageGalleryUrls = [];
 
+  List<File> selectedImageBts = [];
+  List<String> uploadedImageBtsUrls = [];
+
   static final List<MenuEntry> menuEntries = UnmodifiableListView<MenuEntry>(
     listDuration
         .map<MenuEntry>((String name) => MenuEntry(value: name, label: name)),
@@ -168,27 +171,31 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
       // Insert to database
       print('💾 Inserting item to database...');
-      var responseInsertItem = await Supabase.instance.client.from('items')
-        .insert({
-          'name': _nameController.text.trim(),
-          'thumbnail': url,
-          'price': price,
-          'address': _addressController.text.trim(),
-          'description': _descController.text.trim(),
-          'vendor_id': vendorId, // ✅ Database aktual menggunakan 'vendor_id'
-          'durations':
-              durationList.map((duration) => duration.toString()).toList(),
-          'is_verified': false,
-        })
-        .select()
-        .single();
+      var responseInsertItem = await Supabase.instance.client
+          .from('items')
+          .insert({
+            'name': _nameController.text.trim(),
+            'thumbnail': url,
+            'price': price,
+            'address': _addressController.text.trim(),
+            'description': _descController.text.trim(),
+            'vendor_id': vendorId, // ✅ Database aktual menggunakan 'vendor_id'
+            'durations':
+                durationList.map((duration) => duration.toString()).toList(),
+            'is_verified': false,
+          })
+          .select()
+          .single();
 
       final String itemId = responseInsertItem['id'];
 
       if (selectedImageGalleries.isNotEmpty) {
-        await uploadAll(itemId: itemId);
+        await uploadAllGallery(itemId: itemId);
       }
-      
+
+      if (selectedImageBts.isNotEmpty) {
+        await uploadAllBts(itemId: itemId);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -273,19 +280,42 @@ class _CreateItemPageState extends State<CreateItemPage> {
     return picked.map((e) => File(e.path)).toList();
   }
 
-  Future pickImages() async {
+  Future pickImagesGallery() async {
     selectedImageGalleries = await pickMultipleImages();
-    DMethod.log(selectedImageGalleries.toString() ,prefix: "Selected Image");
+    DMethod.log(selectedImageGalleries.toString(),
+        prefix: "Selected Image Gallery");
     setState(() {});
   }
 
-  Future uploadAll({required String itemId}) async {
+  Future pickImagesBts() async {
+    selectedImageBts = await pickMultipleImages();
+    DMethod.log(selectedImageBts.toString(), prefix: "Selected Image Gallery");
+    setState(() {});
+  }
+
+  Future uploadAllGallery({required String itemId}) async {
     ImageUploadService imageUploadService = ImageUploadService();
-    uploadedImageGalleryUrls = await imageUploadService.uploadMultipleImages(selectedImageGalleries, itemId: itemId);
+    uploadedImageGalleryUrls = await imageUploadService.uploadMultipleImages(
+        selectedImageGalleries,
+        itemId: itemId,
+        category: "gallery");
     setState(() {});
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Upload selesai!")),
+      const SnackBar(content: Text("Upload Gallery selesai!")),
+    );
+  }
+
+  Future uploadAllBts({required String itemId}) async {
+    ImageUploadService imageUploadService = ImageUploadService();
+    uploadedImageBtsUrls = await imageUploadService.uploadMultipleImages(
+        selectedImageBts,
+        itemId: itemId,
+        category: "bts");
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Upload BTS selesai!")),
     );
   }
 
@@ -398,7 +428,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 ),
                 InkWell(
                   onTap: () {
-                    pickImages();
+                    pickImagesGallery();
                   },
                   child: Container(
                     height: 56,
@@ -415,6 +445,166 @@ class _CreateItemPageState extends State<CreateItemPage> {
                         Text("Upload image gallery"),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                Visibility(
+                  visible: selectedImageGalleries.isNotEmpty?true:false,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 100,
+                        width: double.infinity,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                shrinkWrap: true,
+                                itemCount: selectedImageGalleries.length,
+                                itemBuilder: (context, index) {
+                                  return Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          8,
+                                        ),
+                                        child: InkWell(
+                                          onTap: () => showDialog(
+                                            context: context, 
+                                            builder: (context) => Dialog(
+                                              child: Image.file(
+                                              selectedImageGalleries[index],
+                                              fit: BoxFit.cover,
+                                                                                  ),
+                                            ),
+                                          ),
+                                          child: Image.file(
+                                            selectedImageGalleries[index],
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedImageGalleries.clear();
+                                });
+                              }, 
+                              icon: Container(
+                                width: 36,
+                                height: 36,
+                                margin: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+
+                                  border: Border.all(color: Colors.amber),
+                                  borderRadius: BorderRadius.circular(8)
+                                ),
+                                child: Icon(Icons.delete, size: 24,))
+                            )
+                          ],
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 16,
+                      )
+                    ],
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    pickImagesBts();
+                  },
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white),
+                        borderRadius: BorderRadius.circular(4)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.image),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Text("Upload image BTS"),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16,),
+                Visibility(
+                  visible: selectedImageBts.isNotEmpty?true:false,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 100,
+                        width: double.infinity,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                shrinkWrap: true,
+                                itemCount: selectedImageBts.length,
+                                itemBuilder: (context, index) {
+                                  return Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(
+                                          8,
+                                        ),
+                                        child: InkWell(
+                                          onTap: () => showDialog(
+                                            context: context, 
+                                            builder: (context) => Dialog(
+                                              child: Image.file(
+                                              selectedImageBts[index],
+                                              fit: BoxFit.cover,
+                                                                                  ),
+                                            ),
+                                          ),
+                                          child: Image.file(
+                                            selectedImageBts[index],
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedImageBts.clear();
+                                });
+                              }, 
+                              icon: Container(
+                                width: 36,
+                                height: 36,
+                                margin: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+
+                                  border: Border.all(color: Colors.amber),
+                                  borderRadius: BorderRadius.circular(8)
+                                ),
+                                child: Icon(Icons.delete, size: 24,))
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const Divider(height: 56),

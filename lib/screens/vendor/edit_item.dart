@@ -1,11 +1,14 @@
 import 'dart:io';
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:unsplash_clone/components/image_picker_widget.dart';
 import 'package:unsplash_clone/components/new_buttons.dart';
+import 'package:unsplash_clone/services/image_upload_service.dart';
 import 'package:unsplash_clone/theme.dart';
 import 'package:http/http.dart' as http;
 
@@ -27,9 +30,20 @@ class _EditItemPageState extends State<EditItemPage> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _durasiController = TextEditingController();
   List<int> durationList = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
   bool _isImageUpdated = false;
   File? _selectedImage;
+
+  List imageGalleryApi = [];
+  List imageBtsApi = [];
+
+  bool _isGalleryUpdated = false;
+  List<File> selectedImageGalleries = [];
+  List<String> uploadedImageGalleryUrls = [];
+
+  bool _isBtsUpdated = false;
+  List<File> selectedImageBts = [];
+  List<String> uploadedImageBtsUrls = [];
 
   @override
   void dispose() {
@@ -41,10 +55,14 @@ class _EditItemPageState extends State<EditItemPage> {
   }
 
   Future<String> uploadImage(File imageFile) async {
-    final bucket = 'item-thumbnails';
-    final fileName =
-        'item_thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
+    final bucket = 'items';
+    final userId = Supabase.instance.client.auth.currentUser!.id;
 
+    // ✅ Gunakan user ID di path untuk RLS policy
+    final fileName =
+        '$userId/thumbnails/${DateTime.now().millisecondsSinceEpoch}_${p.basename(imageFile.path)}';
+
+    print('📁 Uploading to: $fileName');
     await Supabase.instance.client.storage.from(bucket).uploadBinary(
           fileName,
           await imageFile.readAsBytes(),
@@ -102,6 +120,20 @@ class _EditItemPageState extends State<EditItemPage> {
     final client = Supabase.instance.client;
     final response =
         await client.from('items').select().eq('id', widget.dataId).single();
+    final responseGallery = await client
+        .from('item_gallery')
+        .select('*')
+        .eq('item_id', widget.dataId);
+    final responseBts =
+        await client.from('item_bts').select('*').eq('item_id', widget.dataId);
+
+    selectedImageGalleries.clear();
+    selectedImageBts.clear();
+
+    imageGalleryApi = responseGallery;
+    imageBtsApi = responseBts;
+
+    DMethod.log(response.toString(), prefix: "hahah");
 
     _nameController.text = response['name'];
     _addressController.text = response['address'];
@@ -111,6 +143,14 @@ class _EditItemPageState extends State<EditItemPage> {
     _priceController.text = response['price'].toString();
 
     final thumbnailFile = await _loadImageFromUrl(response['thumbnail']);
+
+    for (var item in imageGalleryApi) {
+      selectedImageGalleries.add(await _loadImageFromUrl(item['image_url']));
+    }
+
+    for (var item in imageBtsApi) {
+      selectedImageBts.add(await _loadImageFromUrl(item['image_url']));
+    }
 
     setState(() {
       // ✅ FIX: Cast ke List<dynamic> dulu, baru map
@@ -135,6 +175,18 @@ class _EditItemPageState extends State<EditItemPage> {
     if (_isImageUpdated) {
       url = await uploadImage(_selectedImage!);
       data['thumbnail'] = url;
+    }
+
+    if (_isGalleryUpdated) {
+      if (selectedImageGalleries.isNotEmpty) {
+        await uploadAllGallery(itemId: widget.dataId);
+      }
+    }
+
+    if (_isBtsUpdated) {
+      if (selectedImageBts.isNotEmpty) {
+        await uploadAllBts(itemId: widget.dataId);
+      }
     }
 
     data['name'] = _nameController.text.trim();
@@ -172,191 +224,462 @@ class _EditItemPageState extends State<EditItemPage> {
     _fetchAndSetData();
   }
 
+  Future<List<File>> pickMultipleImages() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickMultiImage(imageQuality: 80);
+
+    return picked.map((e) => File(e.path)).toList();
+  }
+
+  Future pickImagesGallery() async {
+    selectedImageGalleries = await pickMultipleImages();
+    _isGalleryUpdated = true;
+    DMethod.log(selectedImageGalleries.toString(),
+        prefix: "Selected Image Gallery");
+    setState(() {});
+  }
+
+  Future pickImagesBts() async {
+    selectedImageBts = await pickMultipleImages();
+    _isBtsUpdated = true;
+    DMethod.log(selectedImageBts.toString(), prefix: "Selected Image Gallery");
+    setState(() {});
+  }
+
+  Future uploadAllGallery({required String itemId}) async {
+    ImageUploadService imageUploadService = ImageUploadService();
+    uploadedImageGalleryUrls = await imageUploadService.editMultipleImages(
+        oldUrls: imageGalleryApi.map((e) => e['image_url'] as String).toList(),
+        newImages: selectedImageGalleries,
+        itemId: itemId,
+        category: "gallery");
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Upload Gallery selesai!")),
+    );
+  }
+
+  Future uploadAllBts({required String itemId}) async {
+    ImageUploadService imageUploadService = ImageUploadService();
+    uploadedImageBtsUrls = await imageUploadService.editMultipleImages(
+        oldUrls: imageBtsApi.map((e) => e['image_url'] as String).toList(),
+        newImages: selectedImageBts,
+        itemId: itemId,
+        category: "bts");
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Upload BTS selesai!")),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          'Buat Item Baru',
-          style: Theme.of(context).textTheme.displayMedium,
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ImagePickerWidget(
-                    initialImage: _selectedImage,
-                    enabled: !_isLoading,
-                    height: 240,
-                    onImageSelected: (file) {
-                      setState(() {
-                        _selectedImage = file;
-                        _isImageUpdated = true;
-                      });
-                    },
-                  ),
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nama Item',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    style: TextStyle(fontSize: 16),
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Nama item wajib diisi'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Deskripsi',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    minLines: 3,
-                    maxLines: 5,
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Harga',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(fontSize: 16),
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Harga wajib diisi'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Alamat',
-                      border: OutlineInputBorder(),
-                      labelStyle: TextStyle(fontSize: 16),
-                    ),
-                    style: TextStyle(fontSize: 16),
-                    maxLines: 2,
-                    validator: (value) => value == null || value.isEmpty
-                        ? 'Alamat wajib diisi'
-                        : null,
-                  ),
-                  const Divider(height: 56),
-                  Text(
-                    "Durasi",
-                    style: themeFromContext(context).textTheme.displayLarge,
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    spacing: 16,
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _durasiController,
-                          decoration: InputDecoration(
-                            label: Text("Durasi (Jam)"),
-                            hintText:
-                                "Gunakan ',' untuk memasukkan lebih dari 1 durasi",
-                            hintStyle:
-                                themeFromContext(context).textTheme.bodySmall,
-                            hintMaxLines: 2,
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                      MyFilledButton(
-                        width: 96,
-                        variant: MyButtonVariant.secondary,
-                        onTap: () {
-                          final value = _durasiController.text.trim();
-                          final List<int> tmp = durationList +
-                              value
-                                  .split(',')
-                                  .map((v) => int.parse(v))
-                                  .toList();
-                          tmp.sort();
-
-                          setState(() {
-                            durationList = tmp;
-                          });
-
-                          _durasiController.clear();
-                        },
-                        child: Text(
-                          "Tambah",
-                          style: TextStyle(
-                            color: themeFromContext(
-                              context,
-                            ).colorScheme.onSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ...durationList.map(
-                    (duration) => MyLinkButton(
-                      variant: MyButtonVariant.secondary,
-                      alignment: Alignment.centerLeft,
-                      onTap: () {
-                        final tmp = durationList;
-                        tmp.remove(duration);
-
-                        setState(() {
-                          durationList = tmp;
-                        });
-                      },
-                      child: Text("$duration Jam", textAlign: TextAlign.start),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  MyFilledButton(
-                    isLoading: _isLoading,
-                    variant: MyButtonVariant.primary,
-                    onTap: _updateItem,
-                    child: Text(
-                      "Simpan",
-                      style: TextStyle(
-                        color: themeFromContext(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  MyFilledButton(
-                    isLoading: _isLoading,
-                    variant: MyButtonVariant.danger,
-                    onTap: _updateItem,
-                    child: Text(
-                      "Hapus",
-                      style: TextStyle(
-                        color: themeFromContext(context).colorScheme.onError,
-                      ),
-                    ),
-                  ),
-                ],
+    return _isLoading
+        ? Scaffold(
+            body: Center(
+            child: CircularProgressIndicator(),
+          ))
+        : Scaffold(
+            appBar: AppBar(
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: InkWell(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) =>
+                        Dialog(child: Image.file(_selectedImage!)),
+                  );
+                },
+                child: Text(
+                  'Edit Item',
+                  style: Theme.of(context).textTheme.displayMedium,
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
+            body: SafeArea(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding:
+                        EdgeInsets.only(top: 8, left: 16, right: 16, bottom: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ImagePickerWidget(
+                          initialImage: _selectedImage,
+                          enabled: !_isLoading,
+                          height: 240,
+                          onImageSelected: (file) {
+                            setState(() {
+                              _selectedImage = file;
+                              _isImageUpdated = true;
+                            });
+                          },
+                        ),
+                        SizedBox(height: 16),
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Nama Item',
+                            border: OutlineInputBorder(),
+                            labelStyle: TextStyle(fontSize: 16),
+                          ),
+                          style: TextStyle(fontSize: 16),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Nama item wajib diisi'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _descController,
+                          decoration: const InputDecoration(
+                            labelText: 'Deskripsi',
+                            border: OutlineInputBorder(),
+                            labelStyle: TextStyle(fontSize: 16),
+                          ),
+                          minLines: 3,
+                          maxLines: 5,
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _priceController,
+                          decoration: const InputDecoration(
+                            labelText: 'Harga',
+                            border: OutlineInputBorder(),
+                            labelStyle: TextStyle(fontSize: 16),
+                          ),
+                          keyboardType: TextInputType.number,
+                          style: TextStyle(fontSize: 16),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Harga wajib diisi'
+                              : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _addressController,
+                          decoration: const InputDecoration(
+                            labelText: 'Alamat',
+                            border: OutlineInputBorder(),
+                            labelStyle: TextStyle(fontSize: 16),
+                          ),
+                          style: TextStyle(fontSize: 16),
+                          maxLines: 2,
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Alamat wajib diisi'
+                              : null,
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            pickImagesGallery();
+                          },
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white),
+                                borderRadius: BorderRadius.circular(4)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.image),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Text("Upload image gallery"),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        Visibility(
+                          visible:
+                              selectedImageGalleries.isNotEmpty ? true : false,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 100,
+                                width: double.infinity,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        shrinkWrap: true,
+                                        itemCount:
+                                            selectedImageGalleries.length,
+                                        itemBuilder: (context, index) {
+                                          return Row(
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  8,
+                                                ),
+                                                child: InkWell(
+                                                  onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        Dialog(
+                                                      child: Image.file(
+                                                        selectedImageGalleries[
+                                                            index],
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: Image.file(
+                                                    selectedImageGalleries[
+                                                        index],
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            selectedImageGalleries.clear();
+                                          });
+                                        },
+                                        icon: Container(
+                                            width: 36,
+                                            height: 36,
+                                            margin: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: Colors.amber),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            child: Icon(
+                                              Icons.delete,
+                                              size: 24,
+                                            )))
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 16,
+                              )
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            pickImagesBts();
+                          },
+                          child: Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white),
+                                borderRadius: BorderRadius.circular(4)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.image),
+                                const SizedBox(
+                                  width: 8,
+                                ),
+                                Text("Upload image BTS"),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 16,
+                        ),
+                        Visibility(
+                          visible: selectedImageBts.isNotEmpty ? true : false,
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: 100,
+                                width: double.infinity,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        shrinkWrap: true,
+                                        itemCount: selectedImageBts.length,
+                                        itemBuilder: (context, index) {
+                                          return Row(
+                                            children: [
+                                              ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  8,
+                                                ),
+                                                child: InkWell(
+                                                  onTap: () => showDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        Dialog(
+                                                      child: Image.file(
+                                                        selectedImageBts[index],
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: Image.file(
+                                                    selectedImageBts[index],
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                            ],
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    IconButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            selectedImageBts.clear();
+                                          });
+                                        },
+                                        icon: Container(
+                                            width: 36,
+                                            height: 36,
+                                            margin: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                                border: Border.all(
+                                                    color: Colors.amber),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            child: Icon(
+                                              Icons.delete,
+                                              size: 24,
+                                            )))
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(
+                          height: 56,
+                        ),
+                        Text(
+                          "Durasi",
+                          style:
+                              themeFromContext(context).textTheme.displayLarge,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          spacing: 16,
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _durasiController,
+                                decoration: InputDecoration(
+                                  label: Text("Durasi (Jam)"),
+                                  hintText:
+                                      "Gunakan ',' untuk memasukkan lebih dari 1 durasi",
+                                  hintStyle: themeFromContext(context)
+                                      .textTheme
+                                      .bodySmall,
+                                  hintMaxLines: 2,
+                                ),
+                                keyboardType: TextInputType.number,
+                              ),
+                            ),
+                            MyFilledButton(
+                              width: 96,
+                              variant: MyButtonVariant.secondary,
+                              onTap: () {
+                                final value = _durasiController.text.trim();
+                                final List<int> tmp = durationList +
+                                    value
+                                        .split(',')
+                                        .map((v) => int.parse(v))
+                                        .toList();
+                                tmp.sort();
+
+                                setState(() {
+                                  durationList = tmp;
+                                });
+
+                                _durasiController.clear();
+                              },
+                              child: Text(
+                                "Tambah",
+                                style: TextStyle(
+                                  color: themeFromContext(
+                                    context,
+                                  ).colorScheme.onSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ...durationList.map(
+                          (duration) => MyLinkButton(
+                            variant: MyButtonVariant.secondary,
+                            alignment: Alignment.centerLeft,
+                            onTap: () {
+                              final tmp = durationList;
+                              tmp.remove(duration);
+
+                              setState(() {
+                                durationList = tmp;
+                              });
+                            },
+                            child: Text("$duration Jam",
+                                textAlign: TextAlign.start),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        MyFilledButton(
+                          isLoading: _isLoading,
+                          variant: MyButtonVariant.primary,
+                          onTap: _updateItem,
+                          child: Text(
+                            "Simpan",
+                            style: TextStyle(
+                              color: themeFromContext(context)
+                                  .colorScheme
+                                  .onPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        MyFilledButton(
+                          isLoading: _isLoading,
+                          variant: MyButtonVariant.danger,
+                          onTap: _updateItem,
+                          child: Text(
+                            "Hapus",
+                            style: TextStyle(
+                              color:
+                                  themeFromContext(context).colorScheme.onError,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
   }
 }

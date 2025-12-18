@@ -19,12 +19,12 @@ import 'package:unsplash_clone/screens/customer/pesanan_detail_customer.dart';
 import 'package:unsplash_clone/screens/vendor/pesanan_vendor.dart';
 import 'package:unsplash_clone/screens/vendor/pesanan_detail_vendor.dart';
 import 'package:unsplash_clone/screens/customer/pesanan_customer.dart';
-import 'package:unsplash_clone/screens/kelola_item.dart';
+import 'package:unsplash_clone/screens/vendor/kelola_item.dart';
 import 'package:unsplash_clone/screens/opening.dart';
 import 'package:unsplash_clone/screens/login.dart';
 import 'package:unsplash_clone/screens/register.dart';
 import 'package:unsplash_clone/screens/reset_password.dart';
-import 'package:unsplash_clone/screens/search_result.dart';
+import 'package:unsplash_clone/screens/customer/search_result.dart';
 import 'package:unsplash_clone/screens/vendor_detail_page.dart';
 import 'package:unsplash_clone/screens/verify_registration.dart';
 import 'package:unsplash_clone/screens/customer/product_detail.dart';
@@ -166,9 +166,9 @@ final router = GoRouter(
       },
     ),
     GoRoute(
-      path: '/change-password-page',
+      path: '/change-password-page/:role',
       builder: (context, state) {
-        return ChangePasswordPage();
+        return ChangePasswordPage(role: state.pathParameters['role']!);
       },
     ),
     GoRoute(

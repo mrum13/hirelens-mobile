@@ -1,3 +1,4 @@
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -53,27 +54,45 @@ class _LoginPageState extends State<LoginPage> {
         ));
       }
     } catch (e) {
-      if (mounted) {
-        if (e is AuthApiException) {
-          if (e.code == 'email_not_confirmed') {
-            GoRouter.of(context).push(
-              '/verify_registration?email=${_emailController.text.trim()}',
-            );
+      if (!mounted) return;
 
-            await client.auth.resend(
-              type: OtpType.signup,
-              email: _emailController.text.trim(),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-              e.toString(),
-              style: TextStyle(color: Colors.white),
+      if (e is AuthApiException) {
+        if (e.code == 'email_not_confirmed') {
+          GoRouter.of(context).push(
+            '/verify_registration?email=${_emailController.text.trim()}',
+          );
+
+          await client.auth.resend(
+            type: OtpType.signup,
+            email: _emailController.text.trim(),
+          );
+        } else if (e.code == 'invalid_credentials') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "Email atau password salah",
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ));
+          );
+        } else {
+          DMethod.log("DISINI $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.message,style: TextStyle(color: Colors.white),),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
+      } else {
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString(),style: TextStyle(color: Colors.white),),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) {

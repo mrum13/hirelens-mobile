@@ -66,7 +66,7 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
               ),
               role == 'vendor' ? _VendorMenuSection() : _CustomerMenuSection(),
               const SizedBox(height: 32),
-              const _InformationSection(),
+              _InformationSection(role),
             ],
           ),
         ),
@@ -523,7 +523,8 @@ class _VendorMenuSectionState extends State<_VendorMenuSection> {
 }
 
 class _InformationSection extends StatelessWidget {
-  const _InformationSection();
+  String role;
+  _InformationSection(this.role);
 
   @override
   Widget build(BuildContext context) {
@@ -556,7 +557,7 @@ class _InformationSection extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
-              GoRouter.of(context).push("/change-password-page");
+              GoRouter.of(context).push("/change-password-page/$role");
             },
             child: ListTile(
               leading: Icon(Icons.key, size: 24),

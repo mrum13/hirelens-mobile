@@ -29,6 +29,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool isLoading = true;
   bool isOnCart = false;
   List<String> galleryImages = [];
+  List<String> btsImages = [];
 
   Future<bool> checkIsAlreadyOnCart() async {
     final client = Supabase.instance.client;
@@ -107,6 +108,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
   }
 
+  void fetchBtsImages() async {
+    final client = Supabase.instance.client;
+    try {
+      final response = await client
+          .from('item_bts')
+          .select('image_url')
+          .eq('item_id', dataId);
+
+      if (response.isNotEmpty) {
+        setState(() {
+          btsImages = List<String>.from(
+            response.map((item) => item['image_url']),
+          );
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error while fetching product BTS: $e")),
+      );
+    }
+  }
+
   void toggleCart() async {
     final client = Supabase.instance.client;
     setState(() {
@@ -174,6 +197,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     super.initState();
     fetchAndSetData();
     fetchGalleryImages();
+    fetchBtsImages();
   }
 
   @override
@@ -345,11 +369,32 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       // Behind the Scene
                       Container(
                         padding: const EdgeInsets.all(16),
-                        child: Center(
-                          child: Text(
-                            "Belum ada media untuk produk ini.",
-                          ),
-                        ),
+                        child: btsImages.isNotEmpty
+                            ? GridView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                ),
+                                itemCount: btsImages.length,
+                                itemBuilder: (context, index) {
+                                  return ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      btsImages[index],
+                                      fit: BoxFit.cover,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Center(
+                                child: Text(
+                                  "Belum ada gambar untuk produk ini.",
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -368,14 +413,13 @@ class CollapsibleHeaderDelegate extends SliverPersistentHeaderDelegate {
   final String subtitle;
   final String idVendor;
 
-  CollapsibleHeaderDelegate({
-    required this.maxExtentHeight,
-    required this.minExtentHeight,
-    required this.imageUrl,
-    required this.title,
-    required this.subtitle,
-    required this.idVendor
-  });
+  CollapsibleHeaderDelegate(
+      {required this.maxExtentHeight,
+      required this.minExtentHeight,
+      required this.imageUrl,
+      required this.title,
+      required this.subtitle,
+      required this.idVendor});
 
   @override
   double get maxExtent => maxExtentHeight;

@@ -16,7 +16,14 @@ class _RegisterPageState extends State<RegisterPage> {
   String? customerGenderValue;
   String? customerBankName;
   final List<String> genderOptions = ['Laki-laki', 'Perempuan'];
-  final List<String> paymentAccountOptions = ['BRI', 'BNI', 'BCA', 'Gopay', 'Shopee Pay', 'Dana'];
+  final List<String> paymentAccountOptions = [
+    'BRI',
+    'BNI',
+    'BCA',
+    'Gopay',
+    'Shopee Pay',
+    'Dana'
+  ];
 
   // Customer Controllers
   final Map<String, TextEditingController> customerControllers = {
@@ -389,7 +396,6 @@ class _RegisterPageState extends State<RegisterPage> {
     String? bankName = customerBankName;
     String? bankAccount = ctrls['bank_account']?.text;
 
-
     // Validasi fields
     for (var entry in ctrls.entries) {
       if (entry.value.text.trim().isEmpty) {
@@ -414,8 +420,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    if (isCustomer &&
-        (customerBankName == null || customerBankName!.isEmpty)) {
+    if (isCustomer && (customerBankName == null || customerBankName!.isEmpty)) {
       _showError('Pilih jenis rekening');
       return;
     }
@@ -436,40 +441,27 @@ class _RegisterPageState extends State<RegisterPage> {
           'city': city!,
           'role': isCustomer ? 'customer' : 'vendor',
           'bankName': isCustomer ? customerBankName : '',
-          'bankAccount': isCustomer ? bankAccount : ''
+          'bankAccount': isCustomer ? bankAccount : '',
         },
       );
 
-      print('🔵 Signup response - User ID: ${response.user?.id}');
-
       if (response.user != null) {
-        // Step 2: Tunggu trigger selesai
+        // 🔴 PENTING: HAPUS SESSION
+        await Supabase.instance.client.auth.signOut();
+
+        // Optional delay biar trigger DB aman
         await Future.delayed(const Duration(milliseconds: 500));
 
-        // Step 3: Force kirim OTP dengan signInWithOtp
-        print('🔵 Sending OTP via signInWithOtp...');
-        try {
-          await Supabase.instance.client.auth.signInWithOtp(
-            email: email,
-            shouldCreateUser: false, // User sudah ada, jangan buat lagi
-          );
-          print('✅ OTP email sent successfully');
-        } catch (otpError) {
-          print('⚠️ OTP send warning: $otpError');
-          // Lanjut saja meskipun ada error, karena mungkin email sudah terkirim
-        }
+        // Kirim OTP
+        await Supabase.instance.client.auth.signInWithOtp(
+          email: email,
+          shouldCreateUser: false,
+        );
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(
-                    'Kode OTP telah dikirim ke $email. Cek inbox atau folder spam.')),
-          );
           GoRouter.of(context)
               .pushReplacement('/verify_registration?email=$email');
         }
-      } else {
-        _showError('Registrasi gagal. Silakan coba lagi.');
       }
     } on AuthException catch (authError) {
       print('❌ Auth error: ${authError.message}');
