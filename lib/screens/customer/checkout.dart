@@ -301,7 +301,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         "vendor_id": vendorId,
         "status_payment": statusPayment,
         "status_work": 'pending',
-        "status_payout": 'pending',
+        "status_payout": 'not_requested',
       });
     } catch (e) {
       if (mounted) {

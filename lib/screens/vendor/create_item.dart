@@ -178,6 +178,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
           'vendor_id': vendorId, // ✅ Database aktual menggunakan 'vendor_id'
           'durations':
               durationList.map((duration) => duration.toString()).toList(),
+          'is_verified': false,
         })
         .select()
         .single();

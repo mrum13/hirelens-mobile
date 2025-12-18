@@ -264,6 +264,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
       final client = Supabase.instance.client;
       await client.from('transactions').update({
         'status_work': 'finish',
+        'status_payout': 'requested',
       }).eq('id', widget.dataId);
 
       fetchAndSetData();
@@ -340,7 +341,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
           );
         }
       case 'complete':
-        if (data['status_work'] == 'complete') {
+        if ((data['status_work'] == 'complete') && (data['status_url_photos'] == 'approved')) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -364,6 +365,18 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                     child: Text("Selesaikan Pesanan")),
               )
             ],
+          );
+        } else if ((data['status_work'] == 'post_processing') && ((data['status_url_photos'] == 'not_approved') || (data['status_url_photos'] == 'pending'))) {
+          return SizedBox(
+            height: 56,
+            child: Center(
+              child: Text(
+                  "Status Order : Proses verifikasi hasil oleh admin",
+                  textAlign: TextAlign.center,
+                  style: themeFromContext(
+                    context,
+                  ).textTheme.displayMedium),
+            ),
           );
         } else if (data['status_work'] == 'finish') {
           return SizedBox(

@@ -12,6 +12,8 @@ class ItemCard extends StatefulWidget {
   final String? thumbnail;
   final bool? showFavorite;
   final VoidCallback? onTapHandler;
+  final bool isVendor;
+  final bool isVerified;
 
   const ItemCard({
     super.key,
@@ -22,6 +24,8 @@ class ItemCard extends StatefulWidget {
     required this.description,
     this.thumbnail,
     this.showFavorite = true,
+    this.isVendor = false,
+    this.isVerified = false,
     required this.onTapHandler,
   });
 
@@ -134,6 +138,8 @@ class _ItemCardState extends State<ItemCard> {
                               color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
+                          const SizedBox(height: 4,),
+                          widget.isVendor?(widget.isVerified?Icon(Icons.check_circle_outline, color: Colors.green,):Icon(Icons.info_outline,color: Colors.amber,)):const SizedBox(),
                           const Spacer(),
                           Text("Mulai dari", style: TextStyle(fontSize: 8)),
                           Text(

@@ -168,7 +168,10 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       final client = Supabase.instance.client;
       await client
           .from('transactions')
-          .update({'status_work': 'post_processing'}).eq('id', widget.dataId);
+          .update({
+            'status_work': 'post_processing',
+            'status_url_photos': 'pending'
+          }).eq('id', widget.dataId);
 
       fetchAndSetData();
     }
@@ -220,7 +223,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
     return ((price * durasi) * 0.025).round();
   }
 
-  Widget buildConfirmationBar(String workStatus) {
+  Widget buildConfirmationBar(String workStatus, String payoutStatus) {
     switch (workStatus) {
       case 'pending':
         return SlideAction(
@@ -299,7 +302,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       case 'cancel':
         return Center(child: Text("Orderan dicancel"));
       default:
-        return Center(child: Text("Dalam proses verifikasi payout"));
+        return Center(child: Text(payoutStatus=="complete"?"Order Selesai, silahkan cek rekening":"Dalam proses verifikasi payout"));
     }
   }
 
@@ -357,7 +360,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                 linkPhotoController.text.isEmpty)
                             ? false
                             : true,
-                        child: buildConfirmationBar(data['status_work'])),
+                        child: buildConfirmationBar(data['status_work'],data['status_payout'])),
                     const SizedBox(
                       height: 8,
                     ),
@@ -533,6 +536,19 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                       ).textTheme.displayLarge,
                                     ),
                                   ],
+                                ),
+                                Visibility(
+                                  visible: (data['status_work']=="post_processing" || data['status_work']=="complete" || data['status_work']=="finish") ? true:false,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text("Status Link Hasil :"),
+                                      Text(
+                                        data['status_url_photos'] ?? "-"
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:unsplash_clone/components/item_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:unsplash_clone/screens/create_item.dart';
+import 'package:unsplash_clone/screens/vendor/create_item.dart';
 import 'package:unsplash_clone/main.dart' show routeObserver;
 
 class KelolaItemPage extends StatefulWidget {
@@ -150,6 +150,8 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                               onTapHandler: () => GoRouter.of(context).push(
                                 "/vendor/kelola_item/edit/${item['id']}",
                               ),
+                              isVendor: true,
+                              isVerified: item['is_verified'],
                             );
                           },
                         ),
