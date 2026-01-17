@@ -246,6 +246,30 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
     }
   }
 
+    Future<void> rejectOrder() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+      final client = Supabase.instance.client;
+
+      try {
+        await client
+            .from('transactions')
+            .update({'status_work': 'cancel'}).eq('id', widget.dataId);
+
+        await fetchAndSetData();
+      } catch (e) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan!")));
+      }
+    }
+  }
+
   Future initSDK() async {
     _midtrans = await MidtransSDK.init(
       config: MidtransConfig(
@@ -341,7 +365,8 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
           );
         }
       case 'complete':
-        if ((data['status_work'] == 'complete') && (data['status_url_photos'] == 'approved')) {
+        if ((data['status_work'] == 'complete') &&
+            (data['status_url_photos'] == 'approved')) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -366,12 +391,13 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
               )
             ],
           );
-        } else if ((data['status_work'] == 'post_processing') && ((data['status_url_photos'] == 'not_approved') || (data['status_url_photos'] == 'pending'))) {
+        } else if ((data['status_work'] == 'post_processing') &&
+            ((data['status_url_photos'] == 'not_approved') ||
+                (data['status_url_photos'] == 'pending'))) {
           return SizedBox(
             height: 56,
             child: Center(
-              child: Text(
-                  "Status Order : Proses verifikasi hasil oleh admin",
+              child: Text("Status Order : Proses verifikasi hasil oleh admin",
                   textAlign: TextAlign.center,
                   style: themeFromContext(
                     context,
@@ -446,7 +472,17 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
             bottomNavigationBar: SafeArea(
               child: Padding(
                 padding: EdgeInsets.all(16),
-                child: buildPaymentBar(data['status_payment']),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    buildPaymentBar(data['status_payment']),
+                    Visibility(
+                      visible: data['status_work'] == 'cancel'?false:true,
+                      child: FilledButton(onPressed: () {
+                        rejectOrder();
+                      }, child: Text("Cancel order"))),
+                  ],
+                ),
               ),
             ),
             body: SafeArea(
@@ -469,6 +505,16 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                                 ),
                                 Text(
                                   "Tanggal Bayar : ${DateFormat('EEEE, dd MMMM yyyy, hh:mm').format(DateTime.parse(data['created_at'] as String))}",
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Tanggal Acara : ${DateFormat('EEEE, dd MMMM yyyy', 'id').format(DateTime.parse(data['tgl_foto'] as String))}",
+                                    ),
+                                    Text(
+                                      DateFormat(', hh:mm', 'id').format(DateTime.parse(data['waktu_foto'])),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

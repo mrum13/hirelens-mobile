@@ -1,5 +1,7 @@
+import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:unsplash_clone/core/auth/auth_flags.dart';
@@ -9,6 +11,7 @@ import 'package:unsplash_clone/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id', null);
 
   // Coba load file .env
   await dotenv.load(fileName: '.env');
@@ -39,7 +42,11 @@ Future<void> main() async {
     }
   });
 
-  runApp(const MyApp());
+
+
+  runApp(DevicePreview(
+    enabled: false,
+    builder: (context) => const MyApp()));
 }
 
 class EnvErrorApp extends StatelessWidget {

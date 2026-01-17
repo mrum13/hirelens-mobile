@@ -43,7 +43,7 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
       final vendorId = await fetchVendorId();
       final response = await client
           .from('items')
-          .select()
+          .select('*, vendors(id,name)')
           .eq('vendor_id',
               vendorId) // pastikan kolomnya vendor_id, bukan vendor
           .order('created_at', ascending: false);
@@ -132,7 +132,7 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                             crossAxisCount: 2,
                             mainAxisSpacing: 12,
                             crossAxisSpacing: 12,
-                            childAspectRatio: 0.65,
+                            childAspectRatio: 0.7,
                           ),
                           itemBuilder: (context, index) {
                             final item = items[index];
@@ -143,7 +143,8 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                                   ? item['price']
                                   : double.parse(item['price'].toString()),
                               vendor: item[
-                                  'vendor_id'], // Ganti dari 'vendor' ke 'vendor_id'
+                                  'vendor_id'], 
+                              vendorName: item['vendors']['name'],
                               thumbnail: item['thumbnail'],
                               description: item['description'] ?? '',
                               showFavorite: false,

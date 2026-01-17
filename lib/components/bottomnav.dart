@@ -14,10 +14,10 @@ class MyBottomNavbar extends StatelessWidget {
           case 0:
             GoRouter.of(context).replace('/home');
             break;
+          // case 1:
+          //   GoRouter.of(context).replace('/feed');
+          //   break;
           case 1:
-            GoRouter.of(context).replace('/feed');
-            break;
-          case 2:
             GoRouter.of(context).replace('/profile');
             break;
         }
@@ -29,11 +29,11 @@ class MyBottomNavbar extends StatelessWidget {
           activeIcon: Icon(Icons.home),
           label: "Home",
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.movie_filter_outlined),
-          activeIcon: Icon(Icons.movie_filter),
-          label: "Feed",
-        ),
+        // BottomNavigationBarItem(
+        //   icon: Icon(Icons.movie_filter_outlined),
+        //   activeIcon: Icon(Icons.movie_filter),
+        //   label: "Feed",
+        // ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person_outlined),
           activeIcon: Icon(Icons.person),

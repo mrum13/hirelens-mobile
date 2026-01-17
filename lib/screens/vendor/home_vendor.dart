@@ -520,69 +520,69 @@ class _VendorHomePageState extends State<VendorHomePage> with RouteAware {
                   ),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: 32)),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      Text(
-                        "Jadwal Terdekat",
-                        style: themeFromContext(
-                          context,
-                        ).textTheme.displayMedium!.copyWith(fontSize: 20),
-                      ),
-                      SizedBox(height: 16),
-                      upcomingShoots.isNotEmpty
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              spacing: 8,
-                              children: upcomingShoots
-                                  .map(
-                                    (upcomingShot) => _UpcomingTransactionItem(
-                                      customerName:
-                                          upcomingShot['user_displayName'] ??
-                                              'Customer',
-                                      itemName: upcomingShot['item_data']
-                                              ?['name'] ??
-                                          'Item',
-                                      duration: upcomingShot['durasi'] != null
-                                          ? int.tryParse(upcomingShot['durasi']
-                                                  .toString()) ??
-                                              0
-                                          : 0,
-                                      tglFoto: upcomingShot['tgl_foto'] != null
-                                          ? DateTime.tryParse(
-                                                  upcomingShot['tgl_foto']) ??
-                                              DateTime.now()
-                                          : DateTime.now(),
-                                      waktuFoto: upcomingShot['tgl_foto'] !=
-                                                  null &&
-                                              upcomingShot['waktu_foto'] != null
-                                          ? DateTime.tryParse(
-                                                  "${upcomingShot['tgl_foto']} ${upcomingShot['waktu_foto']}") ??
-                                              DateTime.now()
-                                          : DateTime.now(),
-                                    ),
-                                  )
-                                  .toList(),
-                            )
-                          : SizedBox(
-                              height: 200,
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.calendar_today,
-                                        size: 48, color: Colors.grey),
-                                    SizedBox(height: 8),
-                                    Text("Belum ada jadwal"),
-                                  ],
-                                ),
-                              ),
-                            ),
-                    ]),
-                  ),
-                ),
+                // SliverPadding(
+                //   padding: const EdgeInsets.symmetric(horizontal: 16),
+                //   sliver: SliverList(
+                //     delegate: SliverChildListDelegate([
+                //       Text(
+                //         "Jadwal Terdekat",
+                //         style: themeFromContext(
+                //           context,
+                //         ).textTheme.displayMedium!.copyWith(fontSize: 20),
+                //       ),
+                //       SizedBox(height: 16),
+                //       upcomingShoots.isNotEmpty
+                //           ? Column(
+                //               mainAxisAlignment: MainAxisAlignment.start,
+                //               crossAxisAlignment: CrossAxisAlignment.start,
+                //               spacing: 8,
+                //               children: upcomingShoots
+                //                   .map(
+                //                     (upcomingShot) => _UpcomingTransactionItem(
+                //                       customerName:
+                //                           upcomingShot['user_displayName'] ??
+                //                               'Customer',
+                //                       itemName: upcomingShot['item_data']
+                //                               ?['name'] ??
+                //                           'Item',
+                //                       duration: upcomingShot['durasi'] != null
+                //                           ? int.tryParse(upcomingShot['durasi']
+                //                                   .toString()) ??
+                //                               0
+                //                           : 0,
+                //                       tglFoto: upcomingShot['tgl_foto'] != null
+                //                           ? DateTime.tryParse(
+                //                                   upcomingShot['tgl_foto']) ??
+                //                               DateTime.now()
+                //                           : DateTime.now(),
+                //                       waktuFoto: upcomingShot['tgl_foto'] !=
+                //                                   null &&
+                //                               upcomingShot['waktu_foto'] != null
+                //                           ? DateTime.tryParse(
+                //                                   "${upcomingShot['tgl_foto']} ${upcomingShot['waktu_foto']}") ??
+                //                               DateTime.now()
+                //                           : DateTime.now(),
+                //                     ),
+                //                   )
+                //                   .toList(),
+                //             )
+                //           : SizedBox(
+                //               height: 200,
+                //               child: Center(
+                //                 child: Column(
+                //                   mainAxisAlignment: MainAxisAlignment.center,
+                //                   children: [
+                //                     Icon(Icons.calendar_today,
+                //                         size: 48, color: Colors.grey),
+                //                     SizedBox(height: 8),
+                //                     Text("Belum ada jadwal"),
+                //                   ],
+                //                 ),
+                //               ),
+                //             ),
+                //     ]),
+                //   ),
+                // ),
                 SliverToBoxAdapter(child: SizedBox(height: 32)),
               ],
             ],

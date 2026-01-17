@@ -7,6 +7,7 @@ class ItemCard extends StatefulWidget {
   final String id;
   final String name;
   final String vendor;
+  final String vendorName;
   final num price;
   final String description;
   final String? thumbnail;
@@ -20,6 +21,7 @@ class ItemCard extends StatefulWidget {
     required this.id,
     required this.name,
     required this.vendor,
+    required this.vendorName,
     required this.price,
     required this.description,
     this.thumbnail,
@@ -68,88 +70,108 @@ class _ItemCardState extends State<ItemCard> {
             onTap: widget.onTapHandler,
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainer,
+                border: Border.all(
+                    color: Theme.of(context).colorScheme.onPrimaryFixedVariant),
+                color: Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Stack(
-                    children: [
-                      widget.thumbnail == null
-                          ? Container(
-                              height: 120,
+                  ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(8)),
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: widget.thumbnail != null
+                          ? Image.network(
+                              widget.thumbnail!,
+                              fit: BoxFit.cover,
                               width: double.infinity,
-                              decoration: BoxDecoration(
-                                color:
-                                    Theme.of(context).colorScheme.surfaceBright,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(8),
-                                  topRight: Radius.circular(8),
-                                ),
-                              ),
                             )
-                          : ClipRRect(
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(8),
-                                topRight: Radius.circular(8),
-                              ),
-                              child: Image.network(
-                                widget.thumbnail!,
-                                fit: BoxFit.cover,
-                                height: 120,
-                                width: double.infinity,
-                              ),
+                          : Container(
+                              color: Colors.grey.shade300,
+                              child: const Icon(Icons.image_not_supported),
                             ),
-                      if (widget.showFavorite == true)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Icon(
-                            isFavorite ? Icons.star : Icons.star_border,
-                            size: 24,
-                            color: isFavorite ? Colors.amber : Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black87,
-                                blurRadius: 8,
-                                offset: Offset(0, 0),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                  Expanded(
-                    child: Container(
-                      padding: EdgeInsets.all(8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.name,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            widget.description,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4,),
-                          widget.isVendor?(widget.isVerified?Icon(Icons.check_circle_outline, color: Colors.green,):Icon(Icons.info_outline,color: Colors.amber,)):const SizedBox(),
-                          const Spacer(),
-                          Text("Mulai dari", style: TextStyle(fontSize: 8)),
-                          Text(
-                            formatCurrency(widget.price), // Hilangkan .toInt()
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Stack(
+                          children: [
+                            // OUTLINE
+                            Text(
+                              widget.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                foreground: Paint()
+                                  ..style = PaintingStyle.stroke
+                                  ..strokeWidth = 1.2
+                                  ..color = Colors.black,
+                              ),
+                            ),
+                            // FILL
+                            Text(
+                              widget.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          widget.vendorName,
+                          style: TextStyle(
+                              fontWeight: FontWeight.normal, fontSize: 10),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              formatCurrency(
+                                  widget.price), // Hilangkan .toInt()
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                            widget.isVendor
+                                ? (widget.isVerified
+                                    ? Icon(
+                                        Icons.check_circle_outline,
+                                        color: Colors.green,
+                                      )
+                                    : Icon(
+                                        Icons.info_outline,
+                                        color: Colors.amber,
+                                      ))
+                                : Container(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 2),
+                                    decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    child: Text(
+                                      "Order",
+                                      style: TextStyle(
+                                          fontSize: 10, color: Colors.black87),
+                                    ),
+                                  ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
             ),

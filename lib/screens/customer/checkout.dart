@@ -287,6 +287,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         'payment_type': paymentType,
         'durasi': selectedDuration.toString(),
         'tgl_foto': selectedDate!.toLocal().toString(),
+        'waktu_foto': selectedTime!.toLocal().toString(),
         // 'waktu_foto': DateTime(
         //   selectedDate!.year,
         //   selectedDate!.month,

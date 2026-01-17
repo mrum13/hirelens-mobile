@@ -168,12 +168,20 @@ class _RecentOrderItem extends StatelessWidget {
                     style: themeFromContext(context).textTheme.bodyMedium,
                   ),
                   Spacer(),
-                  Opacity(
-                    opacity: 0.65,
-                    child: Text(
-                      "Status Pesanan : $statusWork",
-                      style: themeFromContext(context).textTheme.bodySmall,
-                    ),
+                  Row(
+                    children: [
+                      Opacity(
+                        opacity: 0.65,
+                        child: Text(
+                          "Status Pesanan : ",
+                          style: themeFromContext(context).textTheme.bodySmall,
+                        ),
+                      ),
+                      Text(
+                          statusWork,
+                          style: themeFromContext(context).textTheme.bodyLarge,
+                        ),
+                    ],
                   ),
                 ],
               ),

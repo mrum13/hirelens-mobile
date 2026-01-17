@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:d_method/d_method.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,7 +17,8 @@ class ProductDetailPage extends StatefulWidget {
   State<ProductDetailPage> createState() => _ProductDetailPageState();
 }
 
-class _ProductDetailPageState extends State<ProductDetailPage> {
+class _ProductDetailPageState extends State<ProductDetailPage>
+    with TickerProviderStateMixin {
   late String dataId;
   String name = '';
   String thumbnail = '';
@@ -30,6 +32,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   bool isOnCart = false;
   List<String> galleryImages = [];
   List<String> btsImages = [];
+  late final TabController _tabController;
 
   Future<bool> checkIsAlreadyOnCart() async {
     final client = Supabase.instance.client;
@@ -198,10 +201,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     fetchAndSetData();
     fetchGalleryImages();
     fetchBtsImages();
+
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    DMethod.log(galleryImages.length.toString(), prefix: "Gallery Length");
     return isLoading
         ? Scaffold(
             appBar: AppBar(
@@ -223,10 +235,28 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             body: Center(child: CircularProgressIndicator()),
           )
         : Scaffold(
-            bottomNavigationBar: SizedBox(
-              height: 100,
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => GoRouter.of(context).pop(),
+              ),
+              actions: [
+                IconButton(
+                    onPressed: () {
+                      openWhatsApp(phoneNumber: vendorNumber);
+                    },
+                    icon: Icon(
+                      Icons.chat_outlined,
+                      color: Colors.white,
+                      size: 24,
+                    ))
+              ],
+            ),
+            bottomNavigationBar: Container(
+              // color: Colors.amber,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.only(left: 16, bottom: 16, right: 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   spacing: 8,
@@ -267,141 +297,248 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ),
               ),
             ),
-            body: SafeArea(
-              child: DefaultTabController(
-                length: 3,
-                initialIndex: 0,
-                child: NestedScrollView(
-                  floatHeaderSlivers: true,
-                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
-                    SliverAppBar(
-                      pinned: true,
-                      surfaceTintColor: Colors.transparent,
-                      leading: IconButton(
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: () => GoRouter.of(context).pop(),
-                      ),
-                      actions: [
-                        IconButton(
-                            onPressed: () {
-                              openWhatsApp(phoneNumber: vendorNumber);
-                            },
-                            icon: Icon(
-                              Icons.chat_outlined,
-                              color: Colors.white,
-                              size: 24,
-                            ))
-                      ],
-                    ),
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: CollapsibleHeaderDelegate(
-                        maxExtentHeight: 300,
-                        minExtentHeight: 150,
-                        imageUrl: thumbnail,
-                        title: name,
-                        idVendor: vendorId,
-                        subtitle: "Dari $vendorName",
-                      ),
-                    ),
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: TabBarHeaderDelegate(
-                        TabBar(
-                          tabAlignment: TabAlignment.start,
-                          isScrollable: true,
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          tabs: [
-                            Tab(text: "Deskripsi"),
-                            Tab(text: "Galeri"),
-                            Tab(text: "Behind the Scene"),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                  body: TabBarView(
-                    children: [
-                      // Deskripsi
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Alamat : $address"),
-                            SizedBox(height: 8),
-                            Text(description),
-                          ],
-                        ),
-                      ),
-
-                      // Galeri
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        child: galleryImages.isNotEmpty
-                            ? GridView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                                itemCount: galleryImages.length,
-                                itemBuilder: (context, index) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      galleryImages[index],
-                                      fit: BoxFit.cover,
-                                    ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Text(
-                                  "Belum ada gambar untuk produk ini.",
-                                ),
-                              ),
-                      ),
-
-                      // Behind the Scene
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        child: btsImages.isNotEmpty
-                            ? GridView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 2,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                                itemCount: btsImages.length,
-                                itemBuilder: (context, index) {
-                                  return ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      btsImages[index],
-                                      fit: BoxFit.cover,
-                                    ),
-                                  );
-                                },
-                              )
-                            : Center(
-                                child: Text(
-                                  "Belum ada gambar untuk produk ini.",
-                                ),
-                              ),
-                      ),
-                    ],
+            body: NestedScrollView(
+              headerSliverBuilder: (context, _) => [
+                SliverToBoxAdapter(
+                  child: AspectRatio(
+                    aspectRatio: 1/1,
+                    child: Image.network(thumbnail, )),
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(name),
                   ),
                 ),
+                SliverPersistentHeader(
+                  pinned: true,
+
+                  delegate: TabBarHeaderDelegate(
+
+                    TabBar(
+                      
+                      controller: _tabController,
+                      isScrollable: true,
+                      tabs: const [
+                        Tab(text: "Deskripsi"),
+                        Tab(text: "Galeri"),
+                        Tab(text: "Behind the Scene"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              body: TabBarView(
+                controller: _tabController,
+                physics: AlwaysScrollableScrollPhysics(),
+                children: [
+                  // Deskripsi
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Alamat : $address"),
+                        SizedBox(height: 8),
+                        Text(description),
+                      ],
+                    ),
+                  ),
+
+                  // Galeri
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    child: galleryImages.isNotEmpty
+                        ? GridView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                            itemCount: galleryImages.length,
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  galleryImages[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Text(
+                              "Belum ada gambar untuk produk ini.",
+                            ),
+                          ),
+                  ),
+
+                  // Behind the Scene
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: btsImages.isNotEmpty
+                        ? GridView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                            itemCount: btsImages.length,
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  btsImages[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          )
+                        : Center(
+                            child: Text(
+                              "Belum ada gambar untuk produk ini.",
+                            ),
+                          ),
+                  ),
+                ],
               ),
-            ),
-          );
+            )
+
+            // Padding(
+            //   padding: const EdgeInsets.all(16.0),
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       ClipRRect(
+            //         borderRadius: BorderRadius.circular(12),
+            //         child: Image.network(thumbnail, fit: BoxFit.cover, height: MediaQuery.of(context).size.height/2.5, width: double.infinity,) ,
+            //       ),
+            //       const SizedBox(
+            //         height: 16,
+            //       ),
+            //       Text(
+            //         name,
+            //         maxLines: 1,
+            //         overflow: TextOverflow.ellipsis,
+            //         style: TextStyle(
+            //           fontSize: 16,
+            //           fontWeight: FontWeight.w600,
+            //         ),
+            //       ),
+            //       InkWell(
+            //         onTap: () => GoRouter.of(
+            //           context,
+            //         ).push('/vendor-detail-page/$vendorId'),
+            //         child: Padding(
+            //           padding: const EdgeInsets.only(top: 6),
+            //           child: Text(
+            //             vendorName,
+            //             maxLines: 1,
+            //             overflow: TextOverflow.ellipsis,
+            //             style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+            //           ),
+            //         ),
+            //       ),
+            //       TabBar(
+            //         controller: _tabController,
+            //         tabAlignment: TabAlignment.start,
+            //         isScrollable: true,
+            //         tabs: [
+            //           Tab(text: "Deskripsi"),
+            //           Tab(text: "Galeri"),
+            //           Tab(text: "Behind the Scene"),
+            //         ],
+            //       ),
+            //       TabBarView(
+            //         controller: _tabController,
+            //         physics: AlwaysScrollableScrollPhysics(),
+            //         children: [
+            //           // Deskripsi
+            //           Container(
+            //             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            //             child: Column(
+            //               crossAxisAlignment: CrossAxisAlignment.start,
+            //               children: [
+            //                 Text("Alamat : $address"),
+            //                 SizedBox(height: 8),
+            //                 Text(description),
+            //               ],
+            //             ),
+            //           ),
+
+            //           // Galeri
+            //           Container(
+            //             padding: const EdgeInsets.all(8),
+            //             child: galleryImages.isNotEmpty
+            //                 ? GridView.builder(
+            //                     shrinkWrap: true,
+            //                     physics: NeverScrollableScrollPhysics(),
+            //                     gridDelegate:
+            //                         SliverGridDelegateWithFixedCrossAxisCount(
+            //                       crossAxisCount: 2,
+            //                       crossAxisSpacing: 8,
+            //                       mainAxisSpacing: 8,
+            //                     ),
+            //                     itemCount: galleryImages.length,
+            //                     itemBuilder: (context, index) {
+            //                       return ClipRRect(
+            //                         borderRadius: BorderRadius.circular(8),
+            //                         child: Image.network(
+            //                           galleryImages[index],
+            //                           fit: BoxFit.cover,
+            //                         ),
+            //                       );
+            //                     },
+            //                   )
+            //                 : Center(
+            //                     child: Text(
+            //                       "Belum ada gambar untuk produk ini.",
+            //                     ),
+            //                   ),
+            //           ),
+
+            //           // Behind the Scene
+            //           Container(
+            //             padding: const EdgeInsets.all(16),
+            //             child: btsImages.isNotEmpty
+            //                 ? GridView.builder(
+            //                     shrinkWrap: true,
+            //                     physics: NeverScrollableScrollPhysics(),
+            //                     gridDelegate:
+            //                         SliverGridDelegateWithFixedCrossAxisCount(
+            //                       crossAxisCount: 2,
+            //                       crossAxisSpacing: 8,
+            //                       mainAxisSpacing: 8,
+            //                     ),
+            //                     itemCount: btsImages.length,
+            //                     itemBuilder: (context, index) {
+            //                       return ClipRRect(
+            //                         borderRadius: BorderRadius.circular(8),
+            //                         child: Image.network(
+            //                           btsImages[index],
+            //                           fit: BoxFit.cover,
+            //                         ),
+            //                       );
+            //                     },
+            //                   )
+            //                 : Center(
+            //                     child: Text(
+            //                       "Belum ada gambar untuk produk ini.",
+            //                     ),
+            //                   ),
+            //           ),
+            //         ],
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            );
   }
 }
 

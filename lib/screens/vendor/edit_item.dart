@@ -133,8 +133,6 @@ class _EditItemPageState extends State<EditItemPage> {
     imageGalleryApi = responseGallery;
     imageBtsApi = responseBts;
 
-    DMethod.log(response.toString(), prefix: "hahah");
-
     _nameController.text = response['name'];
     _addressController.text = response['address'];
     _descController.text = response['description'];
@@ -216,7 +214,42 @@ class _EditItemPageState extends State<EditItemPage> {
     }
   }
 
-  // Future<void> _deleteItem() async {}
+  Future<void> _deleteItem() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final supabase = Supabase.instance.client;
+      await supabase.from('items').delete().eq('id', widget.dataId);
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Items berhasil dihapus",
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      GoRouter.of(context).pop();
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString(), style: TextStyle(color: Colors.white)),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -665,7 +698,7 @@ class _EditItemPageState extends State<EditItemPage> {
                         MyFilledButton(
                           isLoading: _isLoading,
                           variant: MyButtonVariant.danger,
-                          onTap: _updateItem,
+                          onTap: _deleteItem,
                           child: Text(
                             "Hapus",
                             style: TextStyle(

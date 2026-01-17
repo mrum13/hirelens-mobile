@@ -51,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
     final role = (metadata['role'] ?? 'customer') as String;
 
     return Scaffold(
-      bottomNavigationBar: MyBottomNavbar(curIndex: 2),
+      bottomNavigationBar: MyBottomNavbar(curIndex: 1),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(

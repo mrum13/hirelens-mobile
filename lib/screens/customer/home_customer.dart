@@ -35,7 +35,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
 
     final response = await Supabase.instance.client
         .from('items')
-        .select()
+        .select('*,vendors(id, name)')
         .filter('is_verified', 'neq', false)
         .order('created_at', ascending: false);
 
@@ -147,6 +147,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                           style:
                               themeFromContext(context).textTheme.displayLarge,
                         ),
+                        Text("Temukan jasa foto terbaik hari ini 📸")
                       ],
                     ),
                   ),
@@ -159,6 +160,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                       vertical: 8,
                     ),
                     child: SearchBar(
+                      shape: WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
                       leading: Padding(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: Icon(Icons.search),
@@ -185,13 +187,13 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                     ? SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         sliver: SliverGrid(
-                          delegate:
-                              SliverChildBuilderDelegate((context, index) {
+                          delegate: SliverChildBuilderDelegate((context, index) {
                             final item = items[index];
                             return ItemCard(
                               id: item['id'],
                               name: item['name'] ?? 'Unnamed Item',
                               vendor: item['vendor_id'] ?? '',
+                              vendorName: item['vendors']['name'],
                               price: item['price'] ?? 0,
                               thumbnail: item['thumbnail'],
                               description: item['description'] ?? '',
@@ -201,11 +203,11 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                             );
                           }, childCount: items.length),
                           gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
+                              SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             mainAxisSpacing: 12,
                             crossAxisSpacing: 12,
-                            childAspectRatio: 0.65,
+                            childAspectRatio: 0.72,
                           ),
                         ),
                       )
@@ -219,6 +221,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> with RouteAware {
                               id: item['id'],
                               name: item['name'],
                               vendor: item['vendor'],
+                              vendorName: item['vendors']['name'],
                               price: item['price'],
                               thumbnail: item['thumbnail'],
                               description: item['description'] ?? '',

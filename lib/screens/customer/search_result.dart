@@ -122,7 +122,7 @@ class _SearchResultPageState extends State<SearchResultPage> {
                   crossAxisCount: 2,
                   mainAxisSpacing: 12,
                   crossAxisSpacing: 12,
-                  childAspectRatio: 0.65,
+                  childAspectRatio: 0.72,
                 ),
                 itemBuilder: (context, index) {
                   final item = results[index];
@@ -133,7 +133,8 @@ class _SearchResultPageState extends State<SearchResultPage> {
                         ? item['price']
                         : double.parse(item['price'].toString()),
                     vendor:
-                        item['vendor_id'], // Ganti dari 'vendor' ke 'vendor_id'
+                        item['vendor_id'], 
+                    vendorName: item['vendors']['name'],
                     thumbnail: item['thumbnail'],
                     description: item['description'] ?? '',
                     showFavorite: false,

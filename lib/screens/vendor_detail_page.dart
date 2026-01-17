@@ -49,7 +49,7 @@ class _VendorDetailPageState extends State<VendorDetailPage> {
 
     final response = await client
         .from('items')
-        .select()
+        .select('*, vendors(id,name)')
         .eq('vendor_id', widget.idVendor)
         .order('created_at', ascending: false);
 
@@ -170,15 +170,16 @@ class _VendorDetailPageState extends State<VendorDetailPage> {
                   itemCount: itemData.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing:20,
-                    childAspectRatio: 0.7,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing:12,
+                    childAspectRatio: 0.72,
                   ),
                   itemBuilder: (context, index) {
                     return ItemCard(
                       id: itemData[index]['id'], 
                       name: itemData[index]['name'], 
                       vendor: name, 
+                      vendorName: itemData[index]['vendors']['name'],
                       price: itemData[index]['price'],
                       thumbnail: itemData[index]['thumbnail'], 
                       description: itemData[index]['description'], 

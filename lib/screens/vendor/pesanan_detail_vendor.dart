@@ -166,12 +166,10 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
         isLoading = true;
       });
       final client = Supabase.instance.client;
-      await client
-          .from('transactions')
-          .update({
-            'status_work': 'post_processing',
-            'status_url_photos': 'pending'
-          }).eq('id', widget.dataId);
+      await client.from('transactions').update({
+        'status_work': 'post_processing',
+        'status_url_photos': 'pending'
+      }).eq('id', widget.dataId);
 
       fetchAndSetData();
     }
@@ -302,7 +300,10 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
       case 'cancel':
         return Center(child: Text("Orderan dicancel"));
       default:
-        return Center(child: Text(payoutStatus=="complete"?"Order Selesai, silahkan cek rekening":"Dalam proses verifikasi payout"));
+        return Center(
+            child: Text(payoutStatus == "complete"
+                ? "Order Selesai, silahkan cek rekening"
+                : "Dalam proses verifikasi payout"));
     }
   }
 
@@ -311,6 +312,7 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
     return isLoading
         ? Center(child: CircularProgressIndicator())
         : Scaffold(
+            resizeToAvoidBottomInset: true,
             appBar: AppBar(
               backgroundColor: Theme.of(context).colorScheme.surface,
               title: Text(
@@ -330,37 +332,28 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Visibility(
-                      visible: (data['status_work'] == "post_processing" &&
-                              data['status_payment'] == "panjar_paid")
-                          ? true
-                          : false,
-                      child: Center(child: Text("Orderan belum dibayar lunas oleh customer"))
-                    ),
+                        visible: (data['status_work'] == "post_processing" &&
+                                data['status_payment'] == "panjar_paid")
+                            ? true
+                            : false,
+                        child: Center(
+                            child: Text(
+                                "Orderan belum dibayar lunas oleh customer"))),
                     Visibility(
                         visible: (data['status_work'] == 'post_processing' &&
                                 data['status_payment'] == 'complete')
                             ? true
                             : false,
                         child: Column(
-                          children: [
-                            TextFormField(
-                              controller: linkPhotoController,
-                              style: TextStyle(fontSize: 14),
-                              decoration: InputDecoration(
-                                  label: Text("Link Foto"),
-                                  border: OutlineInputBorder()),
-                            ),
-                            const SizedBox(
-                              height: 16,
-                            )
-                          ],
+                          children: [const SizedBox()],
                         )),
                     Visibility(
                         visible: (data['status_work'] == "post_processing" &&
                                 linkPhotoController.text.isEmpty)
                             ? false
                             : true,
-                        child: buildConfirmationBar(data['status_work'],data['status_payout'])),
+                        child: buildConfirmationBar(
+                            data['status_work'], data['status_payout'])),
                     const SizedBox(
                       height: 8,
                     ),
@@ -412,10 +405,21 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                               spacing: 8,
                               children: [
                                 Text(
-                                  "Tanggal Pesan : ${DateFormat('EEEE, dd MMMM yyyy, hh:mm').format(DateTime.parse(data['created_at'] as String))}",
+                                  "Tanggal Pesan : ${DateFormat('EEEE, dd MMMM yyyy, hh:mm', 'id').format(DateTime.parse(data['created_at'] as String))}",
                                 ),
                                 Text(
-                                  "Tanggal Bayar : ${DateFormat('EEEE, dd MMMM yyyy, hh:mm').format(DateTime.parse(data['created_at'] as String))}",
+                                  "Tanggal Bayar : ${DateFormat('EEEE, dd MMMM yyyy, hh:mm', 'id').format(DateTime.parse(data['created_at'] as String))}",
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      "Tanggal Acara : ${DateFormat('EEEE, dd MMMM yyyy', 'id').format(DateTime.parse(data['tgl_foto'] as String))}",
+                                    ),
+                                    Text(
+                                      DateFormat(', hh:mm', 'id').format(
+                                          DateTime.parse(data['waktu_foto'])),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -427,9 +431,9 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                 Text(
                                   "Tipe Pembayaran : ${data['payment_type']}",
                                 ),
-                                Text(
-                                  "Metode Pembayaran : ${data['payment_method']}",
-                                ),
+                                // Text(
+                                //   "Metode Pembayaran : ${data['payment_method']}",
+                                // ),
                               ],
                             ),
                             Divider(height: 32),
@@ -538,18 +542,43 @@ class _PesananDetailVendorPageState extends State<PesananDetailVendorPage>
                                   ],
                                 ),
                                 Visibility(
-                                  visible: (data['status_work']=="post_processing" || data['status_work']=="complete" || data['status_work']=="finish") ? true:false,
+                                  visible: (data['status_work'] ==
+                                              "post_processing" ||
+                                          data['status_work'] == "complete" ||
+                                          data['status_work'] == "finish")
+                                      ? true
+                                      : false,
                                   child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text("Status Link Hasil :"),
-                                      Text(
-                                        data['status_url_photos'] ?? "-"
-                                      ),
+                                      Text(data['status_url_photos'] ?? "-"),
                                     ],
                                   ),
                                 ),
+                                Visibility(
+                                    visible: (data['status_work'] ==
+                                                'post_processing' &&
+                                            data['status_payment'] ==
+                                                'complete')
+                                        ? true
+                                        : false,
+                                    child: Column(
+                                      children: [
+                                        const SizedBox(
+                                          height: 24,
+                                        ),
+                                        TextFormField(
+                                          controller: linkPhotoController,
+                                          style: TextStyle(fontSize: 14),
+                                          decoration: InputDecoration(
+                                              label: Text("Link Foto"),
+                                              border: OutlineInputBorder()),
+                                        ),
+                                        const SizedBox(height: 16,)
+                                      ],
+                                    )),
                               ],
                             ),
                           ],

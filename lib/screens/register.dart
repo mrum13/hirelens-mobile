@@ -45,6 +45,7 @@ class _RegisterPageState extends State<RegisterPage> {
     'email': TextEditingController(),
     'password': TextEditingController(),
     'confirmPassword': TextEditingController(),
+    'bank_account': TextEditingController(),
   };
 
   @override
@@ -297,6 +298,37 @@ class _RegisterPageState extends State<RegisterPage> {
                                   vendorControllers['address']!,
                                 ),
                                 inputField("Kota", vendorControllers['city']!),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: DropdownButtonFormField<String>(
+                                    value: customerBankName,
+                                    items: paymentAccountOptions
+                                        .map(
+                                          (payment) => DropdownMenuItem(
+                                            value: payment,
+                                            child: Text(payment),
+                                          ),
+                                        )
+                                        .toList(),
+                                    onChanged: _isLoading
+                                        ? null
+                                        : (value) {
+                                            setState(() {
+                                              customerBankName = value;
+                                            });
+                                          },
+                                    decoration: InputDecoration(
+                                      labelText: "Rekening / E-Wallet",
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                inputField(
+                                  "No. Rek / No. E-Wallet",
+                                  vendorControllers['bank_account']!,
+                                ),
                                 inputField(
                                   "Email",
                                   vendorControllers['email']!,
@@ -420,7 +452,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    if (isCustomer && (customerBankName == null || customerBankName!.isEmpty)) {
+    if (customerBankName == null || customerBankName!.isEmpty) {
       _showError('Pilih jenis rekening');
       return;
     }
@@ -440,8 +472,8 @@ class _RegisterPageState extends State<RegisterPage> {
           'address': address!,
           'city': city!,
           'role': isCustomer ? 'customer' : 'vendor',
-          'bankName': isCustomer ? customerBankName : '',
-          'bankAccount': isCustomer ? bankAccount : '',
+          'bankName': customerBankName,
+          'bankAccount': bankAccount,
         },
       );
 
