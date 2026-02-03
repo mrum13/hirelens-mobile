@@ -353,7 +353,7 @@ class _PesananDetailCustomerPageState extends State<PesananDetailCustomerPage>
                       ).textTheme.displayMedium),
                 ),
                 const SizedBox(
-                  height: 16,
+                  height: 8,
                 ),
                 MyFilledButton(
                   variant: MyButtonVariant.primary,

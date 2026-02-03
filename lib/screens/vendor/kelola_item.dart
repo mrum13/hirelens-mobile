@@ -132,7 +132,7 @@ class _KelolaItemPageState extends State<KelolaItemPage> with RouteAware {
                             crossAxisCount: 2,
                             mainAxisSpacing: 12,
                             crossAxisSpacing: 12,
-                            childAspectRatio: 0.7,
+                            childAspectRatio: 0.68,
                           ),
                           itemBuilder: (context, index) {
                             final item = items[index];

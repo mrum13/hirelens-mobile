@@ -179,21 +179,22 @@ class _ProductDetailPageState extends State<ProductDetailPage>
     });
   }
 
-  void openWhatsApp({required String phoneNumber}) async {
-    String convertTo62Number() {
-      if (phoneNumber.startsWith('0')) {
-        return phoneNumber.replaceFirst('0', '+62');
-      }
-      return phoneNumber; // jika tidak mulai 0, biarkan saja
-    }
+void openWhatsApp({required String phoneNumber}) async {
+  final number = phoneNumber.startsWith('0')
+      ? phoneNumber.replaceFirst('0', '62')
+      : phoneNumber;
 
-    final url = 'https://wa.me/${convertTo62Number()}';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
+  final uri = Uri.parse('https://wa.me/$number');
+
+  try {
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (e) {
+    debugPrint('Gagal membuka WhatsApp: $e');
   }
+}
 
   @override
   void initState() {
@@ -301,8 +302,10 @@ class _ProductDetailPageState extends State<ProductDetailPage>
               headerSliverBuilder: (context, _) => [
                 SliverToBoxAdapter(
                   child: AspectRatio(
-                    aspectRatio: 1/1,
-                    child: Image.network(thumbnail, )),
+                      aspectRatio: 1 / 0.80,
+                      child: Image.network(
+                        thumbnail,
+                      )),
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
@@ -312,11 +315,8 @@ class _ProductDetailPageState extends State<ProductDetailPage>
                 ),
                 SliverPersistentHeader(
                   pinned: true,
-
                   delegate: TabBarHeaderDelegate(
-
                     TabBar(
-                      
                       controller: _tabController,
                       isScrollable: true,
                       tabs: const [

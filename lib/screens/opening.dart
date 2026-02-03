@@ -72,57 +72,52 @@ class _OpeningPageState extends State<OpeningPage> {
               ],
             ),
           ),
-          Positioned(
-            bottom: 56,
-            left: 0,
-            height: 160,
-            width: MediaQuery.of(context).size.width,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                spacing: 8,
-                children: [
-                  MyFilledButton(
-                    width: double.infinity,
-                    height: 48,
-                    borderRadius: 4,
-                    variant: MyButtonVariant.primary,
-                    onTap:
-                        () => Future.microtask(
-                          () => GoRouter.of(context).go('/register'),
-                        ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 8,
+              children: [
+                MyFilledButton(
+                  width: double.infinity,
+                  height: 48,
+                  borderRadius: 4,
+                  variant: MyButtonVariant.primary,
+                  onTap:
+                      () => Future.microtask(
+                        () => GoRouter.of(context).go('/register'),
+                      ),
+                  child: Text(
+                    "Daftar",
+                    style: TextStyle(
+                      color: themeFromContext(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 220,
+                  child: Opacity(
+                    opacity: 0.75,
                     child: Text(
-                      "Daftar",
-                      style: TextStyle(
-                        color: themeFromContext(context).colorScheme.onPrimary,
-                      ),
+                      "Dengan mendaftar, anda menyetujui syarat & ketentuan kami.",
+                      style: themeFromContext(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  SizedBox(
-                    width: 220,
-                    child: Opacity(
-                      opacity: 0.75,
-                      child: Text(
-                        "Dengan mendaftar, anda menyetujui syarat & ketentuan kami.",
-                        style: themeFromContext(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4),
+                MyOutlinedButton(
+                  width: double.infinity,
+                  height: 48,
+                  borderRadius: 4,
+                  variant: MyButtonVariant.white,
+                  onTap:
+                      () => Future.microtask(
+                        () => GoRouter.of(context).go('/login'),
                       ),
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  MyOutlinedButton(
-                    width: double.infinity,
-                    height: 48,
-                    borderRadius: 4,
-                    variant: MyButtonVariant.white,
-                    onTap:
-                        () => Future.microtask(
-                          () => GoRouter.of(context).go('/login'),
-                        ),
-                    child: Text("Masuk"),
-                  ),
-                ],
-              ),
+                  child: Text("Masuk"),
+                ),
+              ],
             ),
           ),
         ],
